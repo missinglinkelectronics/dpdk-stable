@@ -70,7 +70,9 @@ CPUFLAGS += PCLMULQDQ
 endif
 
 ifneq ($(filter $(AUTO_CPUFLAGS),__AVX__),)
+ifeq ($(CONFIG_RTE_ENABLE_AVX),y)
 CPUFLAGS += AVX
+endif
 endif
 
 ifneq ($(filter $(AUTO_CPUFLAGS),__RDRND__),)
@@ -86,15 +88,19 @@ CPUFLAGS += F16C
 endif
 
 ifneq ($(filter $(AUTO_CPUFLAGS),__AVX2__),)
+ifeq ($(CONFIG_RTE_ENABLE_AVX),y)
 CPUFLAGS += AVX2
+endif
 endif
 
 ifneq ($(filter $(AUTO_CPUFLAGS),__AVX512F__),)
+ifeq ($(CONFIG_RTE_ENABLE_AVX512),y)
 CPUFLAGS += AVX512F
 else
 # disable AVX512F support of gcc as a workaround for Bug 97
 ifeq ($(CONFIG_RTE_TOOLCHAIN_GCC),y)
 MACHINE_CFLAGS += -mno-avx512f
+endif
 endif
 endif
 
