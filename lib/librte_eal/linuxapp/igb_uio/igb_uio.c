@@ -325,7 +325,7 @@ static int
 igbuio_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
 	struct rte_uio_pci_dev *udev;
-#ifdef HAVE_PCI_ENABLE_MSIX
+#ifndef HAVE_ALLOC_IRQ_VECTORS
 	struct msix_entry msix_entry;
 #endif
 	int err;
@@ -381,7 +381,7 @@ igbuio_pci_probe(struct pci_dev *dev, const struct pci_device_id *id)
 	switch (igbuio_intr_mode_preferred) {
 	case RTE_INTR_MODE_MSIX:
 		/* Only 1 msi-x vector needed */
-#ifdef HAVE_PCI_ENABLE_MSIX
+#ifndef HAVE_ALLOC_IRQ_VECTORS
 		msix_entry.entry = 0;
 		if (pci_enable_msix(dev, &msix_entry, 1) == 0) {
 			dev_dbg(&dev->dev, "using MSI-X");
@@ -440,8 +440,13 @@ fail_remove_group:
 	sysfs_remove_group(&dev->dev.kobj, &dev_attr_grp);
 fail_release_iomem:
 	igbuio_pci_release_iomem(&udev->info);
+#ifndef HAVE_ALLOC_IRQ_VECTORS
 	if (udev->mode == RTE_INTR_MODE_MSIX)
 		pci_disable_msix(udev->pdev);
+#else
+	if (udev->mode == RTE_INTR_MODE_MSIX)
+		pci_free_irq_vectors(udev->pdev);
+#endif
 	pci_disable_device(dev);
 fail_free:
 	kfree(udev);
@@ -457,8 +462,13 @@ igbuio_pci_remove(struct pci_dev *dev)
 	sysfs_remove_group(&dev->dev.kobj, &dev_attr_grp);
 	uio_unregister_device(&udev->info);
 	igbuio_pci_release_iomem(&udev->info);
+#ifndef HAVE_ALLOC_IRQ_VECTORS
 	if (udev->mode == RTE_INTR_MODE_MSIX)
 		pci_disable_msix(dev);
+#else
+	if (udev->mode == RTE_INTR_MODE_MSIX)
+		pci_free_irq_vectors(dev);
+#endif
 	pci_disable_device(dev);
 	pci_set_drvdata(dev, NULL);
 	kfree(udev);
