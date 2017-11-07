@@ -194,8 +194,6 @@ igbuio_pci_release(struct uio_info *info, struct inode *inode)
 	/* stop the device from further DMA */
 	pci_clear_master(dev);
 
-	pci_reset_function(dev);
-
 	return 0;
 }
 
