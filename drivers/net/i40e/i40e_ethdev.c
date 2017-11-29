@@ -4888,10 +4888,10 @@ i40e_dev_init_vlan(struct rte_eth_dev *dev)
 	int mask = 0;
 
 	/* Apply vlan offload setting */
-	mask = ETH_VLAN_STRIP_MASK | ETH_VLAN_FILTER_MASK;
+	mask = ETH_VLAN_STRIP_MASK |
+	       ETH_VLAN_FILTER_MASK |
+	       ETH_VLAN_EXTEND_MASK;
 	i40e_vlan_offload_set(dev, mask);
-
-	/* Apply double-vlan setting, not implemented yet */
 
 	/* Apply pvid setting */
 	ret = i40e_vlan_pvid_set(dev, data->dev_conf.txmode.pvid,
