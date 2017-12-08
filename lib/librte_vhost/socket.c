@@ -438,7 +438,7 @@ vhost_user_reconnect_init(void)
 
 	ret = pthread_create(&reconn_tid, NULL,
 			     vhost_user_client_reconnect, NULL);
-	if (ret < 0)
+	if (ret != 0)
 		RTE_LOG(ERR, VHOST_CONFIG, "failed to create reconnect thread");
 
 	return ret;
@@ -525,7 +525,7 @@ rte_vhost_driver_register(const char *path, uint64_t flags)
 	if ((flags & RTE_VHOST_USER_CLIENT) != 0) {
 		vsocket->reconnect = !(flags & RTE_VHOST_USER_NO_RECONNECT);
 		if (vsocket->reconnect && reconn_tid == 0) {
-			if (vhost_user_reconnect_init() < 0) {
+			if (vhost_user_reconnect_init() != 0) {
 				free(vsocket->path);
 				free(vsocket);
 				goto out;
