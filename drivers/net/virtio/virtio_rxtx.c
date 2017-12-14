@@ -506,7 +506,7 @@ virtio_update_rxtx_handler(struct rte_eth_dev *dev,
 #if defined RTE_ARCH_X86
 	if (rte_cpu_get_flag_enabled(RTE_CPUFLAG_SSE3))
 		use_simple_rxtx = 1;
-#elif defined RTE_ARCH_ARM64 || defined CONFIG_RTE_ARCH_ARM
+#elif defined RTE_ARCH_ARM64 || defined RTE_ARCH_ARM
 	if (rte_cpu_get_flag_enabled(RTE_CPUFLAG_NEON))
 		use_simple_rxtx = 1;
 #endif
