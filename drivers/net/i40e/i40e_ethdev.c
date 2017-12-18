@@ -6507,7 +6507,7 @@ i40e_dev_tunnel_filter_set(struct i40e_pf *pf,
 			uint8_t add)
 {
 	uint16_t ip_type;
-	uint32_t ipv4_addr;
+	uint32_t ipv4_addr, ipv4_addr_le;
 	uint8_t i, tun_type = 0;
 	/* internal varialbe to convert ipv6 byte order */
 	uint32_t convert_ipv6[4];
@@ -6534,8 +6534,9 @@ i40e_dev_tunnel_filter_set(struct i40e_pf *pf,
 	if (tunnel_filter->ip_type == RTE_TUNNEL_IPTYPE_IPV4) {
 		ip_type = I40E_AQC_ADD_CLOUD_FLAGS_IPV4;
 		ipv4_addr = rte_be_to_cpu_32(tunnel_filter->ip_addr.ipv4_addr);
+		ipv4_addr_le = rte_cpu_to_le_32(ipv4_addr);
 		rte_memcpy(&pfilter->ipaddr.v4.data,
-				&rte_cpu_to_le_32(ipv4_addr),
+				&ipv4_addr_le,
 				sizeof(pfilter->ipaddr.v4.data));
 	} else {
 		ip_type = I40E_AQC_ADD_CLOUD_FLAGS_IPV6;
