@@ -801,7 +801,7 @@ pmd_init_internals(const char *name, const unsigned int nb_rx_queues,
 	struct rte_eth_dev_data *data = NULL;
 	unsigned int numa_node = rte_socket_id();
 
-	RTE_LOG(INFO, PMD, "Creating pcap-backed ethdev on numa socket %u\n",
+	RTE_LOG(INFO, PMD, "Creating pcap-backed ethdev on numa socket %d\n",
 		numa_node);
 
 	/* now do all data allocation - for eth_dev structure
@@ -1042,7 +1042,7 @@ pmd_pcap_remove(const char *name)
 {
 	struct rte_eth_dev *eth_dev = NULL;
 
-	RTE_LOG(INFO, PMD, "Closing pcap ethdev on numa socket %u\n",
+	RTE_LOG(INFO, PMD, "Closing pcap ethdev on numa socket %d\n",
 			rte_socket_id());
 
 	if (name == NULL)
