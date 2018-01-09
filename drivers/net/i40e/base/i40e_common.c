@@ -1046,7 +1046,8 @@ enum i40e_status_code i40e_init_shared_code(struct i40e_hw *hw)
 
 #ifdef X722_SUPPORT
 	if (hw->mac.type == I40E_MAC_X722)
-		hw->flags |= I40E_HW_FLAG_AQ_SRCTL_ACCESS_ENABLE;
+		hw->flags |= I40E_HW_FLAG_AQ_SRCTL_ACCESS_ENABLE |
+			     I40E_HW_FLAG_NVM_READ_REQUIRES_LOCK;
 
 #endif
 	status = i40e_init_nvm(hw);

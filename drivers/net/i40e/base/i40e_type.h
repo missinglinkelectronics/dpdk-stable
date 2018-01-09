@@ -685,6 +685,7 @@ struct i40e_hw {
 
 #endif
 #define I40E_HW_FLAG_AQ_SRCTL_ACCESS_ENABLE BIT_ULL(0)
+#define I40E_HW_FLAG_NVM_READ_REQUIRES_LOCK BIT_ULL(3)
 	u64 flags;
 
 	/* debug mask */
