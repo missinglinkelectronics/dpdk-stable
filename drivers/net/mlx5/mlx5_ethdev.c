@@ -1239,8 +1239,12 @@ mlx5_dev_link_status_handler(void *arg)
 	struct priv *priv = dev->data->dev_private;
 	int ret;
 
-	priv_lock(priv);
-	assert(priv->pending_alarm == 1);
+	while (!priv_trylock(priv)) {
+		/* Alarm is being canceled. */
+		if (priv->pending_alarm == 0)
+			return;
+		rte_pause();
+	}
 	priv->pending_alarm = 0;
 	ret = priv_dev_link_status_handler(priv, dev);
 	priv_unlock(priv);
@@ -1287,9 +1291,10 @@ priv_dev_interrupt_handler_uninstall(struct priv *priv, struct rte_eth_dev *dev)
 	rte_intr_callback_unregister(&priv->intr_handle,
 				     mlx5_dev_interrupt_handler,
 				     dev);
-	if (priv->pending_alarm)
+	if (priv->pending_alarm) {
+		priv->pending_alarm = 0;
 		rte_eal_alarm_cancel(mlx5_dev_link_status_handler, dev);
-	priv->pending_alarm = 0;
+	}
 	priv->intr_handle.fd = 0;
 	priv->intr_handle.type = RTE_INTR_HANDLE_UNKNOWN;
 }
