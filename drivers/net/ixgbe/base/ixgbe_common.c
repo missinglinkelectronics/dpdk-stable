@@ -166,6 +166,7 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 	DEBUGFUNC("ixgbe_device_supports_autoneg_fc");
 
 	switch (hw->phy.media_type) {
+	case ixgbe_media_type_fiber_fixed:
 	case ixgbe_media_type_fiber_qsfp:
 	case ixgbe_media_type_fiber:
 		/* flow control autoneg black list */
@@ -196,6 +197,7 @@ bool ixgbe_device_supports_autoneg_fc(struct ixgbe_hw *hw)
 		case IXGBE_DEV_ID_82599_T3_LOM:
 		case IXGBE_DEV_ID_X540T:
 		case IXGBE_DEV_ID_X540T1:
+		case IXGBE_DEV_ID_X540_BYPASS:
 		case IXGBE_DEV_ID_X550T:
 		case IXGBE_DEV_ID_X550T1:
 		case IXGBE_DEV_ID_X550EM_X_10G_T:
@@ -261,6 +263,7 @@ s32 ixgbe_setup_fc_generic(struct ixgbe_hw *hw)
 			goto out;
 
 		/* only backplane uses autoc so fall though */
+	case ixgbe_media_type_fiber_fixed:
 	case ixgbe_media_type_fiber_qsfp:
 	case ixgbe_media_type_fiber:
 		reg = IXGBE_READ_REG(hw, IXGBE_PCS1GANA);
@@ -3068,6 +3071,7 @@ void ixgbe_fc_autoneg(struct ixgbe_hw *hw)
 
 	switch (hw->phy.media_type) {
 	/* Autoneg flow control on fiber adapters */
+	case ixgbe_media_type_fiber_fixed:
 	case ixgbe_media_type_fiber_qsfp:
 	case ixgbe_media_type_fiber:
 		if (speed == IXGBE_LINK_SPEED_1GB_FULL)
@@ -5065,6 +5069,7 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 
 		/* Set the module link speed */
 		switch (hw->phy.media_type) {
+		case ixgbe_media_type_fiber_fixed:
 		case ixgbe_media_type_fiber:
 			ixgbe_set_rate_select_speed(hw,
 						    IXGBE_LINK_SPEED_10GB_FULL);
@@ -5115,6 +5120,7 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 
 		/* Set the module link speed */
 		switch (hw->phy.media_type) {
+		case ixgbe_media_type_fiber_fixed:
 		case ixgbe_media_type_fiber:
 			ixgbe_set_rate_select_speed(hw,
 						    IXGBE_LINK_SPEED_1GB_FULL);
