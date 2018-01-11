@@ -1035,14 +1035,16 @@ i40evf_get_statics(struct rte_eth_dev *dev, struct rte_eth_stats *stats)
 static void
 i40evf_dev_xstats_reset(struct rte_eth_dev *dev)
 {
+	int ret;
 	struct i40e_vf *vf = I40EVF_DEV_PRIVATE_TO_VF(dev->data->dev_private);
 	struct i40e_eth_stats *pstats = NULL;
 
 	/* read stat values to clear hardware registers */
-	i40evf_update_stats(dev, &pstats);
+	ret = i40evf_update_stats(dev, &pstats);
 
 	/* set stats offset base on current values */
-	vf->vsi.eth_stats_offset = *pstats;
+	if (ret == 0)
+		vf->vsi.eth_stats_offset = *pstats;
 }
 
 static int i40evf_dev_xstats_get_names(__rte_unused struct rte_eth_dev *dev,
