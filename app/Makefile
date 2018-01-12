@@ -36,7 +36,7 @@ DIRS-$(CONFIG_RTE_LIBRTE_ACL) += test-acl
 DIRS-$(CONFIG_RTE_LIBRTE_PIPELINE) += test-pipeline
 DIRS-$(CONFIG_RTE_TEST_PMD) += test-pmd
 DIRS-$(CONFIG_RTE_LIBRTE_CMDLINE) += cmdline_test
-DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += proc_info
+DIRS-$(CONFIG_RTE_PROC_INFO) += proc_info
 DIRS-$(CONFIG_RTE_LIBRTE_PDUMP) += pdump
 
 include $(RTE_SDK)/mk/rte.subdir.mk
