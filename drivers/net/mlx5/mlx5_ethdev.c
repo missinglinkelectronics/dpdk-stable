@@ -658,6 +658,7 @@ mlx5_dev_infos_get(struct rte_eth_dev *dev, struct rte_eth_dev_info *info)
 			       (*priv->rss_conf)[0]->rss_key_len :
 			       0);
 	info->speed_capa = priv->link_speed_capa;
+	info->flow_type_rss_offloads = ~MLX5_RSS_HF_MASK;
 	priv_unlock(priv);
 }
 
