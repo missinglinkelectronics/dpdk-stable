@@ -1599,7 +1599,7 @@ static void virtio_dev_free_mbufs(struct rte_eth_dev *dev)
 		VIRTQUEUE_DUMP(rxvq->vq);
 
 		PMD_INIT_LOG(DEBUG, "rx_queues[%d]=%p", i, rxvq);
-		while ((buf = virtqueue_detatch_unused(rxvq->vq)) != NULL) {
+		while ((buf = virtqueue_detach_unused(rxvq->vq)) != NULL) {
 			rte_pktmbuf_free(buf);
 			mbuf_num++;
 		}
@@ -1622,7 +1622,7 @@ static void virtio_dev_free_mbufs(struct rte_eth_dev *dev)
 		VIRTQUEUE_DUMP(txvq->vq);
 
 		mbuf_num = 0;
-		while ((buf = virtqueue_detatch_unused(txvq->vq)) != NULL) {
+		while ((buf = virtqueue_detach_unused(txvq->vq)) != NULL) {
 			rte_pktmbuf_free(buf);
 			mbuf_num++;
 		}

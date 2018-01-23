@@ -121,7 +121,7 @@ void virtqueue_dump(struct virtqueue *vq);
 /**
  *  Get all mbufs to be freed.
  */
-struct rte_mbuf * virtqueue_detatch_unused(struct virtqueue *vq);
+struct rte_mbuf * virtqueue_detach_unused(struct virtqueue *vq);
 
 static inline int __attribute__((always_inline))
 virtqueue_full(const struct virtqueue *vq)

@@ -56,7 +56,7 @@ virtqueue_disable_intr(struct virtqueue *vq)
  * 2) mbuf that hasn't been consued by backend.
  */
 struct rte_mbuf *
-virtqueue_detatch_unused(struct virtqueue *vq)
+virtqueue_detach_unused(struct virtqueue *vq)
 {
 	struct rte_mbuf *cookie;
 	struct virtio_hw *hw;
