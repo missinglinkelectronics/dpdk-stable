@@ -1085,8 +1085,9 @@ qat_write_hw_desc_entry(struct rte_crypto_op *op, uint8_t *out_msg)
 			ICP_QAT_FW_LA_DIGEST_IN_BUFFER_SET(
 					qat_req->comn_hdr.serv_specif_flags,
 					ICP_QAT_FW_LA_NO_DIGEST_IN_BUFFER);
-			auth_param->auth_res_addr =
-					op->sym->auth.digest.phys_addr;
+			if (likely(ctx->qat_hash_alg != ICP_QAT_HW_AUTH_ALGO_NULL))
+				auth_param->auth_res_addr =
+						op->sym->auth.digest.phys_addr;
 			digest_appended = 0;
 		}
 
