@@ -61,13 +61,19 @@ void bnxt_free_ring(struct bnxt_ring *ring)
  * Ring groups
  */
 
-void bnxt_init_ring_grps(struct bnxt *bp)
+int bnxt_init_ring_grps(struct bnxt *bp)
 {
 	unsigned int i;
+
+	//One slot is still consumed by Default ring.
+	if (bp->max_ring_grps < 1 + bp->rx_cp_nr_rings)
+		return -ENOMEM;
 
 	for (i = 0; i < bp->max_ring_grps; i++)
 		memset(&bp->grp_info[i], (uint8_t)HWRM_NA_SIGNATURE,
 		       sizeof(struct bnxt_ring_grp_info));
+
+	return 0;
 }
 
 /*
@@ -219,7 +225,8 @@ int bnxt_alloc_hwrm_rings(struct bnxt *bp)
 
 		rc = bnxt_hwrm_ring_alloc(bp, cp_ring,
 					  HWRM_RING_ALLOC_INPUT_RING_TYPE_CMPL,
-					  0, HWRM_NA_SIGNATURE);
+					  0, HWRM_NA_SIGNATURE,
+					  HWRM_NA_SIGNATURE);
 		if (rc)
 			goto err_out;
 		cpr->cp_doorbell =
@@ -239,7 +246,8 @@ int bnxt_alloc_hwrm_rings(struct bnxt *bp)
 		/* Rx cmpl */
 		rc = bnxt_hwrm_ring_alloc(bp, cp_ring,
 					HWRM_RING_ALLOC_INPUT_RING_TYPE_CMPL,
-					idx, HWRM_NA_SIGNATURE);
+					idx, HWRM_NA_SIGNATURE,
+					HWRM_NA_SIGNATURE);
 		if (rc)
 			goto err_out;
 		cpr->cp_doorbell =
@@ -251,7 +259,8 @@ int bnxt_alloc_hwrm_rings(struct bnxt *bp)
 		/* Rx ring */
 		rc = bnxt_hwrm_ring_alloc(bp, ring,
 					HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
-					idx, cpr->hw_stats_ctx_id);
+					idx, cpr->hw_stats_ctx_id,
+					cp_ring->fw_ring_id);
 		if (rc)
 			goto err_out;
 		rxr->rx_prod = 0;
@@ -279,20 +288,21 @@ int bnxt_alloc_hwrm_rings(struct bnxt *bp)
 		/* Tx cmpl */
 		rc = bnxt_hwrm_ring_alloc(bp, cp_ring,
 					HWRM_RING_ALLOC_INPUT_RING_TYPE_CMPL,
-					idx, HWRM_NA_SIGNATURE);
+					idx, HWRM_NA_SIGNATURE,
+					HWRM_NA_SIGNATURE);
 		if (rc)
 			goto err_out;
 
 		cpr->cp_doorbell =
 		    (char *)bp->eth_dev->pci_dev->mem_resource[2].addr +
 		    idx * 0x80;
-		bp->grp_info[idx].cp_fw_ring_id = cp_ring->fw_ring_id;
 		B_CP_DIS_DB(cpr, cpr->cp_raw_cons);
 
 		/* Tx ring */
 		rc = bnxt_hwrm_ring_alloc(bp, ring,
 					HWRM_RING_ALLOC_INPUT_RING_TYPE_TX,
-					idx, cpr->hw_stats_ctx_id);
+					idx, cpr->hw_stats_ctx_id,
+					cp_ring->fw_ring_id);
 		if (rc)
 			goto err_out;
 

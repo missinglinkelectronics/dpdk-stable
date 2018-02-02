@@ -65,7 +65,7 @@ int bnxt_hwrm_queue_qportcfg(struct bnxt *bp);
 int bnxt_hwrm_ring_alloc(struct bnxt *bp,
 			 struct bnxt_ring *ring,
 			 uint32_t ring_type, uint32_t map_index,
-			 uint32_t stats_ctx_id);
+			 uint32_t stats_ctx_id, uint32_t cmpl_ring_id);
 int bnxt_hwrm_ring_free(struct bnxt *bp,
 			struct bnxt_ring *ring, uint32_t ring_type);
 int bnxt_hwrm_ring_grp_alloc(struct bnxt *bp, unsigned int idx);
@@ -101,5 +101,7 @@ int bnxt_alloc_hwrm_resources(struct bnxt *bp);
 int bnxt_get_hwrm_link_config(struct bnxt *bp, struct rte_eth_link *link);
 int bnxt_set_hwrm_link_config(struct bnxt *bp, bool link_up);
 int bnxt_hwrm_func_qcfg(struct bnxt *bp);
+#define HWRM_RING_ALLOC_INPUT_EN_STAT_CTX_ID_VALID \
+	HWRM_RING_ALLOC_INPUT_ENABLES_STAT_CTX_ID_VALID
 
 #endif

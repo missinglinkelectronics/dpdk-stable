@@ -315,7 +315,9 @@ static int bnxt_init_nic(struct bnxt *bp)
 {
 	int rc;
 
-	bnxt_init_ring_grps(bp);
+	rc = bnxt_init_ring_grps(bp);
+	if (rc)
+		return rc;
 	bnxt_init_vnics(bp);
 	bnxt_init_filters(bp);
 

@@ -65,6 +65,7 @@
 #define MAX_CP_DESC_CNT (16 * 1024)
 
 #define INVALID_HW_RING_ID      ((uint16_t)-1)
+#define INVALID_STATS_CTX_ID	((uint16_t)-1)
 
 struct bnxt_ring {
 	void			*bd;
@@ -92,7 +93,7 @@ struct bnxt_tx_ring_info;
 struct bnxt_rx_ring_info;
 struct bnxt_cp_ring_info;
 void bnxt_free_ring(struct bnxt_ring *ring);
-void bnxt_init_ring_grps(struct bnxt *bp);
+int bnxt_init_ring_grps(struct bnxt *bp);
 int bnxt_alloc_rings(struct bnxt *bp, uint16_t qidx,
 			    struct bnxt_tx_ring_info *tx_ring_info,
 			    struct bnxt_rx_ring_info *rx_ring_info,
