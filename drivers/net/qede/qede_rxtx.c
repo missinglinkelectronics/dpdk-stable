@@ -222,7 +222,7 @@ qede_rx_queue_setup(struct rte_eth_dev *dev, uint16_t queue_idx,
 	dev->data->rx_queues[queue_idx] = rxq;
 
 	DP_INFO(edev, "rxq %d num_desc %u rx_buf_size=%u socket %u\n",
-		  queue_idx, nb_desc, qdev->mtu, socket_id);
+		  queue_idx, nb_desc, rxq->rx_buf_size, socket_id);
 
 	return 0;
 err4:
