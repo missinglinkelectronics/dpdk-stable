@@ -152,12 +152,12 @@ static uint16_t bnxt_rx_pkt(struct rte_mbuf **rx_pkt,
 	if (likely(RX_CMP_IP_CS_OK(rxcmp1)))
 		mbuf->ol_flags |= PKT_RX_IP_CKSUM_GOOD;
 	else
-		mbuf->ol_flags |= PKT_RX_IP_CKSUM_NONE;
+		mbuf->ol_flags |= PKT_RX_IP_CKSUM_BAD;
 
 	if (likely(RX_CMP_L4_CS_OK(rxcmp1)))
 		mbuf->ol_flags |= PKT_RX_L4_CKSUM_GOOD;
 	else
-		mbuf->ol_flags |= PKT_RX_L4_CKSUM_NONE;
+		mbuf->ol_flags |= PKT_RX_L4_CKSUM_BAD;
 
 	if (rxcmp1->errors_v2 & RX_CMP_L2_ERRORS) {
 		/* Re-install the mbuf back to the rx ring */
