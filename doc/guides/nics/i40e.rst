@@ -130,6 +130,21 @@ Please note that enabling debugging options may affect system performance.
   Interrupt Throttling interval.
 
 
+Runtime Config Options
+~~~~~~~~~~~~~~~~~~~~~~
+
+- ``Support multiple driver`` (default ``disable``)
+
+  There was a multiple driver support issue during use of 700 series Ethernet
+  Adapter with both Linux kernel and DPDK PMD. To fix this issue, ``devargs``
+  parameter ``support-multi-driver`` is introduced, for example::
+
+    -w 84:00.0,support-multi-driver=1
+
+  With the above configuration, DPDK PMD will not change global registers, and
+  will switch PF interrupt from IntN to Int0 to avoid interrupt conflict between
+  DPDK and Linux Kernel.
+
 Driver Compilation
 ~~~~~~~~~~~~~~~~~~
 
