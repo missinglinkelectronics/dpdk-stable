@@ -944,6 +944,67 @@ config_floating_veb(struct rte_eth_dev *dev)
 #define I40E_L2_TAGS_S_TAG_SHIFT 1
 #define I40E_L2_TAGS_S_TAG_MASK I40E_MASK(0x1, I40E_L2_TAGS_S_TAG_SHIFT)
 
+#define ETH_I40E_SUPPORT_MULTI_DRIVER	"support-multi-driver"
+RTE_PMD_REGISTER_PARAM_STRING(net_i40e,
+			      ETH_I40E_SUPPORT_MULTI_DRIVER "=0|1");
+
+static int
+i40e_parse_multi_drv_handler(__rte_unused const char *key,
+			      const char *value,
+			      void *opaque)
+{
+	struct i40e_pf *pf;
+	unsigned long support_multi_driver;
+	char *end;
+
+	pf = (struct i40e_pf *)opaque;
+
+	errno = 0;
+	support_multi_driver = strtoul(value, &end, 10);
+	if (errno != 0 || end == value || *end != 0) {
+		PMD_DRV_LOG(WARNING, "Wrong global configuration");
+		return -(EINVAL);
+	}
+
+	if (support_multi_driver == 1 || support_multi_driver == 0)
+		pf->support_multi_driver = (bool)support_multi_driver;
+	else
+		PMD_DRV_LOG(WARNING, "%s must be 1 or 0,",
+			    "enable global configuration by default."
+			    ETH_I40E_SUPPORT_MULTI_DRIVER);
+	return 0;
+}
+
+static int
+i40e_support_multi_driver(struct rte_eth_dev *dev)
+{
+	struct i40e_pf *pf = I40E_DEV_PRIVATE_TO_PF(dev->data->dev_private);
+	struct rte_pci_device *pci_dev = dev->pci_dev;
+	static const char *valid_keys[] = {
+		ETH_I40E_SUPPORT_MULTI_DRIVER, NULL};
+	struct rte_kvargs *kvlist;
+
+	/* Enable global configuration by default */
+	pf->support_multi_driver = false;
+
+	if (!pci_dev->device.devargs)
+		return 0;
+
+	kvlist = rte_kvargs_parse(pci_dev->device.devargs->args, valid_keys);
+	if (!kvlist)
+		return -EINVAL;
+
+	if (rte_kvargs_count(kvlist, ETH_I40E_SUPPORT_MULTI_DRIVER) > 1)
+		PMD_DRV_LOG(WARNING, "More than one argument \"%s\" and only "
+			    "the first invalid or last valid one is used !",
+			    ETH_I40E_SUPPORT_MULTI_DRIVER);
+
+	rte_kvargs_process(kvlist, ETH_I40E_SUPPORT_MULTI_DRIVER,
+			   i40e_parse_multi_drv_handler, pf);
+	rte_kvargs_free(kvlist);
+	return 0;
+}
+
 static int
 eth_i40e_dev_init(struct rte_eth_dev *dev)
 {
@@ -993,6 +1054,9 @@ eth_i40e_dev_init(struct rte_eth_dev *dev)
 	hw->bus.func = pci_dev->addr.function;
 	hw->adapter_stopped = 0;
 
+	/* Check if need to support multi-driver */
+	i40e_support_multi_driver(dev);
+
 	/* Make sure all is clean before doing PF reset */
 	i40e_clear_hw(hw);
 
@@ -1019,7 +1083,8 @@ eth_i40e_dev_init(struct rte_eth_dev *dev)
 	 * software. It should be removed once issues are fixed
 	 * in NVM.
 	 */
-	i40e_GLQF_reg_init(hw);
+	if (!pf->support_multi_driver)
+		i40e_GLQF_reg_init(hw);
 
 	/* Initialize the input set for filters (hash and fd) to default value */
 	i40e_filter_input_set_init(pf);
@@ -1115,11 +1180,14 @@ eth_i40e_dev_init(struct rte_eth_dev *dev)
 	i40e_set_fc(hw, &aq_fail, TRUE);
 
 	/* Set the global registers with default ether type value */
-	ret = i40e_vlan_tpid_set(dev, ETH_VLAN_TYPE_OUTER, ETHER_TYPE_VLAN);
-	if (ret != I40E_SUCCESS) {
-		PMD_INIT_LOG(ERR, "Failed to set the default outer "
-			     "VLAN ether type");
-		goto err_setup_pf_switch;
+	if (!pf->support_multi_driver) {
+		ret = i40e_vlan_tpid_set(dev, ETH_VLAN_TYPE_OUTER,
+					 ETHER_TYPE_VLAN);
+		if (ret != I40E_SUCCESS) {
+			PMD_INIT_LOG(ERR, "Failed to set the default outer "
+				     "VLAN ether type");
+			goto err_setup_pf_switch;
+		}
 	}
 
 	/* PF setup, which includes VSI setup */
@@ -2754,10 +2822,16 @@ i40e_vlan_tpid_set(struct rte_eth_dev *dev,
 		   uint16_t tpid)
 {
 	struct i40e_hw *hw = I40E_DEV_PRIVATE_TO_HW(dev->data->dev_private);
+	struct i40e_pf *pf = I40E_DEV_PRIVATE_TO_PF(dev->data->dev_private);
 	uint64_t reg_r = 0, reg_w = 0;
 	uint16_t reg_id = 0;
 	int ret = 0;
 	int qinq = dev->data->dev_conf.rxmode.hw_vlan_extend;
+
+	if (pf->support_multi_driver) {
+		PMD_DRV_LOG(ERR, "Setting TPID is not supported.");
+		return -ENOTSUP;
+	}
 
 	switch (vlan_type) {
 	case ETH_VLAN_TYPE_OUTER:
@@ -3039,20 +3113,25 @@ i40e_flow_ctrl_set(struct rte_eth_dev *dev, struct rte_eth_fc_conf *fc_conf)
 		I40E_WRITE_REG(hw, I40E_PRTDCB_MFLCN, mflcn_reg);
 	}
 
-	/* config the water marker both based on the packets and bytes */
-	I40E_WRITE_GLB_REG(hw, I40E_GLRPB_PHW,
-		       (pf->fc_conf.high_water[I40E_MAX_TRAFFIC_CLASS]
-		       << I40E_KILOSHIFT) / I40E_PACKET_AVERAGE_SIZE);
-	I40E_WRITE_GLB_REG(hw, I40E_GLRPB_PLW,
-		       (pf->fc_conf.low_water[I40E_MAX_TRAFFIC_CLASS]
-		       << I40E_KILOSHIFT) / I40E_PACKET_AVERAGE_SIZE);
-	I40E_WRITE_GLB_REG(hw, I40E_GLRPB_GHW,
-		       pf->fc_conf.high_water[I40E_MAX_TRAFFIC_CLASS]
-		       << I40E_KILOSHIFT);
-	I40E_WRITE_GLB_REG(hw, I40E_GLRPB_GLW,
-		       pf->fc_conf.low_water[I40E_MAX_TRAFFIC_CLASS]
-		       << I40E_KILOSHIFT);
-	i40e_global_cfg_warning(I40E_WARNING_FLOW_CTL);
+	if (!pf->support_multi_driver) {
+		/* config water marker both based on the packets and bytes */
+		I40E_WRITE_GLB_REG(hw, I40E_GLRPB_PHW,
+				(pf->fc_conf.high_water[I40E_MAX_TRAFFIC_CLASS]
+				 << I40E_KILOSHIFT) / I40E_PACKET_AVERAGE_SIZE);
+		I40E_WRITE_GLB_REG(hw, I40E_GLRPB_PLW,
+				(pf->fc_conf.low_water[I40E_MAX_TRAFFIC_CLASS]
+				 << I40E_KILOSHIFT) / I40E_PACKET_AVERAGE_SIZE);
+		I40E_WRITE_GLB_REG(hw, I40E_GLRPB_GHW,
+				 pf->fc_conf.high_water[I40E_MAX_TRAFFIC_CLASS]
+				 << I40E_KILOSHIFT);
+		I40E_WRITE_GLB_REG(hw, I40E_GLRPB_GLW,
+				  pf->fc_conf.low_water[I40E_MAX_TRAFFIC_CLASS]
+				  << I40E_KILOSHIFT);
+		i40e_global_cfg_warning(I40E_WARNING_FLOW_CTL);
+	} else {
+		PMD_DRV_LOG(ERR,
+			    "Water marker configuration is not supported.");
+	}
 
 	I40E_WRITE_FLUSH(hw);
 
@@ -6871,8 +6950,14 @@ i40e_tunnel_filter_param_check(struct i40e_pf *pf,
 static int
 i40e_dev_set_gre_key_len(struct i40e_hw *hw, uint8_t len)
 {
+	struct i40e_pf *pf = &((struct i40e_adapter *)hw->back)->pf;
 	uint32_t val, reg;
 	int ret = -EINVAL;
+
+	if (pf->support_multi_driver) {
+		PMD_DRV_LOG(ERR, "GRE key length configuration is unsupported");
+		return -ENOTSUP;
+	}
 
 	val = I40E_READ_REG(hw, I40E_GL_PRS_FVBM(2));
 	PMD_DRV_LOG(DEBUG, "Read original GL_PRS_FVBM with 0x%08x\n", val);
@@ -7115,11 +7200,17 @@ static int
 i40e_set_hash_filter_global_config(struct i40e_hw *hw,
 				   struct rte_eth_hash_global_conf *g_cfg)
 {
+	struct i40e_pf *pf = &((struct i40e_adapter *)hw->back)->pf;
 	int ret;
 	uint16_t i;
 	uint32_t reg;
 	uint32_t mask0 = g_cfg->valid_bit_mask[0];
 	enum i40e_filter_pctype pctype;
+
+	if (pf->support_multi_driver) {
+		PMD_DRV_LOG(ERR, "Hash global configuration is not supported.");
+		return -ENOTSUP;
+	}
 
 	/* Check the input parameters */
 	ret = i40e_hash_global_config_check(g_cfg);
@@ -7851,6 +7942,12 @@ i40e_filter_input_set_init(struct i40e_pf *pf)
 						   I40E_INSET_MASK_NUM_REG);
 		if (num < 0)
 			return;
+
+		if (pf->support_multi_driver && num > 0) {
+			PMD_DRV_LOG(ERR, "Input set setting is not supported.");
+			return;
+		}
+
 		inset_reg = i40e_translate_input_set_reg(hw->mac.type,
 					input_set);
 
@@ -7859,39 +7956,49 @@ i40e_filter_input_set_init(struct i40e_pf *pf)
 		i40e_check_write_reg(hw, I40E_PRTQF_FD_INSET(pctype, 1),
 				     (uint32_t)((inset_reg >>
 				     I40E_32_BIT_WIDTH) & UINT32_MAX));
-		i40e_check_write_global_reg(hw, I40E_GLQF_HASH_INSET(0, pctype),
-				      (uint32_t)(inset_reg & UINT32_MAX));
-		i40e_check_write_global_reg(hw, I40E_GLQF_HASH_INSET(1, pctype),
-				     (uint32_t)((inset_reg >>
-				     I40E_32_BIT_WIDTH) & UINT32_MAX));
-
-		for (i = 0; i < num; i++) {
+		if (!pf->support_multi_driver) {
 			i40e_check_write_global_reg(hw,
+					    I40E_GLQF_HASH_INSET(0, pctype),
+					    (uint32_t)(inset_reg & UINT32_MAX));
+			i40e_check_write_global_reg(hw,
+					    I40E_GLQF_HASH_INSET(1, pctype),
+					    (uint32_t)((inset_reg >>
+					    I40E_32_BIT_WIDTH) & UINT32_MAX));
+
+			for (i = 0; i < num; i++) {
+				i40e_check_write_global_reg(hw,
 						    I40E_GLQF_FD_MSK(i, pctype),
 						    mask_reg[i]);
-			i40e_check_write_global_reg(hw,
+				i40e_check_write_global_reg(hw,
 						  I40E_GLQF_HASH_MSK(i, pctype),
 						  mask_reg[i]);
-		}
-		/*clear unused mask registers of the pctype */
-		for (i = num; i < I40E_INSET_MASK_NUM_REG; i++) {
-			i40e_check_write_global_reg(hw,
+			}
+			/*clear unused mask registers of the pctype */
+			for (i = num; i < I40E_INSET_MASK_NUM_REG; i++) {
+				i40e_check_write_global_reg(hw,
 						    I40E_GLQF_FD_MSK(i, pctype),
 						    0);
-			i40e_check_write_global_reg(hw,
+				i40e_check_write_global_reg(hw,
 						  I40E_GLQF_HASH_MSK(i, pctype),
-						  0);
+						    0);
+			}
+		} else {
+			PMD_DRV_LOG(ERR,
+				    "Input set setting is not supported.");
 		}
 		I40E_WRITE_FLUSH(hw);
 
 		/* store the default input set */
-		pf->hash_input_set[pctype] = input_set;
+		if (!pf->support_multi_driver)
+			pf->hash_input_set[pctype] = input_set;
 		pf->fdir.input_set[pctype] = input_set;
 	}
 
-	i40e_global_cfg_warning(I40E_WARNING_HASH_INSET);
-	i40e_global_cfg_warning(I40E_WARNING_FD_MSK);
-	i40e_global_cfg_warning(I40E_WARNING_HASH_MSK);
+	if (!pf->support_multi_driver) {
+		i40e_global_cfg_warning(I40E_WARNING_HASH_INSET);
+		i40e_global_cfg_warning(I40E_WARNING_FD_MSK);
+		i40e_global_cfg_warning(I40E_WARNING_HASH_MSK);
+	}
 }
 
 int
@@ -7903,6 +8010,11 @@ i40e_hash_filter_inset_select(struct i40e_hw *hw,
 	uint64_t input_set, inset_reg = 0;
 	uint32_t mask_reg[I40E_INSET_MASK_NUM_REG] = {0};
 	int ret, i, num;
+
+	if (pf->support_multi_driver) {
+		PMD_DRV_LOG(ERR, "Hash input set setting is not supported.");
+		return -ENOTSUP;
+	}
 
 	if (!conf) {
 		PMD_DRV_LOG(ERR, "Invalid pointer");
@@ -8030,6 +8142,11 @@ i40e_fdir_filter_inset_select(struct i40e_pf *pf,
 	if (num < 0)
 		return -EINVAL;
 
+	if (pf->support_multi_driver && num > 0) {
+		PMD_DRV_LOG(ERR, "FDIR bit mask is not supported.");
+		return -ENOTSUP;
+	}
+
 	inset_reg |= i40e_translate_input_set_reg(hw->mac.type, input_set);
 
 	i40e_check_write_reg(hw, I40E_PRTQF_FD_INSET(pctype, 0),
@@ -8038,14 +8155,20 @@ i40e_fdir_filter_inset_select(struct i40e_pf *pf,
 			     (uint32_t)((inset_reg >>
 			     I40E_32_BIT_WIDTH) & UINT32_MAX));
 
-	for (i = 0; i < num; i++)
-		i40e_check_write_global_reg(hw, I40E_GLQF_FD_MSK(i, pctype),
-					    mask_reg[i]);
-	/*clear unused mask registers of the pctype */
-	for (i = num; i < I40E_INSET_MASK_NUM_REG; i++)
-		i40e_check_write_global_reg(hw, I40E_GLQF_FD_MSK(i, pctype),
-					    0);
-	i40e_global_cfg_warning(I40E_WARNING_FD_MSK);
+	if (!pf->support_multi_driver) {
+		for (i = 0; i < num; i++)
+			i40e_check_write_global_reg(hw,
+						    I40E_GLQF_FD_MSK(i, pctype),
+						    mask_reg[i]);
+		/*clear unused mask registers of the pctype */
+		for (i = num; i < I40E_INSET_MASK_NUM_REG; i++)
+			i40e_check_write_global_reg(hw,
+						    I40E_GLQF_FD_MSK(i, pctype),
+						    0);
+		i40e_global_cfg_warning(I40E_WARNING_FD_MSK);
+	} else {
+		PMD_DRV_LOG(ERR, "FDIR bit mask is not supported.");
+	}
 	I40E_WRITE_FLUSH(hw);
 
 	pf->fdir.input_set[pctype] = input_set;

@@ -485,6 +485,8 @@ struct i40e_pf {
 	bool floating_veb; /* The flag to use the floating VEB */
 	/* The floating enable flag for the specific VF */
 	bool floating_veb_list[I40E_MAX_VF];
+
+	bool support_multi_driver; /* 1 - support multiple driver */
 };
 
 enum pending_msg {
