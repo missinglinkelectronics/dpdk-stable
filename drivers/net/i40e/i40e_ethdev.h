@@ -103,6 +103,14 @@
 	(((vf)->version_major == I40E_VIRTCHNL_VERSION_MAJOR) && \
 	((vf)->version_minor == 1))
 
+static inline void
+I40E_WRITE_GLB_REG(struct i40e_hw *hw, uint32_t reg, uint32_t value) {
+	I40E_WRITE_REG(hw, reg, value);
+	PMD_DRV_LOG(DEBUG, "Global register 0x%08x is modified "
+		    "with value 0x%08x",
+		    reg, value);
+}
+
 /* index flex payload per layer */
 enum i40e_flxpld_layer_idx {
 	I40E_FLXPLD_L2_IDX    = 0,

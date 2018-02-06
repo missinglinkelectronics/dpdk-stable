@@ -716,6 +716,15 @@ rte_i40e_dev_atomic_write_link_status(struct rte_eth_dev *dev,
 	return 0;
 }
 
+static inline void
+i40e_write_global_rx_ctl(struct i40e_hw *hw, u32 reg_addr, u32 reg_val)
+{
+	i40e_write_rx_ctl(hw, reg_addr, reg_val);
+	PMD_DRV_LOG(DEBUG, "Global register 0x%08x is modified "
+		    "with value 0x%08x",
+		    reg_addr, reg_val);
+}
+
 RTE_PMD_REGISTER_PCI(net_i40e, rte_i40e_pmd.pci_drv);
 RTE_PMD_REGISTER_PCI_TABLE(net_i40e, pci_id_i40e_map);
 
@@ -735,9 +744,9 @@ static inline void i40e_GLQF_reg_init(struct i40e_hw *hw)
 	 * configuration API is added to avoid configuration conflicts
 	 * between ports of the same device.
 	 */
-	I40E_WRITE_REG(hw, I40E_GLQF_ORT(33), 0x000000E0);
-	I40E_WRITE_REG(hw, I40E_GLQF_ORT(34), 0x000000E3);
-	I40E_WRITE_REG(hw, I40E_GLQF_ORT(35), 0x000000E6);
+	I40E_WRITE_GLB_REG(hw, I40E_GLQF_ORT(33), 0x000000E0);
+	I40E_WRITE_GLB_REG(hw, I40E_GLQF_ORT(34), 0x000000E3);
+	I40E_WRITE_GLB_REG(hw, I40E_GLQF_ORT(35), 0x000000E6);
 	i40e_global_cfg_warning(I40E_WARNING_ENA_FLX_PLD);
 
 	/*
@@ -746,8 +755,8 @@ static inline void i40e_GLQF_reg_init(struct i40e_hw *hw)
 	 * configuration API is added to avoid configuration conflicts
 	 * between ports of the same device.
 	 */
-	I40E_WRITE_REG(hw, I40E_GLQF_ORT(40), 0x00000029);
-	I40E_WRITE_REG(hw, I40E_GLQF_PIT(9), 0x00009420);
+	I40E_WRITE_GLB_REG(hw, I40E_GLQF_ORT(40), 0x00000029);
+	I40E_WRITE_GLB_REG(hw, I40E_GLQF_PIT(9), 0x00009420);
 	i40e_global_cfg_warning(I40E_WARNING_QINQ_PARSER);
 }
 
@@ -2799,8 +2808,9 @@ i40e_vlan_tpid_set(struct rte_eth_dev *dev,
 			    "I40E_GL_SWT_L2TAGCTRL[%d]", reg_id);
 		return ret;
 	}
-	PMD_DRV_LOG(DEBUG, "Debug write 0x%08"PRIx64" to "
-		    "I40E_GL_SWT_L2TAGCTRL[%d]", reg_w, reg_id);
+	PMD_DRV_LOG(DEBUG,
+		    "Global register 0x%08x is changed with value 0x%08x",
+		    I40E_GL_SWT_L2TAGCTRL(reg_id), (uint32_t)reg_w);
 
 	i40e_global_cfg_warning(I40E_WARNING_TPID);
 
@@ -3030,16 +3040,16 @@ i40e_flow_ctrl_set(struct rte_eth_dev *dev, struct rte_eth_fc_conf *fc_conf)
 	}
 
 	/* config the water marker both based on the packets and bytes */
-	I40E_WRITE_REG(hw, I40E_GLRPB_PHW,
+	I40E_WRITE_GLB_REG(hw, I40E_GLRPB_PHW,
 		       (pf->fc_conf.high_water[I40E_MAX_TRAFFIC_CLASS]
 		       << I40E_KILOSHIFT) / I40E_PACKET_AVERAGE_SIZE);
-	I40E_WRITE_REG(hw, I40E_GLRPB_PLW,
+	I40E_WRITE_GLB_REG(hw, I40E_GLRPB_PLW,
 		       (pf->fc_conf.low_water[I40E_MAX_TRAFFIC_CLASS]
 		       << I40E_KILOSHIFT) / I40E_PACKET_AVERAGE_SIZE);
-	I40E_WRITE_REG(hw, I40E_GLRPB_GHW,
+	I40E_WRITE_GLB_REG(hw, I40E_GLRPB_GHW,
 		       pf->fc_conf.high_water[I40E_MAX_TRAFFIC_CLASS]
 		       << I40E_KILOSHIFT);
-	I40E_WRITE_REG(hw, I40E_GLRPB_GLW,
+	I40E_WRITE_GLB_REG(hw, I40E_GLRPB_GLW,
 		       pf->fc_conf.low_water[I40E_MAX_TRAFFIC_CLASS]
 		       << I40E_KILOSHIFT);
 	i40e_global_cfg_warning(I40E_WARNING_FLOW_CTL);
@@ -6881,6 +6891,9 @@ i40e_dev_set_gre_key_len(struct i40e_hw *hw, uint8_t len)
 						   reg, NULL);
 		if (ret != 0)
 			return ret;
+		PMD_DRV_LOG(DEBUG, "Global register 0x%08x is changed "
+			    "with value 0x%08x",
+			    I40E_GL_PRS_FVBM(2), reg);
 		i40e_global_cfg_warning(I40E_WARNING_GRE_KEY_LEN);
 	} else {
 		ret = 0;
@@ -7125,41 +7138,43 @@ i40e_set_hash_filter_global_config(struct i40e_hw *hw,
 				I40E_GLQF_HSYM_SYMH_ENA_MASK : 0;
 		if (hw->mac.type == I40E_MAC_X722) {
 			if (pctype == I40E_FILTER_PCTYPE_NONF_IPV4_UDP) {
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_IPV4_UDP), reg);
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_UNICAST_IPV4_UDP),
 				  reg);
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_MULTICAST_IPV4_UDP),
 				  reg);
 			} else if (pctype == I40E_FILTER_PCTYPE_NONF_IPV4_TCP) {
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_IPV4_TCP), reg);
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_IPV4_TCP_SYN_NO_ACK),
 				  reg);
 			} else if (pctype == I40E_FILTER_PCTYPE_NONF_IPV6_UDP) {
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_IPV6_UDP), reg);
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_UNICAST_IPV6_UDP),
 				  reg);
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_MULTICAST_IPV6_UDP),
 				  reg);
 			} else if (pctype == I40E_FILTER_PCTYPE_NONF_IPV6_TCP) {
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_IPV6_TCP), reg);
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(
+				i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(
 				  I40E_FILTER_PCTYPE_NONF_IPV6_TCP_SYN_NO_ACK),
 				  reg);
 			} else {
-				i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(pctype),
-				  reg);
+				i40e_write_global_rx_ctl(hw,
+							 I40E_GLQF_HSYM(pctype),
+							 reg);
 			}
 		} else {
-			i40e_write_rx_ctl(hw, I40E_GLQF_HSYM(pctype), reg);
+			i40e_write_global_rx_ctl(hw, I40E_GLQF_HSYM(pctype),
+						 reg);
 		}
 		i40e_global_cfg_warning(I40E_WARNING_HSYM);
 	}
@@ -7185,7 +7200,7 @@ i40e_set_hash_filter_global_config(struct i40e_hw *hw,
 		/* Use the default, and keep it as it is */
 		goto out;
 
-	i40e_write_rx_ctl(hw, I40E_GLQF_CTL, reg);
+	i40e_write_global_rx_ctl(hw, I40E_GLQF_CTL, reg);
 	i40e_global_cfg_warning(I40E_WARNING_QF_CTL);
 
 out:
@@ -7800,6 +7815,18 @@ i40e_check_write_reg(struct i40e_hw *hw, uint32_t addr, uint32_t val)
 }
 
 static void
+i40e_check_write_global_reg(struct i40e_hw *hw, uint32_t addr, uint32_t val)
+{
+	uint32_t reg = i40e_read_rx_ctl(hw, addr);
+
+	PMD_DRV_LOG(DEBUG, "[0x%08x] original: 0x%08x", addr, reg);
+	if (reg != val)
+		i40e_write_global_rx_ctl(hw, addr, val);
+	PMD_DRV_LOG(DEBUG, "[0x%08x] after: 0x%08x", addr,
+		    (uint32_t)i40e_read_rx_ctl(hw, addr));
+}
+
+static void
 i40e_filter_input_set_init(struct i40e_pf *pf)
 {
 	struct i40e_hw *hw = I40E_PF_TO_HW(pf);
@@ -7832,24 +7859,28 @@ i40e_filter_input_set_init(struct i40e_pf *pf)
 		i40e_check_write_reg(hw, I40E_PRTQF_FD_INSET(pctype, 1),
 				     (uint32_t)((inset_reg >>
 				     I40E_32_BIT_WIDTH) & UINT32_MAX));
-		i40e_check_write_reg(hw, I40E_GLQF_HASH_INSET(0, pctype),
+		i40e_check_write_global_reg(hw, I40E_GLQF_HASH_INSET(0, pctype),
 				      (uint32_t)(inset_reg & UINT32_MAX));
-		i40e_check_write_reg(hw, I40E_GLQF_HASH_INSET(1, pctype),
+		i40e_check_write_global_reg(hw, I40E_GLQF_HASH_INSET(1, pctype),
 				     (uint32_t)((inset_reg >>
 				     I40E_32_BIT_WIDTH) & UINT32_MAX));
 
 		for (i = 0; i < num; i++) {
-			i40e_check_write_reg(hw, I40E_GLQF_FD_MSK(i, pctype),
-					     mask_reg[i]);
-			i40e_check_write_reg(hw, I40E_GLQF_HASH_MSK(i, pctype),
-					     mask_reg[i]);
+			i40e_check_write_global_reg(hw,
+						    I40E_GLQF_FD_MSK(i, pctype),
+						    mask_reg[i]);
+			i40e_check_write_global_reg(hw,
+						  I40E_GLQF_HASH_MSK(i, pctype),
+						  mask_reg[i]);
 		}
 		/*clear unused mask registers of the pctype */
 		for (i = num; i < I40E_INSET_MASK_NUM_REG; i++) {
-			i40e_check_write_reg(hw, I40E_GLQF_FD_MSK(i, pctype),
-					     0);
-			i40e_check_write_reg(hw, I40E_GLQF_HASH_MSK(i, pctype),
-					     0);
+			i40e_check_write_global_reg(hw,
+						    I40E_GLQF_FD_MSK(i, pctype),
+						    0);
+			i40e_check_write_global_reg(hw,
+						  I40E_GLQF_HASH_MSK(i, pctype),
+						  0);
 		}
 		I40E_WRITE_FLUSH(hw);
 
@@ -7921,20 +7952,20 @@ i40e_hash_filter_inset_select(struct i40e_hw *hw,
 
 	inset_reg |= i40e_translate_input_set_reg(hw->mac.type, input_set);
 
-	i40e_check_write_reg(hw, I40E_GLQF_HASH_INSET(0, pctype),
-			      (uint32_t)(inset_reg & UINT32_MAX));
-	i40e_check_write_reg(hw, I40E_GLQF_HASH_INSET(1, pctype),
-			     (uint32_t)((inset_reg >>
-			     I40E_32_BIT_WIDTH) & UINT32_MAX));
+	i40e_check_write_global_reg(hw, I40E_GLQF_HASH_INSET(0, pctype),
+				    (uint32_t)(inset_reg & UINT32_MAX));
+	i40e_check_write_global_reg(hw, I40E_GLQF_HASH_INSET(1, pctype),
+				    (uint32_t)((inset_reg >>
+				    I40E_32_BIT_WIDTH) & UINT32_MAX));
 	i40e_global_cfg_warning(I40E_WARNING_HASH_INSET);
 
 	for (i = 0; i < num; i++)
-		i40e_check_write_reg(hw, I40E_GLQF_HASH_MSK(i, pctype),
-				     mask_reg[i]);
+		i40e_check_write_global_reg(hw, I40E_GLQF_HASH_MSK(i, pctype),
+					    mask_reg[i]);
 	/*clear unused mask registers of the pctype */
 	for (i = num; i < I40E_INSET_MASK_NUM_REG; i++)
-		i40e_check_write_reg(hw, I40E_GLQF_HASH_MSK(i, pctype),
-				     0);
+		i40e_check_write_global_reg(hw, I40E_GLQF_HASH_MSK(i, pctype),
+					    0);
 	i40e_global_cfg_warning(I40E_WARNING_HASH_MSK);
 	I40E_WRITE_FLUSH(hw);
 
@@ -8008,12 +8039,12 @@ i40e_fdir_filter_inset_select(struct i40e_pf *pf,
 			     I40E_32_BIT_WIDTH) & UINT32_MAX));
 
 	for (i = 0; i < num; i++)
-		i40e_check_write_reg(hw, I40E_GLQF_FD_MSK(i, pctype),
-				     mask_reg[i]);
+		i40e_check_write_global_reg(hw, I40E_GLQF_FD_MSK(i, pctype),
+					    mask_reg[i]);
 	/*clear unused mask registers of the pctype */
 	for (i = num; i < I40E_INSET_MASK_NUM_REG; i++)
-		i40e_check_write_reg(hw, I40E_GLQF_FD_MSK(i, pctype),
-				     0);
+		i40e_check_write_global_reg(hw, I40E_GLQF_FD_MSK(i, pctype),
+					    0);
 	i40e_global_cfg_warning(I40E_WARNING_FD_MSK);
 	I40E_WRITE_FLUSH(hw);
 
