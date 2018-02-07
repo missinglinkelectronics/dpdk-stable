@@ -986,9 +986,7 @@ recover:
 		/* Provide new values to rxq_setup(). */
 		dev->data->dev_conf.rxmode.jumbo_frame = sp;
 		dev->data->dev_conf.rxmode.max_rx_pkt_len = max_frame_len;
-		if (rehash)
-			ret = rxq_rehash(dev, rxq_ctrl);
-		else
+		if (!rehash)
 			ret = rxq_ctrl_setup(dev, rxq_ctrl, 1 << rxq->elts_n,
 					     rxq_ctrl->socket, NULL, rxq->mp);
 		if (!ret)
