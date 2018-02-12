@@ -1694,7 +1694,7 @@ struct rte_eth_dev_data {
 	enum rte_kernel_driver kdrv;    /**< Kernel driver passthrough */
 	int numa_node;  /**< NUMA node connection */
 	const char *drv_name;   /**< Driver name */
-};
+} __rte_cache_aligned;
 
 /** Device supports hotplug detach */
 #define RTE_ETH_DEV_DETACHABLE   0x0001
