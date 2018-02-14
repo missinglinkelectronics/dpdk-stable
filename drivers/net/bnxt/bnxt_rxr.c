@@ -72,7 +72,7 @@ static inline int bnxt_alloc_rx_data(struct bnxt_rx_queue *rxq,
 
 	rx_buf->mbuf = data;
 
-	rxbd->addr = rte_cpu_to_le_64(RTE_MBUF_DATA_DMA_ADDR(rx_buf->mbuf));
+	rxbd->addr = rte_cpu_to_le_64(rte_mbuf_data_dma_addr_default(data));
 
 	return 0;
 }
@@ -126,6 +126,7 @@ static uint16_t bnxt_rx_pkt(struct rte_mbuf **rx_pkt,
 	mbuf = rx_buf->mbuf;
 	rte_prefetch0(mbuf);
 
+	mbuf->data_off = RTE_PKTMBUF_HEADROOM;
 	mbuf->nb_segs = 1;
 	mbuf->next = NULL;
 	mbuf->pkt_len = rxcmp->len;
