@@ -1426,6 +1426,7 @@ efx_mcdi_get_phy_cfg(
 	efx_mcdi_req_t req;
 	uint8_t payload[MAX(MC_CMD_GET_PHY_CFG_IN_LEN,
 			    MC_CMD_GET_PHY_CFG_OUT_LEN)];
+	uint32_t phy_media_type;
 	efx_rc_t rc;
 
 	(void) memset(payload, 0, sizeof (payload));
@@ -1474,8 +1475,8 @@ efx_mcdi_get_phy_cfg(
 	EFX_STATIC_ASSERT(MC_CMD_MEDIA_SFP_PLUS == EFX_PHY_MEDIA_SFP_PLUS);
 	EFX_STATIC_ASSERT(MC_CMD_MEDIA_BASE_T == EFX_PHY_MEDIA_BASE_T);
 	EFX_STATIC_ASSERT(MC_CMD_MEDIA_QSFP_PLUS == EFX_PHY_MEDIA_QSFP_PLUS);
-	epp->ep_fixed_port_type =
-		(efx_phy_media_type_t) MCDI_OUT_DWORD(req, GET_PHY_CFG_OUT_MEDIA_TYPE);
+	phy_media_type = MCDI_OUT_DWORD(req, GET_PHY_CFG_OUT_MEDIA_TYPE);
+	epp->ep_fixed_port_type = (efx_phy_media_type_t)phy_media_type;
 	if (epp->ep_fixed_port_type >= EFX_PHY_MEDIA_NTYPES)
 		epp->ep_fixed_port_type = EFX_PHY_MEDIA_INVALID;
 
