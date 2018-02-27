@@ -438,8 +438,7 @@ rte_eth_dev_get_port_by_name(const char *name, uint8_t *port_id)
 
 	for (i = 0; i < RTE_MAX_ETHPORTS; i++) {
 
-		if (!strncmp(name,
-			rte_eth_dev_data[i].name, strlen(name))) {
+		if (!strcmp(name, rte_eth_dev_data[i].name)) {
 
 			*port_id = i;
 
