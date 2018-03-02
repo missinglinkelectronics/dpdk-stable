@@ -44,6 +44,7 @@
 #include <rte_udp.h>
 #include <rte_sctp.h>
 #include <rte_arp.h>
+#include <rte_spinlock.h>
 
 #include "vhost.h"
 
@@ -313,8 +314,11 @@ virtio_dev_rx(struct virtio_net *dev, uint16_t queue_id,
 	}
 
 	vq = dev->virtqueue[queue_id];
+
+	rte_spinlock_lock(&vq->access_lock);
+
 	if (unlikely(vq->enabled == 0))
-		return 0;
+		goto out_access_unlock;
 
 	avail_idx = *((volatile uint16_t *)&vq->avail->idx);
 	start_idx = vq->last_used_idx;
@@ -322,7 +326,7 @@ virtio_dev_rx(struct virtio_net *dev, uint16_t queue_id,
 	count = RTE_MIN(count, free_entries);
 	count = RTE_MIN(count, (uint32_t)MAX_PKT_BURST);
 	if (count == 0)
-		return 0;
+		goto out_access_unlock;
 
 	LOG_DEBUG(VHOST_DATA, "(%d) start_idx %d | end_idx %d\n",
 		dev->vid, start_idx, start_idx + count);
@@ -388,6 +392,10 @@ virtio_dev_rx(struct virtio_net *dev, uint16_t queue_id,
 	if (!(vq->avail->flags & VRING_AVAIL_F_NO_INTERRUPT)
 			&& (vq->callfd >= 0))
 		eventfd_write(vq->callfd, (eventfd_t)1);
+
+out_access_unlock:
+	rte_spinlock_unlock(&vq->access_lock);
+
 	return count;
 }
 
@@ -582,12 +590,15 @@ virtio_dev_merge_rx(struct virtio_net *dev, uint16_t queue_id,
 	}
 
 	vq = dev->virtqueue[queue_id];
+
+	rte_spinlock_lock(&vq->access_lock);
+
 	if (unlikely(vq->enabled == 0))
-		return 0;
+		goto out_access_unlock;
 
 	count = RTE_MIN((uint32_t)MAX_PKT_BURST, count);
 	if (count == 0)
-		return 0;
+		goto out_access_unlock;
 
 	rte_prefetch0(&vq->avail->ring[vq->last_avail_idx & (vq->size - 1)]);
 
@@ -630,6 +641,9 @@ virtio_dev_merge_rx(struct virtio_net *dev, uint16_t queue_id,
 				&& (vq->callfd >= 0))
 			eventfd_write(vq->callfd, (eventfd_t)1);
 	}
+
+out_access_unlock:
+	rte_spinlock_unlock(&vq->access_lock);
 
 	return pkt_idx;
 }
@@ -1068,8 +1082,12 @@ rte_vhost_dequeue_burst(int vid, uint16_t queue_id,
 	}
 
 	vq = dev->virtqueue[queue_id];
-	if (unlikely(vq->enabled == 0))
+
+	if (unlikely(rte_spinlock_trylock(&vq->access_lock) == 0))
 		return 0;
+
+	if (unlikely(vq->enabled == 0))
+		goto out_access_unlock;
 
 	if (unlikely(dev->dequeue_zero_copy)) {
 		struct zcopy_mbuf *zmbuf, *next;
@@ -1120,7 +1138,7 @@ rte_vhost_dequeue_burst(int vid, uint16_t queue_id,
 		if (rarp_mbuf == NULL) {
 			RTE_LOG(ERR, VHOST_DATA,
 				"Failed to allocate memory for mbuf.\n");
-			return 0;
+			goto out_access_unlock;
 		}
 
 		if (make_rarp_packet(rarp_mbuf, &dev->mac)) {
@@ -1134,7 +1152,7 @@ rte_vhost_dequeue_burst(int vid, uint16_t queue_id,
 	free_entries = *((volatile uint16_t *)&vq->avail->idx) -
 			vq->last_avail_idx;
 	if (free_entries == 0)
-		goto out;
+		goto out_access_unlock;
 
 	LOG_DEBUG(VHOST_DATA, "(%d) %s\n", dev->vid, __func__);
 
@@ -1227,7 +1245,9 @@ rte_vhost_dequeue_burst(int vid, uint16_t queue_id,
 		update_used_idx(dev, vq, i);
 	}
 
-out:
+out_access_unlock:
+	rte_spinlock_unlock(&vq->access_lock);
+
 	if (unlikely(rarp_mbuf != NULL)) {
 		/*
 		 * Inject it to the head of "pkts" array, so that switch's mac

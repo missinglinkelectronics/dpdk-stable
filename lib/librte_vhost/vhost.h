@@ -91,6 +91,8 @@ struct vhost_virtqueue {
 
 	/* Backend value to determine if device should started/stopped */
 	int			backend;
+	rte_spinlock_t		access_lock;
+
 	/* Used to notify the guest (trigger interrupt) */
 	int			callfd;
 	/* Currently unused as polling mode is enabled */

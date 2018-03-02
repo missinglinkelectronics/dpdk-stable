@@ -202,6 +202,8 @@ alloc_vring_queue_pair(struct virtio_net *dev, uint32_t qp_idx)
 	dev->virtqueue[virt_tx_q_idx] = virtqueue + VIRTIO_TXQ;
 
 	init_vring_queue_pair(dev, qp_idx);
+	rte_spinlock_init(&dev->virtqueue[virt_rx_q_idx]->access_lock);
+	rte_spinlock_init(&dev->virtqueue[virt_tx_q_idx]->access_lock);
 
 	dev->virt_qp_nb += 1;
 
