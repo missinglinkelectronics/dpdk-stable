@@ -1028,3 +1028,135 @@ Fixes in 16.11 LTS Release
 * uio: fix compilation with -Og
 * usertools: fix device binding with python 3
 * vfio: fix close unchecked file descriptor
+
+16.11.5
+~~~~~~~
+
+* app/procinfo: add compilation option in config
+* app/testpmd: fix crash of txonly with multiple segments
+* app/testpmd: fix flow director filter
+* app/testpmd: fix port index in RSS forward config
+* app/testpmd: fix port topology in RSS forward config
+* bus/pci: fix interrupt handler type
+* contigmem: fix build on FreeBSD 12
+* crypto/qat: fix allocation check and leak
+* crypto/qat: fix null auth algo overwrite
+* doc: fix outdated link to IPsec white paper
+* eal/ppc: remove the braces in memory barrier macros
+* eal/ppc: support sPAPR IOMMU for vfio-pci
+* eal: update assertion macro
+* eal/x86: use lock-prefixed instructions for SMP barrier
+* ethdev: fix data alignment
+* ethdev: fix link autonegotiation value
+* ethdev: fix missing imissed counter in xstats
+* ethdev: fix typo in functions comment
+* examples/bond: check mbuf allocation
+* examples/exception_path: align stats on cache line
+* examples/ip_pipeline: fix timer period unit
+* examples/ipsec-secgw: fix corner case for SPI value
+* examples/l3fwd-power: fix frequency detection
+* examples/l3fwd-power: fix Rx without interrupt
+* examples/vhost: fix sending ARP packet to self
+* examples/vhost: fix startup check
+* igb_uio: fix IRQ disable on recent kernels
+* igb_uio: fix MSI-X IRQ assignment with new IRQ function
+* igb_uio: switch to new irq function for MSI-X
+* keepalive: fix state alignment
+* kni: fix build with kernel 4.15
+* lpm: fix ARM big endian build
+* malloc: fix end for bounded elements
+* malloc: protect stats with lock
+* mbuf: cleanup function to get last segment
+* mbuf: fix NULL freeing when debug enabled
+* mem: fix mmap error check on huge page attach
+* memzone: fix leak on allocation error
+* mk: fix external build
+* mk: support renamed Makefile in external project
+* net/bnxt: fix broadcast cofiguration
+* net/bnxt: fix group info usage
+* net/bnxt: fix headroom initialization
+* net/bnxt: fix link speed setting with autoneg off
+* net/bnxt: fix Rx checksum flags
+* net/bnxt: fix size of Tx ring in HW
+* net/bnxt: parse checksum offload flags
+* net/bnxt: support new PCI IDs
+* net/bonding: check error of MAC address setting
+* net/bonding: fix activated slave in 8023ad mode
+* net/bonding: fix setting slave MAC addresses
+* net/e1000: fix mailbox interrupt handler
+* net/e1000: fix VF Rx interrupt enabling
+* net/ena: do not set Tx L4 offloads in Rx path
+* net/enic: fix crash due to static max number of queues
+* net/fm10k: fix logical port delete
+* net/i40e: add debug logs when writing global registers
+* net/i40e: add warnings when writing global registers
+* net/i40e/base: fix compile issue for GCC 6.3
+* net/i40e/base: fix link LED blink
+* net/i40e/base: fix NVM lock
+* net/i40e: check multi-driver option parsing
+* net/i40e: fix ARM big endian build
+* net/i40e: fix flag for MAC address write
+* net/i40e: fix flow director Rx resource defect
+* net/i40e: fix interrupt conflict when using multi-driver
+* net/i40e: fix multiple driver support issue
+* net/i40e: fix Rx interrupt
+* net/i40e: fix VF reset stats crash
+* net/i40e: fix VF Rx interrupt enabling
+* net/i40e: fix VLAN offload setting
+* net/i40e: fix VSI MAC filter on primary address change
+* net/i40e: implement vector PMD for altivec
+* net/igb: fix Tx queue number assignment
+* net/ixgbe/base: add media type of fixed fiber
+* net/ixgbe: fix ARM big endian build
+* net/ixgbe: fix mailbox interrupt handler
+* net/ixgbe: fix max queue number for VF
+* net/ixgbe: fix reset error handling
+* net/ixgbe: fix the failure of number of Tx queue check
+* net/ixgbe: fix VF Rx interrupt enabling
+* net/ixgbe: improve link state check on VF
+* net/mlx5: fix deadlock of link status alarm
+* net/mlx5: fix missing RSS capability
+* net/mlx5: fix MTU update
+* net/nfp: fix CRC strip check behaviour
+* net/nfp: fix jumbo settings
+* net/nfp: fix MTU settings
+* net/pcap: fix the NUMA id display in logs
+* net/qede/base: fix VF LRO tunnel configuration
+* net/qede: fix clearing of queue stats
+* net/qede: fix few log messages
+* net/qede: fix MTU set and max Rx pkt len usage
+* net/qede: fix to reject config with no Rx queue
+* net/szedata2: fix check of mmap return value
+* net/thunderx: fix multi segment Tx function return
+* net/vhost: fix log messages on create/destroy
+* net/virtio: fix incorrect cast
+* net/virtio: fix mbuf data offset for simple Rx
+* net/virtio: fix memory leak when reinitializing device
+* net/virtio: fix queue flushing with vector Rx enabled
+* net/virtio: fix resuming port with Rx vector path
+* net/virtio: fix Rx and Tx handler selection for ARM32
+* net/virtio: fix typo in function name
+* net/virtio: fix vector Rx flushing
+* net/virtio-user: fix start with kernel vhost
+* pdump: fix error check when creating/canceling thread
+* pmdinfogen: fix cross compilation for ARM big endian
+* test/crypto: fix missing include
+* test/memzone: fix freeing test
+* test/memzone: fix NULL freeing
+* test/memzone: fix wrong test
+* test/memzone: handle previously allocated memzones
+* test/pmd_perf: declare variables as static
+* test: register test as failed if setup failed
+* test/reorder: fix memory leak
+* test/ring_perf: fix memory leak
+* test/table: fix memory leak
+* test/table: fix uninitialized parameter
+* test/timer_perf: fix memory leak
+* usertools/devbind: remove unused function
+* vfio: fix enabled check on error
+* vhost: do not take lock on owner reset
+* vhost: fix crash
+* vhost: fix dequeue zero copy with virtio1
+* vhost: fix error code check when creating thread
+* vhost: fix mbuf free
+* vhost: protect active rings from async ring changes
