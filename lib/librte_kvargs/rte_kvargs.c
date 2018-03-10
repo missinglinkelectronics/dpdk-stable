@@ -41,7 +41,7 @@
 
 /*
  * Receive a string with a list of arguments following the pattern
- * key=value;key=value;... and insert them into the list.
+ * key=value,key=value,... and insert them into the list.
  * strtok() is used so the params string will be copied to be modified.
  */
 static int
@@ -182,7 +182,7 @@ rte_kvargs_free(struct rte_kvargs *kvlist)
 }
 
 /*
- * Parse the arguments "key=value;key=value;..." string and return
+ * Parse the arguments "key=value,key=value,..." string and return
  * an allocated structure that contains a key/value list. Also
  * check if only valid keys were used.
  */
