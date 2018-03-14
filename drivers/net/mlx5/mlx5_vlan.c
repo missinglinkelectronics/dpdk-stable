@@ -36,6 +36,12 @@
 #include <assert.h>
 #include <stdint.h>
 
+/*
+ * Not needed by this file; included to work around the lack of off_t
+ * definition for mlx5dv.h with unpatched rdma-core versions.
+ */
+#include <sys/types.h>
+
 /* DPDK headers don't like -pedantic. */
 #ifdef PEDANTIC
 #pragma GCC diagnostic ignored "-Wpedantic"
