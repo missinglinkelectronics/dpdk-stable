@@ -651,7 +651,9 @@ txq_set_params(struct mlx5_txq_ctrl *txq_ctrl)
 	unsigned int inline_max_packet_sz;
 	eth_tx_burst_t tx_pkt_burst = priv_select_tx_function(priv, priv->dev);
 	int is_empw_func = is_empw_burst_func(tx_pkt_burst);
-	int tso = !!(txq_ctrl->txq.offloads & DEV_TX_OFFLOAD_TCP_TSO);
+	int tso = !!(txq_ctrl->txq.offloads & (DEV_TX_OFFLOAD_TCP_TSO |
+					       DEV_TX_OFFLOAD_VXLAN_TNL_TSO |
+					       DEV_TX_OFFLOAD_GRE_TNL_TSO));
 
 	txq_inline = (config->txq_inline == MLX5_ARG_UNSET) ?
 		0 : config->txq_inline;
