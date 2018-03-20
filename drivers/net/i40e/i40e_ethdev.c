@@ -1316,6 +1316,7 @@ eth_i40e_dev_uninit(struct rte_eth_dev *dev)
 	struct i40e_filter_control_settings settings;
 	int ret;
 	uint8_t aq_fail = 0;
+	int retries = 0;
 
 	PMD_INIT_FUNC_TRACE();
 
@@ -1355,9 +1356,20 @@ eth_i40e_dev_uninit(struct rte_eth_dev *dev)
 	/* disable uio intr before callback unregister */
 	rte_intr_disable(&(pci_dev->intr_handle));
 
-	/* register callback func to eal lib */
-	rte_intr_callback_unregister(&(pci_dev->intr_handle),
-		i40e_dev_interrupt_handler, (void *)dev);
+	/* unregister callback func to eal lib */
+	do {
+		ret = rte_intr_callback_unregister(&(pci_dev->intr_handle),
+				i40e_dev_interrupt_handler, (void *)dev);
+		if (ret >= 0) {
+			break;
+		} else if (ret != -EAGAIN) {
+			PMD_INIT_LOG(ERR,
+				 "intr callback unregister failed: %d",
+				 ret);
+			return ret;
+		}
+		i40e_msec_delay(500);
+	} while (retries++ < 5);
 
 	return 0;
 }
