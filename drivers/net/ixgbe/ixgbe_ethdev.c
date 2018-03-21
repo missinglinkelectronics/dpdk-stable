@@ -1300,6 +1300,8 @@ eth_ixgbe_dev_uninit(struct rte_eth_dev *eth_dev)
 {
 	struct rte_pci_device *pci_dev;
 	struct ixgbe_hw *hw;
+	int retries = 0;
+	int ret;
 
 	PMD_INIT_FUNC_TRACE();
 
@@ -1321,8 +1323,20 @@ eth_ixgbe_dev_uninit(struct rte_eth_dev *eth_dev)
 
 	/* disable uio intr before callback unregister */
 	rte_intr_disable(&(pci_dev->intr_handle));
-	rte_intr_callback_unregister(&(pci_dev->intr_handle),
-		ixgbe_dev_interrupt_handler, (void *)eth_dev);
+
+	do {
+		ret = rte_intr_callback_unregister(&(pci_dev->intr_handle),
+				ixgbe_dev_interrupt_handler, (void *)eth_dev);
+		if (ret >= 0) {
+			break;
+		} else if (ret != -EAGAIN) {
+			PMD_INIT_LOG(ERR,
+				"intr callback unregister failed: %d",
+				ret);
+			return ret;
+		}
+		rte_delay_ms(100);
+	} while (retries++ < (10 + IXGBE_LINK_UP_TIME));
 
 	/* uninitialize PF if max_vfs not zero */
 	ixgbe_pf_host_uninit(eth_dev);
