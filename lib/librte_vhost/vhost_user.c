@@ -327,9 +327,11 @@ qva_to_vva(struct virtio_net *dev, uint64_t qva)
  * This function then converts these to our address space.
  */
 static int
-vhost_user_set_vring_addr(struct virtio_net *dev, struct vhost_vring_addr *addr)
+vhost_user_set_vring_addr(struct virtio_net **pdev,
+						  struct vhost_vring_addr *addr)
 {
 	struct vhost_virtqueue *vq;
+	struct virtio_net *dev = *pdev;
 
 	if (dev->mem == NULL)
 		return -1;
@@ -348,6 +350,8 @@ vhost_user_set_vring_addr(struct virtio_net *dev, struct vhost_vring_addr *addr)
 	}
 
 	dev = numa_realloc(dev, addr->index);
+	*pdev = dev;
+
 	vq = dev->virtqueue[addr->index];
 
 	vq->avail = (struct vring_avail *)(uintptr_t)qva_to_vva(dev,
@@ -1092,7 +1096,7 @@ vhost_user_msg_handler(int vid, int fd)
 		vhost_user_set_vring_num(dev, &msg.payload.state);
 		break;
 	case VHOST_USER_SET_VRING_ADDR:
-		vhost_user_set_vring_addr(dev, &msg.payload.addr);
+		vhost_user_set_vring_addr(&dev, &msg.payload.addr);
 		break;
 	case VHOST_USER_SET_VRING_BASE:
 		vhost_user_set_vring_base(dev, &msg.payload.state);
