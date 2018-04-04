@@ -1366,9 +1366,9 @@ get_szedata2_index(struct rte_eth_dev *dev, uint32_t *index)
 	char pcislot_path[PATH_MAX];
 	struct rte_pci_addr pcislot_addr = dev->pci_dev->addr;
 	uint32_t domain;
-	uint32_t bus;
-	uint32_t devid;
-	uint32_t function;
+	uint8_t bus;
+	uint8_t devid;
+	uint8_t function;
 
 	dir = opendir("/sys/class/combo");
 	if (dir == NULL)
@@ -1393,7 +1393,7 @@ get_szedata2_index(struct rte_eth_dev *dev, uint32_t *index)
 		if (fd == NULL)
 			continue;
 
-		ret = fscanf(fd, "%4" PRIx16 ":%2" PRIx8 ":%2" PRIx8 ".%" PRIx8,
+		ret = fscanf(fd, "%8" SCNx32 ":%2" SCNx8 ":%2" SCNx8 ".%" SCNx8,
 				&domain, &bus, &devid, &function);
 		fclose(fd);
 		if (ret != 4)
