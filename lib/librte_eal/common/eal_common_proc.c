@@ -557,12 +557,10 @@ mp_request_one(const char *dst, struct rte_mp_msg *req,
 	sync_req.reply = &msg;
 	pthread_cond_init(&sync_req.cond, NULL);
 
-	pthread_mutex_lock(&sync_requests.lock);
 	exist = find_sync_request(dst, req->name);
 	if (exist) {
 		RTE_LOG(ERR, EAL, "A pending request %s:%s\n", dst, req->name);
 		rte_errno = EEXIST;
-		pthread_mutex_unlock(&sync_requests.lock);
 		return -1;
 	}
 
@@ -592,9 +590,7 @@ mp_request_one(const char *dst, struct rte_mp_msg *req,
 			 now.tv_usec * 1000 < ts->tv_nsec)
 			break;
 	} while (1);
-	/* We got the lock now */
 	TAILQ_REMOVE(&sync_requests.requests, &sync_req, next);
-	pthread_mutex_unlock(&sync_requests.lock);
 
 	if (sync_req.reply_received == 0) {
 		RTE_LOG(ERR, EAL, "Fail to recv reply for request %s:%s\n",
@@ -645,8 +641,12 @@ rte_mp_request(struct rte_mp_msg *req, struct rte_mp_reply *reply,
 	reply->msgs = NULL;
 
 	/* for secondary process, send request to the primary process only */
-	if (rte_eal_process_type() == RTE_PROC_SECONDARY)
-		return mp_request_one(eal_mp_socket_path(), req, reply, &end);
+	if (rte_eal_process_type() == RTE_PROC_SECONDARY) {
+		pthread_mutex_lock(&sync_requests.lock);
+		ret =  mp_request_one(eal_mp_socket_path(), req, reply, &end);
+		pthread_mutex_unlock(&sync_requests.lock);
+		return ret;
+	}
 
 	/* for primary process, broadcast request, and collect reply 1 by 1 */
 	mp_dir = opendir(mp_dir_path);
@@ -656,6 +656,7 @@ rte_mp_request(struct rte_mp_msg *req, struct rte_mp_reply *reply,
 		return -1;
 	}
 
+	pthread_mutex_lock(&sync_requests.lock);
 	while ((ent = readdir(mp_dir))) {
 		char path[PATH_MAX];
 
@@ -665,9 +666,13 @@ rte_mp_request(struct rte_mp_msg *req, struct rte_mp_reply *reply,
 		snprintf(path, sizeof(path), "%s/%s", mp_dir_path,
 			 ent->d_name);
 
+		/* unlocks the mutex while waiting for response,
+		 * locks on receive
+		 */
 		if (mp_request_one(path, req, reply, &end))
 			ret = -1;
 	}
+	pthread_mutex_unlock(&sync_requests.lock);
 
 	closedir(mp_dir);
 	return ret;
