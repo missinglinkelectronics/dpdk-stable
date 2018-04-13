@@ -49,7 +49,7 @@ ifeq ($(CONFIG_RTE_TOOLCHAIN_ICC),y)
 #
 # CFLAGS for icc
 #
-CFLAGS_BASE_DRIVER = -wd188
+CFLAGS_BASE_DRIVER = -diag-disable 188
 else
 #
 # CFLAGS for gcc/clang
