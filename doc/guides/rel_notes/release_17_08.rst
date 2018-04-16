@@ -813,3 +813,17 @@ Fixes in 17.08 Stable Release
 * vfio: fix secondary process initialization
 * vhost: check poll error code
 * vhost: fix dereferencing invalid pointer after realloc
+
+17.08.2
+~~~~~~~
+
+* examples/vhost: move to safe GPA translation API
+* examples/vhost_scsi: move to safe GPA translation API
+* vhost: add support for non-contiguous indirect descs tables (fixes CVE-2018-1059)
+* vhost: check all range is mapped when translating GPAs (fixes CVE-2018-1059)
+* vhost: deprecate unsafe GPA translation API (fixes CVE-2018-1059)
+* vhost: ensure all range is mapped when translating QVAs (fixes CVE-2018-1059)
+* vhost: handle virtually non-contiguous buffers in Rx (fixes CVE-2018-1059)
+* vhost: handle virtually non-contiguous buffers in Rx-mrg (fixes CVE-2018-1059)
+* vhost: introduce safe API for GPA translation (fixes CVE-2018-1059)
+* vhost-user: fix deadlock in case of NUMA realloc
