@@ -396,12 +396,18 @@ rte_mempool_populate_phys(struct rte_mempool *mp, char *vaddr,
 	}
 
 	/* not enough room to store one object */
-	if (i == 0)
-		return -EINVAL;
+	if (i == 0) {
+		ret = -EINVAL;
+		goto fail;
+	}
 
 	STAILQ_INSERT_TAIL(&mp->mem_list, memhdr, next);
 	mp->nb_mem_chunks++;
 	return i;
+
+fail:
+	rte_free(memhdr);
+	return ret;
 }
 
 /* Add objects in the pool, using a table of physical pages. Return the
