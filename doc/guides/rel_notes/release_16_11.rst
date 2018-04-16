@@ -1160,3 +1160,14 @@ Fixes in 16.11 LTS Release
 * vhost: fix error code check when creating thread
 * vhost: fix mbuf free
 * vhost: protect active rings from async ring changes
+
+16.11.6
+~~~~~~~
+
+* vhost: add support for non-contiguous indirect descs tables (fixes CVE-2018-1059)
+* vhost: check all range is mapped when translating GPAs (fixes CVE-2018-1059)
+* vhost: ensure all range is mapped when translating QVAs (fixes CVE-2018-1059)
+* vhost: handle virtually non-contiguous buffers in Rx (fixes CVE-2018-1059)
+* vhost: handle virtually non-contiguous buffers in Rx-mrg (fixes CVE-2018-1059)
+* vhost: handle virtually non-contiguous buffers in Tx (fixes CVE-2018-1059)
+* vhost-user: fix deadlock in case of NUMA realloc
