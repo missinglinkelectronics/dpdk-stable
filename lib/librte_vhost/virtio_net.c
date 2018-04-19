@@ -174,19 +174,23 @@ copy_mbuf_to_desc(struct virtio_net *dev, struct vring_desc *descs,
 	uint32_t desc_avail, desc_offset;
 	uint32_t mbuf_avail, mbuf_offset;
 	uint32_t cpy_len;
+	uint64_t dlen;
 	struct vring_desc *desc;
 	uint64_t desc_addr;
 	/* A counter to avoid desc dead loop chain */
 	uint16_t nr_desc = 1;
 
 	desc = &descs[desc_idx];
-	desc_addr = rte_vhost_gpa_to_vva(dev->mem, desc->addr);
+	dlen = desc->len;
+	desc_addr = rte_vhost_va_from_guest_pa(dev->mem, desc->addr,
+					&dlen);
 	/*
 	 * Checking of 'desc_addr' placed outside of 'unlikely' macro to avoid
 	 * performance issue with some versions of gcc (4.8.4 and 5.3.0) which
 	 * otherwise stores offset on the stack instead of in a register.
 	 */
-	if (unlikely(desc->len < dev->vhost_hlen) || !desc_addr)
+	if (unlikely(dlen != desc->len || desc->len < dev->vhost_hlen) ||
+			!desc_addr)
 		return -1;
 
 	rte_prefetch0((void *)(uintptr_t)desc_addr);
@@ -219,8 +223,10 @@ copy_mbuf_to_desc(struct virtio_net *dev, struct vring_desc *descs,
 				return -1;
 
 			desc = &descs[desc->next];
-			desc_addr = rte_vhost_gpa_to_vva(dev->mem, desc->addr);
-			if (unlikely(!desc_addr))
+			dlen = desc->len;
+			desc_addr = rte_vhost_va_from_guest_pa(dev->mem, desc->addr,
+					&dlen);
+			if (unlikely(!desc_addr || dlen != desc->len))
 				return -1;
 
 			desc_offset = 0;
@@ -303,10 +309,13 @@ virtio_dev_rx(struct virtio_net *dev, uint16_t queue_id,
 		int err;
 
 		if (vq->desc[desc_idx].flags & VRING_DESC_F_INDIRECT) {
+			uint64_t dlen = vq->desc[desc_idx].len;
 			descs = (struct vring_desc *)(uintptr_t)
-				rte_vhost_gpa_to_vva(dev->mem,
-					vq->desc[desc_idx].addr);
-			if (unlikely(!descs)) {
+				rte_vhost_va_from_guest_pa(dev->mem,
+						vq->desc[desc_idx].addr,
+						&dlen);
+			if (unlikely(!descs ||
+					dlen != vq->desc[desc_idx].len)) {
 				count = i;
 				break;
 			}
@@ -358,14 +367,18 @@ fill_vec_buf(struct virtio_net *dev, struct vhost_virtqueue *vq,
 	uint16_t idx = vq->avail->ring[avail_idx & (vq->size - 1)];
 	uint32_t vec_id = *vec_idx;
 	uint32_t len    = 0;
+	uint64_t dlen;
 	struct vring_desc *descs = vq->desc;
 
 	*desc_chain_head = idx;
 
 	if (vq->desc[idx].flags & VRING_DESC_F_INDIRECT) {
+		dlen = vq->desc[idx].len;
 		descs = (struct vring_desc *)(uintptr_t)
-			rte_vhost_gpa_to_vva(dev->mem, vq->desc[idx].addr);
-		if (unlikely(!descs))
+			rte_vhost_va_from_guest_pa(dev->mem,
+						vq->desc[idx].addr,
+						&dlen);
+		if (unlikely(!descs || dlen != vq->desc[idx].len))
 			return -1;
 
 		idx = 0;
@@ -447,14 +460,20 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 	uint32_t mbuf_offset, mbuf_avail;
 	uint32_t desc_offset, desc_avail;
 	uint32_t cpy_len;
+	uint64_t dlen;
 	uint64_t hdr_addr, hdr_phys_addr;
 	struct rte_mbuf *hdr_mbuf;
 
 	if (unlikely(m == NULL))
 		return -1;
 
-	desc_addr = rte_vhost_gpa_to_vva(dev->mem, buf_vec[vec_idx].buf_addr);
-	if (buf_vec[vec_idx].buf_len < dev->vhost_hlen || !desc_addr)
+	dlen = buf_vec[vec_idx].buf_len;
+	desc_addr = rte_vhost_va_from_guest_pa(dev->mem,
+						buf_vec[vec_idx].buf_addr,
+						&dlen);
+	if (dlen != buf_vec[vec_idx].buf_len ||
+			buf_vec[vec_idx].buf_len < dev->vhost_hlen ||
+			!desc_addr)
 		return -1;
 
 	hdr_mbuf = m;
@@ -474,9 +493,13 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 		/* done with current desc buf, get the next one */
 		if (desc_avail == 0) {
 			vec_idx++;
-			desc_addr = rte_vhost_gpa_to_vva(dev->mem,
-					buf_vec[vec_idx].buf_addr);
-			if (unlikely(!desc_addr))
+			dlen = buf_vec[vec_idx].buf_len;
+			desc_addr =
+				rte_vhost_va_from_guest_pa(dev->mem,
+					buf_vec[vec_idx].buf_addr,
+					&dlen);
+			if (unlikely(!desc_addr ||
+					dlen != buf_vec[vec_idx].buf_len))
 				return -1;
 
 			/* Prefetch buffer address. */
@@ -775,6 +798,7 @@ copy_desc_to_mbuf(struct virtio_net *dev, struct vring_desc *descs,
 	uint32_t desc_avail, desc_offset;
 	uint32_t mbuf_avail, mbuf_offset;
 	uint32_t cpy_len;
+	uint64_t dlen;
 	struct rte_mbuf *cur = m, *prev = m;
 	struct virtio_net_hdr *hdr = NULL;
 	/* A counter to avoid desc dead loop chain */
@@ -785,8 +809,11 @@ copy_desc_to_mbuf(struct virtio_net *dev, struct vring_desc *descs,
 			(desc->flags & VRING_DESC_F_INDIRECT))
 		return -1;
 
-	desc_addr = rte_vhost_gpa_to_vva(dev->mem, desc->addr);
-	if (unlikely(!desc_addr))
+	dlen = desc->len;
+	desc_addr = rte_vhost_va_from_guest_pa(dev->mem,
+					desc->addr,
+					&dlen);
+	if (unlikely(!desc_addr || dlen != desc->len))
 		return -1;
 
 	if (virtio_net_with_host_offload(dev)) {
@@ -805,8 +832,11 @@ copy_desc_to_mbuf(struct virtio_net *dev, struct vring_desc *descs,
 		if (unlikely(desc->flags & VRING_DESC_F_INDIRECT))
 			return -1;
 
-		desc_addr = rte_vhost_gpa_to_vva(dev->mem, desc->addr);
-		if (unlikely(!desc_addr))
+		dlen = desc->len;
+		desc_addr = rte_vhost_va_from_guest_pa(dev->mem,
+							desc->addr,
+							&dlen);
+		if (unlikely(!desc_addr || dlen != desc->len))
 			return -1;
 
 		desc_offset = 0;
@@ -869,8 +899,11 @@ copy_desc_to_mbuf(struct virtio_net *dev, struct vring_desc *descs,
 			if (unlikely(desc->flags & VRING_DESC_F_INDIRECT))
 				return -1;
 
-			desc_addr = rte_vhost_gpa_to_vva(dev->mem, desc->addr);
-			if (unlikely(!desc_addr))
+			dlen = desc->len;
+			desc_addr = rte_vhost_va_from_guest_pa(dev->mem,
+							desc->addr,
+							&dlen);
+			if (unlikely(!desc_addr || dlen != desc->len))
 				return -1;
 
 			rte_prefetch0((void *)(uintptr_t)desc_addr);
@@ -1108,16 +1141,20 @@ rte_vhost_dequeue_burst(int vid, uint16_t queue_id,
 	for (i = 0; i < count; i++) {
 		struct vring_desc *desc;
 		uint16_t sz, idx;
+		uint64_t dlen;
 		int err;
 
 		if (likely(i + 1 < count))
 			rte_prefetch0(&vq->desc[desc_indexes[i + 1]]);
 
 		if (vq->desc[desc_indexes[i]].flags & VRING_DESC_F_INDIRECT) {
+			dlen = vq->desc[desc_indexes[i]].len;
 			desc = (struct vring_desc *)(uintptr_t)
-				rte_vhost_gpa_to_vva(dev->mem,
-					vq->desc[desc_indexes[i]].addr);
-			if (unlikely(!desc))
+				rte_vhost_va_from_guest_pa(dev->mem,
+						vq->desc[desc_indexes[i]].addr,
+						&dlen);
+			if (unlikely(!desc ||
+					dlen != vq->desc[desc_indexes[i]].len))
 				break;
 
 			rte_prefetch0(desc);

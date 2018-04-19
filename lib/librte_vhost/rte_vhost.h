@@ -166,7 +166,7 @@ rte_vhost_va_from_guest_pa(struct rte_vhost_memory *mem,
 		if (gpa >= r->guest_phys_addr &&
 		    gpa <  r->guest_phys_addr + r->size) {
 
-			if (unlikely(gpa + *len > r->guest_phys_addr + r->size))
+			if (unlikely(*len > r->guest_phys_addr + r->size - gpa))
 				*len = r->guest_phys_addr + r->size - gpa;
 
 			return gpa - r->guest_phys_addr +
