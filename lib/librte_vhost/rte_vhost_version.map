@@ -59,3 +59,9 @@ DPDK_18.02 {
 	rte_vhost_vring_call;
 
 } DPDK_17.08;
+
+DPDK_18.02.1 {
+	global;
+
+	rte_vhost_va_from_guest_pa;
+} DPDK_18.02;
