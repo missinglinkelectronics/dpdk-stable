@@ -225,19 +225,24 @@ extern struct virtio_net *vhost_devices[MAX_VHOST_DEVICE];
 
 /* Convert guest physical Address to host virtual address */
 static inline uint64_t __attribute__((always_inline))
-gpa_to_vva(struct virtio_net *dev, uint64_t gpa)
+gpa_to_vva(struct virtio_net *dev, uint64_t gpa, uint64_t *len)
 {
-	struct virtio_memory_region *reg;
+	struct virtio_memory_region *r;
 	uint32_t i;
 
 	for (i = 0; i < dev->mem->nregions; i++) {
-		reg = &dev->mem->regions[i];
-		if (gpa >= reg->guest_phys_addr &&
-		    gpa <  reg->guest_phys_addr + reg->size) {
-			return gpa - reg->guest_phys_addr +
-			       reg->host_user_addr;
+		r = &dev->mem->regions[i];
+		if (gpa >= r->guest_phys_addr &&
+		    gpa <  r->guest_phys_addr + r->size) {
+
+			if (unlikely(*len > r->guest_phys_addr + r->size - gpa))
+				*len = r->guest_phys_addr + r->size - gpa;
+
+			return gpa - r->guest_phys_addr +
+			       r->host_user_addr;
 		}
 	}
+	*len = 0;
 
 	return 0;
 }
