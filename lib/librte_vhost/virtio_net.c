@@ -627,8 +627,10 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 			    struct buf_vector *buf_vec, uint16_t num_buffers)
 {
 	struct virtio_net_hdr_mrg_rxbuf virtio_hdr = {{0, 0, 0, 0, 0, 0}, 0};
+	struct virtio_net_hdr_mrg_rxbuf *hdr;
 	uint32_t vec_idx = 0;
-	uint64_t desc_addr, desc_len;
+	uint64_t desc_addr, desc_gaddr;
+	uint64_t desc_chunck_len;
 	uint32_t mbuf_offset, mbuf_avail;
 	uint32_t desc_offset, desc_avail;
 	uint32_t cpy_len;
@@ -638,15 +640,19 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 	if (unlikely(m == NULL))
 		return -1;
 
-	desc_len = buf_vec[vec_idx].buf_len;
-	desc_addr = gpa_to_vva(dev, buf_vec[vec_idx].buf_addr, &desc_len);
-	if (desc_len != buf_vec[vec_idx].buf_len ||
-			buf_vec[vec_idx].buf_len < dev->vhost_hlen ||
+	desc_chunck_len = buf_vec[vec_idx].buf_len;
+	desc_gaddr = buf_vec[vec_idx].buf_addr;
+	desc_addr = gpa_to_vva(dev, desc_gaddr, &desc_chunck_len);
+	if (buf_vec[vec_idx].buf_len < dev->vhost_hlen ||
 			!desc_addr)
 		return -1;
 
 	hdr_mbuf = m;
 	hdr_addr = desc_addr;
+	if (unlikely(desc_chunck_len < dev->vhost_hlen))
+		hdr = &virtio_hdr;
+	else
+		hdr = (struct virtio_net_hdr_mrg_rxbuf *)(uintptr_t)hdr_addr;
 	hdr_phys_addr = buf_vec[vec_idx].buf_addr;
 	rte_prefetch0((void *)(uintptr_t)hdr_addr);
 
@@ -655,7 +661,21 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 		dev->vid, num_buffers);
 
 	desc_avail  = buf_vec[vec_idx].buf_len - dev->vhost_hlen;
-	desc_offset = dev->vhost_hlen;
+	if (unlikely(desc_chunck_len < dev->vhost_hlen)) {
+		desc_chunck_len = desc_avail;
+		desc_gaddr += dev->vhost_hlen;
+		desc_addr = gpa_to_vva(dev,
+				desc_gaddr,
+				&desc_chunck_len);
+		if (unlikely(!desc_addr))
+			return -1;
+
+		desc_offset = 0;
+	} else {
+		desc_offset = dev->vhost_hlen;
+		desc_chunck_len -= dev->vhost_hlen;
+	}
+
 
 	mbuf_avail  = rte_pktmbuf_data_len(m);
 	mbuf_offset = 0;
@@ -663,17 +683,27 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 		/* done with current desc buf, get the next one */
 		if (desc_avail == 0) {
 			vec_idx++;
-			desc_len = buf_vec[vec_idx].buf_len;
-			desc_addr = gpa_to_vva(dev, buf_vec[vec_idx].buf_addr,
-								   &desc_len);
-			if (unlikely(!desc_addr ||
-					desc_len != buf_vec[vec_idx].buf_len))
+			desc_gaddr = buf_vec[vec_idx].buf_addr;
+			desc_chunck_len = buf_vec[vec_idx].buf_len;
+			desc_addr = gpa_to_vva(dev, desc_gaddr,
+					&desc_chunck_len);
+			if (unlikely(!desc_addr))
 				return -1;
 
 			/* Prefetch buffer address. */
 			rte_prefetch0((void *)(uintptr_t)desc_addr);
 			desc_offset = 0;
 			desc_avail  = buf_vec[vec_idx].buf_len;
+		} else if (unlikely(desc_chunck_len == 0)) {
+			desc_chunck_len = desc_avail;
+			desc_gaddr += desc_offset;
+			desc_addr = gpa_to_vva(dev,
+					desc_gaddr,
+					&desc_chunck_len);
+			if (unlikely(!desc_addr))
+				return -1;
+
+			desc_offset = 0;
 		}
 
 		/* done with current mbuf, get the next one */
@@ -686,7 +716,33 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 
 		if (hdr_addr) {
 			virtio_enqueue_offload(hdr_mbuf, &virtio_hdr.hdr);
-			copy_virtio_net_hdr(dev, hdr_addr, virtio_hdr);
+			if (likely(hdr != &virtio_hdr)) {
+				copy_virtio_net_hdr(dev, hdr_addr, virtio_hdr);
+			} else {
+				uint64_t len;
+				uint64_t remain = dev->vhost_hlen;
+				uint64_t src = (uint64_t)(uintptr_t)&virtio_hdr;
+				uint64_t dst;
+				uint64_t guest_addr = hdr_phys_addr;
+
+				while (remain) {
+					len = remain;
+					dst = gpa_to_vva(dev, guest_addr, &len);
+					if (unlikely(!dst || !len))
+						return -1;
+
+					rte_memcpy((void *)(uintptr_t)dst,
+							(void *)(uintptr_t)src,
+							len);
+
+					PRINT_PACKET(dev, (uintptr_t)dst,
+							len, 0);
+
+					remain -= len;
+					guest_addr += len;
+					dst += len;
+				}
+			}
 			vhost_log_write(dev, hdr_phys_addr, dev->vhost_hlen);
 			PRINT_PACKET(dev, (uintptr_t)hdr_addr,
 				     dev->vhost_hlen, 0);
@@ -694,12 +750,11 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 			hdr_addr = 0;
 		}
 
-		cpy_len = RTE_MIN(desc_avail, mbuf_avail);
+		cpy_len = RTE_MIN(desc_chunck_len, mbuf_avail);
 		rte_memcpy((void *)((uintptr_t)(desc_addr + desc_offset)),
 			rte_pktmbuf_mtod_offset(m, void *, mbuf_offset),
 			cpy_len);
-		vhost_log_write(dev, buf_vec[vec_idx].buf_addr + desc_offset,
-			cpy_len);
+		vhost_log_write(dev, desc_gaddr + desc_offset, cpy_len);
 		PRINT_PACKET(dev, (uintptr_t)(desc_addr + desc_offset),
 			cpy_len, 0);
 
@@ -707,6 +762,7 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 		mbuf_offset += cpy_len;
 		desc_avail  -= cpy_len;
 		desc_offset += cpy_len;
+		desc_chunck_len -= cpy_len;
 	}
 
 	return 0;
