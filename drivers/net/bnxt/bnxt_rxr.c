@@ -74,6 +74,7 @@ static inline int bnxt_alloc_rx_data(struct bnxt_rx_queue *rxq,
 	}
 
 	rx_buf->mbuf = mbuf;
+	mbuf->data_off = RTE_PKTMBUF_HEADROOM;
 
 	rxbd->addr = rte_cpu_to_le_64(rte_mbuf_data_iova_default(mbuf));
 
@@ -101,6 +102,7 @@ static inline int bnxt_alloc_ag_data(struct bnxt_rx_queue *rxq,
 
 
 	rx_buf->mbuf = mbuf;
+	mbuf->data_off = RTE_PKTMBUF_HEADROOM;
 
 	rxbd->addr = rte_cpu_to_le_64(rte_mbuf_data_iova_default(mbuf));
 
