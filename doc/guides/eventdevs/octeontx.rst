@@ -36,7 +36,7 @@ Supported OCTEONTX SoCs
 Prerequisites
 -------------
 
-See :doc: `../platform/octeontx` for setup information.
+See :doc:`../platform/octeontx` for setup information.
 
 Pre-Installation Configuration
 ------------------------------
