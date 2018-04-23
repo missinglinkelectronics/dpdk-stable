@@ -298,7 +298,7 @@ copy_mbuf_to_desc(struct virtio_net *dev, struct vring_desc *descs,
 			rte_memcpy((void *)(uintptr_t)dst,
 					(void *)(uintptr_t)src, len);
 
-			PRINT_PACKET(dev, (uintptr_t)dst, len, 0);
+			PRINT_PACKET(dev, (uintptr_t)dst, (uint32_t)len, 0);
 			remain -= len;
 			guest_addr += len;
 			dst += len;
@@ -736,7 +736,7 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct rte_mbuf *m,
 							len);
 
 					PRINT_PACKET(dev, (uintptr_t)dst,
-							len, 0);
+							(uint32_t)len, 0);
 
 					remain -= len;
 					guest_addr += len;
@@ -1116,7 +1116,7 @@ copy_desc_to_mbuf(struct virtio_net *dev, struct vring_desc *descs,
 	rte_prefetch0((void *)(uintptr_t)(desc_addr + desc_offset));
 
 	PRINT_PACKET(dev, (uintptr_t)(desc_addr + desc_offset),
-			desc_chunck_len, 0);
+			(uint32_t)desc_chunck_len, 0);
 
 	mbuf_offset = 0;
 	mbuf_avail  = m->buf_len - RTE_PKTMBUF_HEADROOM;
@@ -1181,7 +1181,7 @@ copy_desc_to_mbuf(struct virtio_net *dev, struct vring_desc *descs,
 			desc_avail  = desc->len;
 
 			PRINT_PACKET(dev, (uintptr_t)desc_addr,
-					desc_chunck_len, 0);
+					(uint32_t)desc_chunck_len, 0);
 		} else if (unlikely(desc_chunck_len == 0)) {
 			desc_chunck_len = desc_avail;
 			desc_gaddr += desc_offset;
@@ -1194,7 +1194,7 @@ copy_desc_to_mbuf(struct virtio_net *dev, struct vring_desc *descs,
 			desc_offset = 0;
 
 			PRINT_PACKET(dev, (uintptr_t)desc_addr,
-					desc_chunck_len, 0);
+					(uint32_t)desc_chunck_len, 0);
 		}
 
 		/*
