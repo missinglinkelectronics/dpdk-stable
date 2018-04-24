@@ -386,15 +386,19 @@ static struct rte_device *
 vdev_find_device(const struct rte_device *start, rte_dev_cmp_t cmp,
 		 const void *data)
 {
+	const struct rte_vdev_device *vstart;
 	struct rte_vdev_device *dev;
 
-	TAILQ_FOREACH(dev, &vdev_device_list, next) {
-		if (start && &dev->device == start) {
-			start = NULL;
-			continue;
-		}
+	if (start != NULL) {
+		vstart = RTE_DEV_TO_VDEV_CONST(start);
+		dev = TAILQ_NEXT(vstart, next);
+	} else {
+		dev = TAILQ_FIRST(&vdev_device_list);
+	}
+	while (dev != NULL) {
 		if (cmp(&dev->device, data) == 0)
 			return &dev->device;
+		dev = TAILQ_NEXT(dev, next);
 	}
 	return NULL;
 }
