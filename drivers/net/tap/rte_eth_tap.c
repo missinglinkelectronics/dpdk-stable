@@ -1253,12 +1253,6 @@ eth_dev_tap_create(struct rte_vdev_device *vdev, char *tap_name,
 
 	RTE_LOG(DEBUG, PMD, "  TAP device on numa %u\n", rte_socket_id());
 
-	data = rte_zmalloc_socket(tap_name, sizeof(*data), 0, numa_node);
-	if (!data) {
-		RTE_LOG(ERR, PMD, "TAP Failed to allocate data\n");
-		goto error_exit_nodev;
-	}
-
 	dev = rte_eth_vdev_allocate(vdev, sizeof(*pmd));
 	if (!dev) {
 		RTE_LOG(ERR, PMD, "TAP Unable to allocate device struct\n");
@@ -1278,7 +1272,7 @@ eth_dev_tap_create(struct rte_vdev_device *vdev, char *tap_name,
 	}
 
 	/* Setup some default values */
-	rte_memcpy(data, dev->data, sizeof(*data));
+	data = dev->data;
 	data->dev_private = pmd;
 	data->dev_flags = RTE_ETH_DEV_INTR_LSC;
 	data->numa_node = numa_node;
@@ -1289,7 +1283,6 @@ eth_dev_tap_create(struct rte_vdev_device *vdev, char *tap_name,
 	data->nb_rx_queues = 0;
 	data->nb_tx_queues = 0;
 
-	dev->data = data;
 	dev->dev_ops = &ops;
 	dev->rx_pkt_burst = pmd_rx_burst;
 	dev->tx_pkt_burst = pmd_tx_burst;
@@ -1440,7 +1433,6 @@ error_exit_nodev:
 	RTE_LOG(ERR, PMD, "TAP Unable to initialize %s\n",
 		rte_vdev_device_name(vdev));
 
-	rte_free(data);
 	return -EINVAL;
 }
 
@@ -1611,7 +1603,6 @@ rte_pmd_tap_remove(struct rte_vdev_device *dev)
 
 	close(internals->ioctl_sock);
 	rte_free(eth_dev->data->dev_private);
-	rte_free(eth_dev->data);
 
 	rte_eth_dev_release_port(eth_dev);
 
