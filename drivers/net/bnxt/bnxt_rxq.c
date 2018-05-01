@@ -221,7 +221,8 @@ static void bnxt_rx_queue_release_mbufs(struct bnxt_rx_queue *rxq __rte_unused)
 	if (rxq) {
 		sw_ring = rxq->rx_ring->rx_buf_ring;
 		if (sw_ring) {
-			for (i = 0; i < rxq->nb_rx_desc; i++) {
+			for (i = 0;
+			     i < rxq->rx_ring->rx_ring_struct->ring_size; i++) {
 				if (sw_ring[i].mbuf) {
 					rte_pktmbuf_free_seg(sw_ring[i].mbuf);
 					sw_ring[i].mbuf = NULL;
