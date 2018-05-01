@@ -105,7 +105,7 @@ typedef uint16_t unaligned_uint16_t;
 /*********** Macros for pointer arithmetic ********/
 
 /**
- * add a byte-value offset from a pointer
+ * add a byte-value offset to a pointer
  */
 #define RTE_PTR_ADD(ptr, x) ((void*)((uintptr_t)(ptr) + (x)))
 
