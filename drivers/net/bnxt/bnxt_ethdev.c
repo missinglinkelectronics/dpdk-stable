@@ -544,7 +544,8 @@ static int bnxt_dev_configure_op(struct rte_eth_dev *eth_dev)
 	if (eth_dev->data->dev_conf.rxmode.jumbo_frame) {
 		eth_dev->data->mtu =
 				eth_dev->data->dev_conf.rxmode.max_rx_pkt_len -
-				ETHER_HDR_LEN - ETHER_CRC_LEN - VLAN_TAG_SIZE;
+				ETHER_HDR_LEN - ETHER_CRC_LEN - VLAN_TAG_SIZE *
+				BNXT_NUM_VLANS;
 		bnxt_mtu_set_op(eth_dev, eth_dev->data->mtu);
 	}
 	return 0;
