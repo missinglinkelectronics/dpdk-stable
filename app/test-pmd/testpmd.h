@@ -599,6 +599,7 @@ enum print_warning {
 	DISABLED_WARN
 };
 int port_id_is_invalid(portid_t port_id, enum print_warning warning);
+void print_valid_ports(void);
 
 /*
  * Work-around of a compilation error with ICC on invocations of the
