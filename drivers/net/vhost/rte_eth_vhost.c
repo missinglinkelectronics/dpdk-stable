@@ -115,6 +115,7 @@ struct pmd_internal {
 	char *dev_name;
 	char *iface_name;
 	uint16_t max_queues;
+	int vid;
 };
 
 struct internal_list {
@@ -1066,6 +1067,7 @@ eth_dev_vhost_create(const char *name, char *iface_name, int16_t queues,
 	data->nb_rx_queues = queues;
 	data->nb_tx_queues = queues;
 	internal->max_queues = queues;
+	internal->vid = -1;
 	data->dev_link = pmd_link;
 	data->mac_addrs = eth_addr;
 
