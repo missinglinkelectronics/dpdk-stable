@@ -455,7 +455,7 @@ uint16_t enic_prep_pkts(__rte_unused void *tx_queue, struct rte_mbuf **tx_pkts,
 		m = tx_pkts[i];
 		ol_flags = m->ol_flags;
 		if (ol_flags & ENIC_TX_OFFLOAD_NOTSUP_MASK) {
-			rte_errno = -ENOTSUP;
+			rte_errno = ENOTSUP;
 			return i;
 		}
 #ifdef RTE_LIBRTE_ETHDEV_DEBUG
