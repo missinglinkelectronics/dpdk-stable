@@ -1015,7 +1015,8 @@ flow_item_spec_copy(void *buf, const struct rte_flow_item *item,
 		src.raw = item_spec;
 		dst.raw = buf;
 		size = offsetof(struct rte_flow_item_raw, pattern) +
-			src.raw->length * sizeof(*src.raw->pattern);
+			((const struct rte_flow_item_raw *)item->spec)->
+			length * sizeof(*src.raw->pattern);
 		if (dst.raw)
 			memcpy(dst.raw, src.raw, size);
 		break;
