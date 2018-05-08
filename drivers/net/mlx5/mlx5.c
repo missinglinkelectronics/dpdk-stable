@@ -636,16 +636,16 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		break;
 	}
 	if (attr_ctx == NULL) {
-		mlx5_glue->free_device_list(list);
 		switch (err) {
 		case 0:
 			ERROR("cannot access device, is mlx5_ib loaded?");
 			err = ENODEV;
-			goto error;
+			break;
 		case EINVAL:
 			ERROR("cannot use device, are drivers up to date?");
-			goto error;
+			break;
 		}
+		goto error;
 	}
 	ibv_dev = list[i];
 	DEBUG("device opened");
