@@ -928,6 +928,12 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		/* Bring Ethernet device up. */
 		DEBUG("forcing Ethernet interface up");
 		mlx5_set_link_up(eth_dev);
+		/*
+		 * Even though the interrupt handler is not installed yet,
+		 * interrupts will still trigger on the asyn_fd from
+		 * Verbs context returned by ibv_open_device().
+		 */
+		mlx5_link_update(eth_dev, 0);
 		/* Store device configuration on private structure. */
 		priv->config = config;
 		continue;
