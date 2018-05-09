@@ -466,38 +466,41 @@ fslmc_process_iodevices(struct rte_dpaa2_device *dev)
 static int
 fslmc_process_mcp(struct rte_dpaa2_device *dev)
 {
+	int ret;
 	int64_t v_addr;
-	char *dev_name;
+	char *dev_name = NULL;
 	struct fsl_mc_io dpmng  = {0};
 	struct mc_version mc_ver_info = {0};
 
 	rte_mcp_ptr_list = malloc(sizeof(void *) * 1);
 	if (!rte_mcp_ptr_list) {
 		FSLMC_VFIO_LOG(ERR, "Out of memory");
-		return -ENOMEM;
+		ret = -ENOMEM;
+		goto cleanup;
 	}
 
 	dev_name = strdup(dev->device.name);
 	if (!dev_name) {
 		FSLMC_VFIO_LOG(ERR, "Out of memory.");
-		free(rte_mcp_ptr_list);
-		rte_mcp_ptr_list = NULL;
-		return -ENOMEM;
+		ret = -ENOMEM;
+		goto cleanup;
 	}
 
 	v_addr = vfio_map_mcp_obj(&vfio_group, dev_name);
 	if (v_addr == (int64_t)MAP_FAILED) {
 		FSLMC_VFIO_LOG(ERR, "Error mapping region  (errno = %d)",
 			       errno);
-		free(rte_mcp_ptr_list);
-		rte_mcp_ptr_list = NULL;
-		return -1;
+		ret = -1;
+		goto cleanup;
 	}
 
 	/* check the MC version compatibility */
 	dpmng.regs = (void *)v_addr;
-	if (mc_get_version(&dpmng, CMD_PRI_LOW, &mc_ver_info))
+	if (mc_get_version(&dpmng, CMD_PRI_LOW, &mc_ver_info)) {
 		RTE_LOG(WARNING, PMD, "\tmc_get_version failed\n");
+		ret = -1;
+		goto cleanup;
+	}
 
 	if ((mc_ver_info.major != MC_VER_MAJOR) ||
 	    (mc_ver_info.minor < MC_VER_MINOR)) {
@@ -506,13 +509,24 @@ fslmc_process_mcp(struct rte_dpaa2_device *dev)
 			MC_VER_MAJOR, MC_VER_MINOR,
 			mc_ver_info.major, mc_ver_info.minor,
 			mc_ver_info.revision);
-		free(rte_mcp_ptr_list);
-		rte_mcp_ptr_list = NULL;
-		return -1;
+		ret = -1;
+		goto cleanup;
 	}
 	rte_mcp_ptr_list[0] = (void *)v_addr;
 
+	free(dev_name);
 	return 0;
+
+cleanup:
+	if (dev_name)
+		free(dev_name);
+
+	if (rte_mcp_ptr_list) {
+		free(rte_mcp_ptr_list);
+		rte_mcp_ptr_list = NULL;
+	}
+
+	return ret;
 }
 
 int
