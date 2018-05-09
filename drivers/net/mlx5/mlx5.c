@@ -597,7 +597,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		return -ENOMEM;
 	}
 	DEBUG("using driver device index %d", idx);
-
 	/* Save PCI address. */
 	mlx5_dev[idx].pci_addr = pci_dev->addr;
 	list = mlx5_glue->get_device_list(&i);
@@ -644,7 +643,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		return -err;
 	}
 	ibv_dev = list[i];
-
 	DEBUG("device opened");
 	/*
 	 * Multi-packet send is supported by ConnectX-4 Lx PF as well
@@ -685,7 +683,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 	if (mlx5_glue->query_device_ex(attr_ctx, NULL, &device_attr))
 		goto error;
 	INFO("%u port(s) detected", device_attr.orig_attr.phys_port_cnt);
-
 	for (i = 0; i < device_attr.orig_attr.phys_port_cnt; i++) {
 		char name[RTE_ETH_NAME_MAX_LEN];
 		int len;
@@ -715,9 +712,7 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 			 pci_dev->addr.devid, pci_dev->addr.function);
 		if (device_attr.orig_attr.phys_port_cnt > 1)
 			snprintf(name + len, sizeof(name), " port %u", i);
-
 		mlx5_dev[idx].ports |= test;
-
 		if (rte_eal_process_type() == RTE_PROC_SECONDARY) {
 			eth_dev = rte_eth_dev_attach_secondary(name);
 			if (eth_dev == NULL) {
@@ -754,34 +749,28 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 				priv_select_tx_function(priv, eth_dev);
 			continue;
 		}
-
 		DEBUG("using port %u (%08" PRIx32 ")", port, test);
-
 		ctx = mlx5_glue->open_device(ibv_dev);
 		if (ctx == NULL) {
 			err = ENODEV;
 			goto port_error;
 		}
-
 		/* Check port status. */
 		err = mlx5_glue->query_port(ctx, port, &port_attr);
 		if (err) {
 			ERROR("port query failed: %s", strerror(err));
 			goto port_error;
 		}
-
 		if (port_attr.link_layer != IBV_LINK_LAYER_ETHERNET) {
 			ERROR("port %d is not configured in Ethernet mode",
 			      port);
 			err = EINVAL;
 			goto port_error;
 		}
-
 		if (port_attr.state != IBV_PORT_ACTIVE)
 			DEBUG("port %d is not active: \"%s\" (%d)",
 			      port, mlx5_glue->port_state_str(port_attr.state),
 			      port_attr.state);
-
 		/* Allocate protection domain. */
 		pd = mlx5_glue->alloc_pd(ctx);
 		if (pd == NULL) {
@@ -789,9 +778,7 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 			err = ENOMEM;
 			goto port_error;
 		}
-
 		mlx5_dev[idx].ports |= test;
-
 		/* from rte_ethdev.c */
 		priv = rte_zmalloc("ethdev private structure",
 				   sizeof(*priv),
@@ -801,7 +788,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 			err = ENOMEM;
 			goto port_error;
 		}
-
 		priv->ctx = ctx;
 		strncpy(priv->ibdev_path, priv->ctx->device->ibdev_path,
 			sizeof(priv->ibdev_path));
@@ -819,7 +805,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 			ERROR("ibv_query_device_ex() failed");
 			goto port_error;
 		}
-
 		config.hw_csum = !!(device_attr_ex.device_cap_flags_ex &
 				    IBV_DEVICE_RAW_IP_CSUM);
 		DEBUG("checksum offloading is %ssupported",
@@ -855,7 +840,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 #endif
 		DEBUG("hardware RX end alignment padding is %ssupported",
 		      (config.hw_padding ? "" : "not "));
-
 		config.tso = ((device_attr_ex.tso_caps.max_tso > 0) &&
 			      (device_attr_ex.tso_caps.supported_qpts &
 			      (1 << IBV_QPT_RAW_PACKET)));
@@ -904,7 +888,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		/* Get actual MTU if possible. */
 		priv_get_mtu(priv, &priv->mtu);
 		DEBUG("port %u MTU is %u", priv->port, priv->mtu);
-
 		eth_dev = rte_eth_dev_allocate(name);
 		if (eth_dev == NULL) {
 			ERROR("can not allocate rte ethdev");
@@ -927,7 +910,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		claim_zero(mlx5_mac_addr_add(eth_dev, &mac, 0, 0));
 		TAILQ_INIT(&priv->flows);
 		TAILQ_INIT(&priv->ctrl_flows);
-
 		/* Hint libmlx5 to use PMD allocator for data plane resources */
 		struct mlx5dv_ctx_allocators alctr = {
 			.alloc = &mlx5_alloc_verbs_buf,
@@ -944,7 +926,6 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		/* Store device configuration on private structure. */
 		priv->config = config;
 		continue;
-
 port_error:
 		if (priv)
 			rte_free(priv);
@@ -954,20 +935,17 @@ port_error:
 			claim_zero(mlx5_glue->close_device(ctx));
 		break;
 	}
-
 	/*
 	 * XXX if something went wrong in the loop above, there is a resource
 	 * leak (ctx, pd, priv, dpdk ethdev) but we can do nothing about it as
 	 * long as the dpdk does not provide a way to deallocate a ethdev and a
 	 * way to enumerate the registered ethdevs to free the previous ones.
 	 */
-
 	/* no port found, complain */
 	if (!mlx5_dev[idx].ports) {
 		err = ENODEV;
 		goto error;
 	}
-
 error:
 	if (attr_ctx)
 		claim_zero(mlx5_glue->close_device(attr_ctx));
