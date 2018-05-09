@@ -685,8 +685,9 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 #else
 	WARN("Tunnel offloading disabled due to old OFED/rdma-core version");
 #endif
-	if (mlx5_glue->query_device_ex(attr_ctx, NULL, &device_attr)) {
-		err = errno;
+	err = mlx5_glue->query_device_ex(attr_ctx, NULL, &device_attr);
+	if (err) {
+		DEBUG("ibv_query_device_ex() failed");
 		goto error;
 	}
 	INFO("%u port(s) detected", device_attr.orig_attr.phys_port_cnt);
@@ -731,16 +732,22 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 			eth_dev->device = &pci_dev->device;
 			eth_dev->dev_ops = &mlx5_dev_sec_ops;
 			err = mlx5_uar_init_secondary(eth_dev);
-			if (err)
+			if (err) {
+				err = rte_errno;
 				goto error;
+			}
 			/* Receive command fd from primary process */
 			err = mlx5_socket_connect(eth_dev);
-			if (err < 0)
+			if (err < 0) {
+				err = rte_errno;
 				goto error;
+			}
 			/* Remap UAR for Tx queues. */
 			err = mlx5_tx_uar_remap(eth_dev, err);
-			if (err)
+			if (err) {
+				err = rte_errno;
 				goto error;
+			}
 			/*
 			 * Ethdev pointer is still required as input since
 			 * the primary device is not accessible from the
@@ -802,11 +809,12 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		if (err) {
 			ERROR("failed to process device arguments: %s",
 			      strerror(err));
+			err = rte_errno;
 			goto port_error;
 		}
-		if (mlx5_glue->query_device_ex(ctx, NULL, &device_attr_ex)) {
+		err = mlx5_glue->query_device_ex(ctx, NULL, &device_attr_ex);
+		if (err) {
 			ERROR("ibv_query_device_ex() failed");
-			err = errno;
 			goto port_error;
 		}
 		config.hw_csum = !!(device_attr_ex.device_cap_flags_ex &
@@ -876,8 +884,10 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		rte_eth_copy_pci_info(eth_dev, pci_dev);
 		eth_dev->device->driver = &mlx5_driver.driver;
 		err = mlx5_uar_init_primary(eth_dev);
-		if (err)
+		if (err) {
+			err = rte_errno;
 			goto port_error;
+		}
 		/* Configure the first MAC address by default. */
 		if (mlx5_get_mac(eth_dev, &mac.addr_bytes)) {
 			ERROR("cannot get MAC address, is mlx5_en loaded?"
@@ -903,8 +913,10 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 #endif
 		/* Get actual MTU if possible. */
 		err = mlx5_get_mtu(eth_dev, &priv->mtu);
-		if (err)
+		if (err) {
+			err = rte_errno;
 			goto port_error;
+		}
 		DEBUG("port %u MTU is %u", priv->port, priv->mtu);
 		/*
 		 * Initialize burst functions to prevent crashes before link-up.
