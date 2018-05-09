@@ -51,11 +51,9 @@ mlx5_rss_hash_update(struct rte_eth_dev *dev,
 	}
 	if (rss_conf->rss_key && rss_conf->rss_key_len) {
 		if (rss_conf->rss_key_len != rss_hash_default_key_len) {
-			DRV_LOG(ERR,
-				"port %u RSS key len must be %zu Bytes long",
+			ERROR("port %u RSS key len must be %zu Bytes long",
 				dev->data->port_id, rss_hash_default_key_len);
-			rte_errno = EINVAL;
-			return -rte_errno;
+			return -EINVAL;
 		}
 		priv->rss_conf.rss_key = rte_realloc(priv->rss_conf.rss_key,
 						     rss_conf->rss_key_len, 0);
