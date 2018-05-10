@@ -57,7 +57,7 @@ struct worker_stats worker_stats[RTE_MAX_LCORE];
 /* worker thread used for testing the time to do a round-trip of a cache
  * line between two cores and back again
  */
-static void
+static int
 flip_bit(volatile uint64_t *arg)
 {
 	uint64_t old_val = 0;
@@ -67,6 +67,7 @@ flip_bit(volatile uint64_t *arg)
 		old_val = *arg;
 		*arg = 0;
 	}
+	return 0;
 }
 
 /* test case to time the number of cycles to round-trip a cache line between
