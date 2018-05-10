@@ -222,8 +222,8 @@ rte_eth_dev_shared_data_prepare(void)
 	rte_spinlock_unlock(&rte_eth_shared_data_lock);
 }
 
-struct rte_eth_dev *
-rte_eth_dev_allocated(const char *name)
+static struct rte_eth_dev *
+_rte_eth_dev_allocated(const char *name)
 {
 	unsigned i;
 
@@ -233,6 +233,22 @@ rte_eth_dev_allocated(const char *name)
 			return &rte_eth_devices[i];
 	}
 	return NULL;
+}
+
+struct rte_eth_dev *
+rte_eth_dev_allocated(const char *name)
+{
+	struct rte_eth_dev *ethdev;
+
+	rte_eth_dev_shared_data_prepare();
+
+	rte_spinlock_lock(&rte_eth_dev_shared_data->ownership_lock);
+
+	ethdev = _rte_eth_dev_allocated(name);
+
+	rte_spinlock_unlock(&rte_eth_dev_shared_data->ownership_lock);
+
+	return ethdev;
 }
 
 static uint16_t
@@ -281,7 +297,7 @@ rte_eth_dev_allocate(const char *name)
 		goto unlock;
 	}
 
-	if (rte_eth_dev_allocated(name) != NULL) {
+	if (_rte_eth_dev_allocated(name) != NULL) {
 		RTE_LOG(ERR, EAL, "Ethernet Device with name %s already allocated!\n",
 				name);
 		goto unlock;
