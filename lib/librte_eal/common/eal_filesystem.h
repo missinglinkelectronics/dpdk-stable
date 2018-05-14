@@ -86,8 +86,6 @@ eal_hugepage_info_path(void)
 
 /** String format for hugepage map files. */
 #define HUGEFILE_FMT "%s/%smap_%d"
-#define TEMP_HUGEFILE_FMT "%s/%smap_temp_%d"
-
 static inline const char *
 eal_get_hugefile_path(char *buffer, size_t buflen, const char *hugedir, int f_id)
 {
