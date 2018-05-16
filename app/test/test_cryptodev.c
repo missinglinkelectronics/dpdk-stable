@@ -4621,7 +4621,7 @@ test_multi_session_random_usage(void)
 					* dev_info.sym.max_nb_sessions) + 1, 0);
 
 	for (i = 0; i < MB_SESSION_NUMBER; i++) {
-		rte_memcpy(&ut_paramz[i].ut_params, &testsuite_params,
+		rte_memcpy(&ut_paramz[i].ut_params, &unittest_params,
 				sizeof(struct crypto_unittest_params));
 
 		test_AES_CBC_HMAC_SHA512_decrypt_create_session_params(
