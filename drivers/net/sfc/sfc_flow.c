@@ -1063,7 +1063,7 @@ sfc_flow_parse_actions(struct sfc_adapter *sa,
 		case RTE_FLOW_ACTION_TYPE_RSS:
 			rc = sfc_flow_parse_rss(sa, actions->conf, flow);
 			if (rc != 0) {
-				rte_flow_error_set(error, rc,
+				rte_flow_error_set(error, -rc,
 					RTE_FLOW_ERROR_TYPE_ACTION, actions,
 					"Bad RSS action");
 				return -rte_errno;
