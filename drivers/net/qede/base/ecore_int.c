@@ -6,6 +6,8 @@
  * See LICENSE.qede_pmd for copyright and licensing details.
  */
 
+#include <rte_string_fns.h>
+
 #include "bcm_osal.h"
 #include "ecore.h"
 #include "ecore_spq.h"
@@ -938,9 +940,10 @@ static enum _ecore_status_t ecore_int_deassertion(struct ecore_hwfn *p_hwfn,
 							      p_aeu->bit_name,
 							      bit);
 					else
-						OSAL_STRNCPY(bit_name,
-							     p_aeu->bit_name,
-							     30);
+						strlcpy(bit_name,
+							p_aeu->bit_name,
+							sizeof(bit_name));
+
 					/* Handle source of the attention */
 					ecore_int_deassertion_aeu_bit(p_hwfn,
 								      p_aeu,
