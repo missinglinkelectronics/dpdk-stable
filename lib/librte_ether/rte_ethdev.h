@@ -2692,7 +2692,7 @@ rte_eth_rx_queue_count(uint8_t port_id, uint16_t queue_id)
 	struct rte_eth_dev *dev = &rte_eth_devices[port_id];
 	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -EINVAL);
 	RTE_FUNC_PTR_OR_ERR_RET(*dev->dev_ops->rx_queue_count, -ENOTSUP);
-        return (*dev->dev_ops->rx_queue_count)(dev, queue_id);
+        return (int)(*dev->dev_ops->rx_queue_count)(dev, queue_id);
 }
 
 /**
