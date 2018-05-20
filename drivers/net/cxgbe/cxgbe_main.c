@@ -1318,6 +1318,11 @@ allocate_mac:
 			err = -1;
 			goto out_free;
 		}
+
+		if (i > 0) {
+			/* First port will be notified by upper layer */
+			rte_eth_dev_probing_finish(pi->eth_dev);
+		}
 	}
 
 	if (adapter->flags & FW_OK) {

@@ -3375,6 +3375,13 @@ _rte_eth_dev_callback_process(struct rte_eth_dev *dev,
 	return rc;
 }
 
+void
+rte_eth_dev_probing_finish(struct rte_eth_dev *dev)
+{
+	if (dev == NULL)
+		return;
+}
+
 int
 rte_eth_dev_rx_intr_ctl(uint16_t port_id, int epfd, int op, void *data)
 {

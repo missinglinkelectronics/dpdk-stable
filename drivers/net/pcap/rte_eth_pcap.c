@@ -899,6 +899,7 @@ eth_from_pcaps(struct rte_vdev_device *vdev,
 	else
 		eth_dev->tx_pkt_burst = eth_pcap_tx;
 
+	rte_eth_dev_probing_finish(eth_dev);
 	return 0;
 }
 

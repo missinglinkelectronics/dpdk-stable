@@ -429,6 +429,7 @@ eth_kni_probe(struct rte_vdev_device *vdev)
 	eth_dev->rx_pkt_burst = eth_kni_rx;
 	eth_dev->tx_pkt_burst = eth_kni_tx;
 
+	rte_eth_dev_probing_finish(eth_dev);
 	return 0;
 
 kni_uninit:

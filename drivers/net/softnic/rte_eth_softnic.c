@@ -529,6 +529,8 @@ pmd_ethdev_register(struct rte_vdev_device *vdev,
 	soft_dev->data->kdrv = RTE_KDRV_NONE;
 	soft_dev->data->numa_node = numa_node;
 
+	rte_eth_dev_probing_finish(soft_dev);
+
 	return 0;
 }
 

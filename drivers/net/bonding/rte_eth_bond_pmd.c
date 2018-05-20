@@ -3088,6 +3088,7 @@ bond_probe(struct rte_vdev_device *dev)
 		rte_eth_bond_8023ad_agg_selection_set(port_id, AGG_STABLE);
 	}
 
+	rte_eth_dev_probing_finish(&rte_eth_devices[port_id]);
 	RTE_LOG(INFO, EAL, "Create bonded device %s on port %d in mode %u on "
 			"socket %u.\n",	name, port_id, bonding_mode, socket_id);
 	return 0;

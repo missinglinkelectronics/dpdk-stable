@@ -266,6 +266,7 @@ fs_eth_dev_create(struct rte_vdev_device *vdev)
 		.fd = -1,
 		.type = RTE_INTR_HANDLE_EXT,
 	};
+	rte_eth_dev_probing_finish(dev);
 	return 0;
 cancel_alarm:
 	failsafe_hotplug_alarm_cancel(dev);

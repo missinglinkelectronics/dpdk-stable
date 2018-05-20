@@ -201,6 +201,7 @@ DPDK_18.02 {
 	global:
 
 	rte_eth_dev_filter_ctrl;
+	rte_eth_dev_probing_finish;
 
 } DPDK_17.11;
 

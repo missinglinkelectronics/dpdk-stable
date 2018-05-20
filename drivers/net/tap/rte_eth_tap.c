@@ -1506,6 +1506,7 @@ eth_dev_tap_create(struct rte_vdev_device *vdev, char *tap_name,
 		}
 	}
 
+	rte_eth_dev_probing_finish(dev);
 	return 0;
 
 disable_rte_flow:

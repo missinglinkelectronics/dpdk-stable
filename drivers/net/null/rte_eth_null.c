@@ -564,6 +564,7 @@ eth_dev_null_create(struct rte_vdev_device *dev,
 		eth_dev->tx_pkt_burst = eth_null_tx;
 	}
 
+	rte_eth_dev_probing_finish(eth_dev);
 	return 0;
 }
 

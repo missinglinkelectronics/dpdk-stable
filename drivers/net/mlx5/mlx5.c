@@ -757,6 +757,7 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 				mlx5_select_rx_function(eth_dev);
 			eth_dev->tx_pkt_burst =
 				mlx5_select_tx_function(eth_dev);
+			rte_eth_dev_probing_finish(eth_dev);
 			continue;
 		}
 		DEBUG("using port %u (%08" PRIx32 ")", port, test);
@@ -948,6 +949,7 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		mlx5_link_update(eth_dev, 0);
 		/* Store device configuration on private structure. */
 		priv->config = config;
+		rte_eth_dev_probing_finish(eth_dev);
 		continue;
 port_error:
 		if (priv)
