@@ -824,6 +824,15 @@ tap_dev_close(struct rte_eth_dev *dev)
 		ioctl(internals->ioctl_sock, SIOCSIFFLAGS,
 				&internals->remote_initial_flags);
 	}
+
+	if (internals->ka_fd != -1) {
+		close(internals->ka_fd);
+		internals->ka_fd = -1;
+	}
+	/*
+	 * Since TUN device has no more opened file descriptors
+	 * it will be removed from kernel
+	 */
 }
 
 static void
@@ -1389,6 +1398,7 @@ eth_dev_tap_create(struct rte_vdev_device *vdev, char *tap_name,
 	dev->intr_handle = &pmd->intr_handle;
 
 	/* Presetup the fds to -1 as being not valid */
+	pmd->ka_fd = -1;
 	for (i = 0; i < RTE_PMD_TAP_MAX_QUEUES; i++) {
 		pmd->rxq[i].fd = -1;
 		pmd->txq[i].fd = -1;
@@ -1405,13 +1415,17 @@ eth_dev_tap_create(struct rte_vdev_device *vdev, char *tap_name,
 		eth_random_addr((uint8_t *)&pmd->eth_addr);
 	}
 
-	/* Immediately create the netdevice (this will create the 1st queue). */
-	/* rx queue */
-	if (tap_setup_queue(dev, pmd, 0, 1) == -1)
+	/*
+	 * Allocate a TUN device keep-alive file descriptor that will only be
+	 * closed when the TUN device itself is closed or removed.
+	 * This keep-alive file descriptor will guarantee that the TUN device
+	 * exists even when all of its queues are closed
+	 */
+	pmd->ka_fd = tun_alloc(pmd);
+	if (pmd->ka_fd == -1) {
+		RTE_LOG(ERR, PMD, "Unable to create %s interface", tap_name);
 		goto error_exit;
-	/* tx queue */
-	if (tap_setup_queue(dev, pmd, 0, 0) == -1)
-		goto error_exit;
+	}
 
 	ifr.ifr_mtu = dev->data->mtu;
 	if (tap_ioctl(pmd, SIOCSIFMTU, &ifr, 1, LOCAL_AND_REMOTE) < 0)
@@ -1685,9 +1699,12 @@ rte_pmd_tap_remove(struct rte_vdev_device *dev)
 	close(internals->ioctl_sock);
 	rte_free(eth_dev->data->dev_private);
 	rte_free(eth_dev->data);
-
 	rte_eth_dev_release_port(eth_dev);
 
+	if (internals->ka_fd != -1) {
+		close(internals->ka_fd);
+		internals->ka_fd = -1;
+	}
 	return 0;
 }
 
