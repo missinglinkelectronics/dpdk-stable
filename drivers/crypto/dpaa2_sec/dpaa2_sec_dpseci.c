@@ -1720,7 +1720,7 @@ dpaa2_sec_auth_init(struct rte_cryptodev *dev,
 				   1, 0, &authdata, !session->dir,
 				   session->digest_length);
 	if (bufsize < 0) {
-		DPAA2_SEC_ERR("Crypto: Invalid buffer length");
+		RTE_LOG(ERR, PMD, "Crypto: Invalid buffer length");
 		goto error_out;
 	}
 
@@ -1845,7 +1845,7 @@ dpaa2_sec_aead_init(struct rte_cryptodev *dev,
 				&aeaddata, session->iv.length,
 				session->digest_length);
 	if (bufsize < 0) {
-		DPAA2_SEC_ERR("Crypto: Invalid buffer length");
+		RTE_LOG(ERR, PMD, "Crypto: Invalid buffer length");
 		goto error_out;
 	}
 
@@ -2071,7 +2071,7 @@ dpaa2_sec_aead_chain_init(struct rte_cryptodev *dev,
 					      session->digest_length,
 					      session->dir);
 		if (bufsize < 0) {
-			DPAA2_SEC_ERR("Crypto: Invalid buffer length");
+			RTE_LOG(ERR, PMD, "Crypto: Invalid buffer length");
 			goto error_out;
 		}
 	} else {
@@ -2357,7 +2357,7 @@ dpaa2_sec_set_ipsec_session(struct rte_cryptodev *dev,
 		goto out;
 
 	if (bufsize < 0) {
-		DPAA2_SEC_ERR("Crypto: Invalid buffer length");
+		RTE_LOG(ERR, PMD, "Crypto: Invalid buffer length");
 		goto out;
 	}
 

@@ -214,18 +214,17 @@ static inline struct rte_mbuf *__attribute__((hot))
 eth_sg_fd_to_mbuf(const struct qbman_fd *fd)
 {
 	struct qbman_sge *sgt, *sge;
-	dma_addr_t sg_addr;
+	size_t sg_addr, fd_addr;
 	int i = 0;
-	uint64_t fd_addr;
 	struct rte_mbuf *first_seg, *next_seg, *cur_seg, *temp;
 
-	fd_addr = (uint64_t)DPAA2_IOVA_TO_VADDR(DPAA2_GET_FD_ADDR(fd));
+	fd_addr = (size_t)DPAA2_IOVA_TO_VADDR(DPAA2_GET_FD_ADDR(fd));
 
 	/* Get Scatter gather table address */
 	sgt = (struct qbman_sge *)(fd_addr + DPAA2_GET_FD_OFFSET(fd));
 
 	sge = &sgt[i++];
-	sg_addr = (uint64_t)DPAA2_IOVA_TO_VADDR(DPAA2_GET_FLE_ADDR(sge));
+	sg_addr = (size_t)DPAA2_IOVA_TO_VADDR(DPAA2_GET_FLE_ADDR(sge));
 
 	/* First Scatter gather entry */
 	first_seg = DPAA2_INLINE_MBUF_FROM_BUF(sg_addr,
@@ -250,7 +249,7 @@ eth_sg_fd_to_mbuf(const struct qbman_fd *fd)
 	cur_seg = first_seg;
 	while (!DPAA2_SG_IS_FINAL(sge)) {
 		sge = &sgt[i++];
-		sg_addr = (uint64_t)DPAA2_IOVA_TO_VADDR(
+		sg_addr = (size_t)DPAA2_IOVA_TO_VADDR(
 				DPAA2_GET_FLE_ADDR(sge));
 		next_seg = DPAA2_INLINE_MBUF_FROM_BUF(sg_addr,
 			rte_dpaa2_bpid_info[DPAA2_GET_FLE_BPID(sge)].meta_data_size);
