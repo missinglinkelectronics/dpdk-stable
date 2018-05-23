@@ -52,6 +52,8 @@
 
 #define BUF_VECTOR_MAX 256
 
+#define VHOST_LOG_CACHE_NR 32
+
 /**
  * Structure contains buffer address, length and descriptor index
  * from vring to do scatter RX.
@@ -74,6 +76,14 @@ struct zcopy_mbuf {
 	TAILQ_ENTRY(zcopy_mbuf) next;
 };
 TAILQ_HEAD(zcopy_mbuf_list, zcopy_mbuf);
+
+/*
+ * Structure that contains the info for batched dirty logging.
+ */
+struct log_cache_entry {
+	uint32_t offset;
+	unsigned long val;
+};
 
 /**
  * Structure contains variables relevant to RX/TX virtqueues.
@@ -110,6 +120,9 @@ struct vhost_virtqueue {
 
 	struct vring_used_elem  *shadow_used_ring;
 	uint16_t                shadow_used_idx;
+
+	struct log_cache_entry log_cache[VHOST_LOG_CACHE_NR];
+	uint16_t log_cache_nb_elem;
 } __rte_cache_aligned;
 
 /* Old kernels have no such macros defined */
