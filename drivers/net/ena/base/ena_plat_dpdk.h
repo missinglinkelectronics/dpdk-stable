@@ -188,10 +188,15 @@ typedef uint64_t dma_addr_t;
 		snprintf(z_name, sizeof(z_name),			\
 				"ena_alloc_%d", ena_alloc_cnt++);	\
 		mz = rte_memzone_reserve(z_name, size, SOCKET_ID_ANY, 0); \
-		memset(mz->addr, 0, size);				\
-		virt = mz->addr;					\
-		phys = mz->phys_addr;					\
 		handle = mz;						\
+		if (mz == NULL) {					\
+			virt = NULL;					\
+			phys = 0;					\
+		} else {						\
+			memset(mz->addr, 0, size);			\
+			virt = mz->addr;				\
+			phys = mz->phys_addr;				\
+		}							\
 	} while (0)
 #define ENA_MEM_FREE_COHERENT(dmadev, size, virt, phys, handle) 	\
 		({ ENA_TOUCH(size); ENA_TOUCH(phys);			\
@@ -206,8 +211,14 @@ typedef uint64_t dma_addr_t;
 		snprintf(z_name, sizeof(z_name),			\
 				"ena_alloc_%d", ena_alloc_cnt++);	\
 		mz = rte_memzone_reserve(z_name, size, node, 0); \
-		virt = mz->addr;					\
-		phys = mz->phys_addr;					\
+		if (mz == NULL) {					\
+			virt = NULL;					\
+			phys = 0;					\
+		} else {						\
+			memset(mz->addr, 0, size);			\
+			virt = mz->addr;				\
+			phys = mz->phys_addr;				\
+		}							\
 	} while (0)
 
 #define ENA_MEM_ALLOC_NODE(dmadev, size, virt, node, dev_node) \
