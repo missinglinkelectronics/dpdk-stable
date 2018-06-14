@@ -1171,3 +1171,119 @@ Fixes in 16.11 LTS Release
 * vhost: handle virtually non-contiguous buffers in Rx-mrg (fixes CVE-2018-1059)
 * vhost: handle virtually non-contiguous buffers in Tx (fixes CVE-2018-1059)
 * vhost-user: fix deadlock in case of NUMA realloc
+
+16.11.7
+~~~~~~~
+
+* app/crypto-perf: fix parameters copy
+* app/testpmd: fix burst stats reporting
+* app/testpmd: fix command token
+* app/testpmd: fix forward ports Rx flush
+* app/testpmd: fix forward ports update
+* app/testpmd: fix slave port detection
+* app/testpmd: fix synchronic port hotplug
+* app/testpmd: fix valid ports prints
+* bus/pci: fix size of driver name buffer
+* crypto/zuc: do not set default op status
+* crypto/zuc: remove unnecessary check
+* doc: fix a typo in the EAL guide
+* drivers/net: fix icc deprecated parameter warning
+* drivers/net: fix link autoneg value for virtual PMDs
+* eal: declare trace buffer at top of own block
+* eal: explicit cast in rwlock functions
+* eal: explicit cast of builtin for bsf32
+* eal: explicit cast of core id when getting index
+* eal: fix casts in random functions
+* eal: fix typo in doc of pointer offset macro
+* eal/ppc: remove braces in SMP memory barrier macro
+* eal: remove unused path pattern
+* eal: support strlcpy function
+* ethdev: explicit cast of buffered Tx number
+* ethdev: explicit cast of queue count return
+* ethdev: fix queue start
+* ethdev: fix string length in name comparison
+* ethdev: fix type and scope of variables in Rx burst
+* ethdev: improve doc for name by port ID API
+* examples/exception_path: limit core count to 64
+* examples/performance-thread: fix return type of threads
+* hash: explicit casts for truncation in CRC32c
+* hash: fix comment for lookup
+* hash: move stack declaration at top of CRC32c function
+* ip_frag: fix double free of chained mbufs
+* ip_frag: fix some debug logs
+* kni: fix build on RHEL 7.5
+* kvargs: fix syntax in comments
+* mbuf: avoid integer promotion in prepend/adj/chain
+* mbuf: explicit cast of headroom on reset
+* mbuf: explicit cast of size on detach
+* mbuf: explicit casts of reference counter
+* mbuf: fix reference counter integer promotion
+* mbuf: fix Tx checksum offload API doc
+* mbuf: fix type of private size in detach
+* mempool: fix leak when no objects are populated
+* mempool: fix virtual address population
+* memzone: fix size on reserving biggest memzone
+* net/bnx2x: do not cast function pointers as a policy
+* net/bnx2x: fix for PCI FLR after ungraceful exit
+* net/bnx2x: fix KR2 device check
+* net/bnx2x: fix memzone name overrun
+* net/bnxt: avoid freeing memzone multiple times
+* net/bnxt: fix endianness of flag
+* net/bnxt: fix mbuf data offset initialization
+* net/bnxt: fix Rx checksum flags
+* net/bnxt: fix Rx checksum flags for tunnel frames
+* net/bnxt: fix Rx drop setting
+* net/bnxt: fix Rx mbuf and agg ring leak in dev stop
+* net/bonding: clear started state if start fails
+* net/bonding: export mode 4 slave info routine
+* net/bonding: fix setting VLAN ID on slave ports
+* net/enic: allocate stats DMA buffer upfront during probe
+* net/enic: fix crash on MTU update with non-setup queues
+* net: explicit cast in L4 checksum
+* net: explicit cast of IP checksum to 16-bit
+* net: explicit cast of multicast bit clearing
+* net: explicit cast of protocol in IPv6 checksum
+* net/i40e: fix failing to disable FDIR Tx queue
+* net/i40e: fix intr callback unregister by adding retry
+* net/i40e: fix link status update
+* net/i40e: fix link update no wait
+* net/i40e: fix shifts of signed values
+* net/ixgbe: fix DCB configuration
+* net/ixgbe: fix intr callback unregister by adding retry
+* net/ixgbe: fix too many interrupts
+* net/mlx5: fix ARM build
+* net/mlx5: fix double free on error handling
+* net/mlx5: fix resource leak in case of error
+* net: move stack variable at top of VLAN strip function
+* net/nfp: fix assigning port id in mbuf
+* net/nfp: fix barrier location
+* net/nfp: fix mbufs releasing when stop or close
+* net/nfp: fix memcpy out of source range
+* net/qede: fix alloc from socket 0
+* net/qede: fix strncpy
+* net/qede: fix unicast filter routine return code
+* net/qede: replace strncpy by strlcpy
+* net/szedata2: fix format string for PCI address
+* net/szedata2: fix total stats
+* net/thunderx: fix MTU configuration for jumbo packets
+* net/vhost: initialise device as inactive
+* net/virtio-user: fix hugepage files enumeration
+* net/vmxnet3: keep link state consistent
+* net/vmxnet3: set the queue shared buffer at start
+* Revert "vhost: fix device cleanup at stop"
+* spinlock/x86: move stack declaration before code
+* test/distributor: fix return type of thread function
+* test: fix memory flags test for low NUMA nodes number
+* test/mempool: fix autotest retry
+* test/pipeline: fix return type of stub miss
+* test/pipeline: fix type of table entry parameter
+* test/reorder: fix freeing mbuf twice
+* vhost: check cmsg not null
+* vhost: fix compilation issue when vhost debug enabled
+* vhost: fix dead lock on closing in server mode
+* vhost: fix device cleanup at stop
+* vhost: fix log macro name conflict
+* vhost: fix offset while mmaping log base address
+* vhost: fix realloc failure
+* vhost: fix typo in comment
+* vhost: improve dirty pages logging performance
