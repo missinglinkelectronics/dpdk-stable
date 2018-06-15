@@ -147,6 +147,7 @@ vhost_log_cache_page(struct virtio_net *dev, struct vhost_virtqueue *vq,
 
 	vq->log_cache[i].offset = offset;
 	vq->log_cache[i].val = (1UL << bit_nr);
+	vq->log_cache_nb_elem++;
 }
 
 static inline void __attribute__((always_inline))
