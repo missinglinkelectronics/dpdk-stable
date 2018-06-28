@@ -67,7 +67,7 @@ void bnxt_init_vnics(struct bnxt *bp)
 {
 	struct bnxt_vnic_info *vnic;
 	uint16_t max_vnics;
-	int i, j;
+	int i;
 
 	if (BNXT_PF(bp)) {
 		struct bnxt_pf_info *pf = &bp->pf;
@@ -84,9 +84,6 @@ void bnxt_init_vnics(struct bnxt *bp)
 		vnic->fw_vnic_id = (uint16_t)HWRM_NA_SIGNATURE;
 		vnic->fw_rss_cos_lb_ctx = (uint16_t)HWRM_NA_SIGNATURE;
 		vnic->ctx_is_rss_cos_lb = HW_CONTEXT_NONE;
-
-		for (j = 0; j < MAX_QUEUES_PER_VNIC; j++)
-			vnic->fw_grp_ids[j] = (uint16_t)HWRM_NA_SIGNATURE;
 
 		prandom_bytes(vnic->rss_hash_key, HW_HASH_KEY_SIZE);
 		STAILQ_INIT(&vnic->filter);
