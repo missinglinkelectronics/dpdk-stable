@@ -335,12 +335,14 @@ M: Jing Chen <jing.d.chen@intel.com>
 F: drivers/net/fm10k/
 
 Mellanox mlx4
-M: Adrien Mazarguil <adrien.mazarguil@6wind.com>
+M: Matan Azrad <matan@mellanox.com>
+M: Shahaf Shuler <shahafs@mellanox.com>
 F: drivers/net/mlx4/
 F: doc/guides/nics/mlx4.rst
 
 Mellanox mlx5
-M: Adrien Mazarguil <adrien.mazarguil@6wind.com>
+M: Shahaf Shuler <shahafs@mellanox.com>
+M: Yongseok Koh <yskoh@mellanox.com>
 F: drivers/net/mlx5/
 F: doc/guides/nics/mlx5.rst
 
