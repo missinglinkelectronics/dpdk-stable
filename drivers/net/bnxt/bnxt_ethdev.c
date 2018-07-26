@@ -358,12 +358,12 @@ static void bnxt_dev_info_get_op(struct rte_eth_dev *eth_dev,
 		dev_info->max_rx_queues = bp->pf.max_rx_rings;
 		dev_info->max_tx_queues = bp->pf.max_tx_rings;
 		dev_info->max_vfs = bp->pf.active_vfs;
-		dev_info->reta_size = bp->pf.max_rsscos_ctx;
+		dev_info->reta_size = HW_HASH_INDEX_SIZE;
 		max_vnics = bp->pf.max_vnics;
 	} else {
 		dev_info->max_rx_queues = bp->vf.max_rx_rings;
 		dev_info->max_tx_queues = bp->vf.max_tx_rings;
-		dev_info->reta_size = bp->vf.max_rsscos_ctx;
+		dev_info->reta_size = HW_HASH_INDEX_SIZE;
 		max_vnics = bp->vf.max_vnics;
 	}
 
