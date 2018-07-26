@@ -134,11 +134,19 @@ static int bnxt_hwrm_send_message(struct bnxt *bp, void *msg, uint32_t msg_len)
 		if (rc) { \
 			RTE_LOG(ERR, PMD, "%s failed rc:%d\n", \
 				__func__, rc); \
+			if (rc == HWRM_ERR_CODE_RESOURCE_ACCESS_DENIED) \
+				rc = -EACCES; \
+			else if (rc > 0) \
+				rc = -EINVAL; \
 			return rc; \
 		} \
 		if (resp->error_code) { \
 			rc = rte_le_to_cpu_16(resp->error_code); \
 			RTE_LOG(ERR, PMD, "%s error %d\n", __func__, rc); \
+			if (rc == HWRM_ERR_CODE_RESOURCE_ACCESS_DENIED) \
+				rc = -EACCES; \
+			else if (rc > 0) \
+				rc = -EINVAL; \
 			return rc; \
 		} \
 	}
