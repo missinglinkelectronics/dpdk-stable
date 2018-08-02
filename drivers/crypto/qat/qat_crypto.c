@@ -1004,9 +1004,8 @@ qat_write_hw_desc_entry(struct rte_crypto_op *op, uint8_t *out_msg)
 			ctx->qat_cipher_alg == ICP_QAT_HW_CIPHER_ALGO_KASUMI) {
 
 			if (unlikely(
-				(cipher_param->cipher_length % BYTE_LENGTH != 0)
-				 || (cipher_param->cipher_offset
-							% BYTE_LENGTH != 0))) {
+			    (op->sym->cipher.data.length % BYTE_LENGTH != 0) ||
+			    (op->sym->cipher.data.offset % BYTE_LENGTH != 0))) {
 				PMD_DRV_LOG(ERR,
 		  "SNOW3G/KASUMI in QAT PMD only supports byte aligned values");
 				op->status = RTE_CRYPTO_OP_STATUS_INVALID_ARGS;
@@ -1047,8 +1046,9 @@ qat_write_hw_desc_entry(struct rte_crypto_op *op, uint8_t *out_msg)
 
 		if (ctx->qat_hash_alg == ICP_QAT_HW_AUTH_ALGO_SNOW_3G_UIA2 ||
 			ctx->qat_hash_alg == ICP_QAT_HW_AUTH_ALGO_KASUMI_F9) {
-			if (unlikely((auth_param->auth_off % BYTE_LENGTH != 0)
-				|| (auth_param->auth_len % BYTE_LENGTH != 0))) {
+			if (unlikely(
+			    (op->sym->auth.data.offset % BYTE_LENGTH != 0) ||
+			    (op->sym->auth.data.length % BYTE_LENGTH != 0))) {
 				PMD_DRV_LOG(ERR,
 		"For SNOW3G/KASUMI, QAT PMD only supports byte aligned values");
 				op->status = RTE_CRYPTO_OP_STATUS_INVALID_ARGS;
