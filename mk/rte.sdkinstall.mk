@@ -113,18 +113,22 @@ else
 	@echo Installation in $(DESTDIR)$(prefix)/ complete
 endif
 
+# when installing we want recursive copies preserving timestamps only, no
+# preservation of user/group ids or permissions
+CP_FLAGS=-dR --preserve=timestamps
+TAR_X_FLAGS=--strip-components=1 --keep-newer-files --no-same-owner --no-same-permissions
+
 install-runtime:
 	$(Q)$(call rte_mkdir, $(DESTDIR)$(libdir))
-	$(Q)cp -a    $O/lib/* $(DESTDIR)$(libdir)
+	$(Q)cp $(CP_FLAGS)    $O/lib/* $(DESTDIR)$(libdir)
 	$(Q)$(call rte_mkdir, $(DESTDIR)$(bindir))
 	$(Q)tar -cf -      -C $O --exclude 'app/*.map' \
 		--exclude app/dpdk-pmdinfogen \
 		--exclude 'app/cmdline*' --exclude app/test \
 		--exclude app/testacl --exclude app/testpipeline app | \
-	    tar -xf -      -C $(DESTDIR)$(bindir) --strip-components=1 \
-		--keep-newer-files
+	    tar -xf -      -C $(DESTDIR)$(bindir) $(TAR_X_FLAGS)
 	$(Q)$(call rte_mkdir,      $(DESTDIR)$(datadir))
-	$(Q)cp -a $(RTE_SDK)/tools $(DESTDIR)$(datadir)
+	$(Q)cp $(CP_FLAGS) $(RTE_SDK)/tools $(DESTDIR)$(datadir)
 	$(Q)$(call rte_symlink,    $(DESTDIR)$(datadir)/tools/dpdk-setup.sh, \
 	                           $(DESTDIR)$(datadir)/tools/setup.sh)
 	$(Q)$(call rte_symlink,    $(DESTDIR)$(datadir)/tools/dpdk-devbind.py, \
@@ -136,30 +140,29 @@ install-runtime:
 	                           $(DESTDIR)$(bindir)/dpdk-pmdinfo)
 ifneq ($(wildcard $O/doc/man/*/*.1),)
 	$(Q)$(call rte_mkdir,      $(DESTDIR)$(mandir)/man1)
-	$(Q)cp -a $O/doc/man/*/*.1 $(DESTDIR)$(mandir)/man1
+	$(Q)cp $(CP_FLAGS) $O/doc/man/*/*.1 $(DESTDIR)$(mandir)/man1
 endif
 ifneq ($(wildcard $O/doc/man/*/*.8),)
 	$(Q)$(call rte_mkdir,      $(DESTDIR)$(mandir)/man8)
-	$(Q)cp -a $O/doc/man/*/*.8 $(DESTDIR)$(mandir)/man8
+	$(Q)cp $(CP_FLAGS) $O/doc/man/*/*.8 $(DESTDIR)$(mandir)/man8
 endif
 
 install-kmod:
 ifneq ($(wildcard $O/kmod/*),)
 	$(Q)$(call rte_mkdir, $(DESTDIR)$(kerneldir))
-	$(Q)cp -a   $O/kmod/* $(DESTDIR)$(kerneldir)
+	$(Q)cp $(CP_FLAGS)   $O/kmod/* $(DESTDIR)$(kerneldir)
 endif
 
 install-sdk:
 	$(Q)$(call rte_mkdir, $(DESTDIR)$(includedir))
 	$(Q)tar -chf -     -C $O include | \
-	    tar -xf -      -C $(DESTDIR)$(includedir) --strip-components=1 \
-		--keep-newer-files
+	    tar -xf -      -C $(DESTDIR)$(includedir) $(TAR_X_FLAGS)
 	$(Q)$(call rte_mkdir,                            $(DESTDIR)$(sdkdir))
-	$(Q)cp -a               $(RTE_SDK)/mk            $(DESTDIR)$(sdkdir)
-	$(Q)cp -a               $(RTE_SDK)/scripts       $(DESTDIR)$(sdkdir)
+	$(Q)cp $(CP_FLAGS)      $(RTE_SDK)/mk            $(DESTDIR)$(sdkdir)
+	$(Q)cp $(CP_FLAGS)      $(RTE_SDK)/scripts       $(DESTDIR)$(sdkdir)
 	$(Q)$(call rte_mkdir,                            $(DESTDIR)$(targetdir)/app)
-	$(Q)cp -a               $O/.config               $(DESTDIR)$(targetdir)
-	$(Q)cp -a               $O/app/dpdk-pmdinfogen   $(DESTDIR)$(targetdir)/app
+	$(Q)cp $(CP_FLAGS)      $O/.config               $(DESTDIR)$(targetdir)
+	$(Q)cp $(CP_FLAGS)      $O/app/dpdk-pmdinfogen   $(DESTDIR)$(targetdir)/app
 	$(Q)$(call rte_symlink, $(DESTDIR)$(includedir), $(DESTDIR)$(targetdir)/include)
 	$(Q)$(call rte_symlink, $(DESTDIR)$(libdir),     $(DESTDIR)$(targetdir)/lib)
 
@@ -167,12 +170,11 @@ install-doc:
 ifneq ($(wildcard $O/doc/html),)
 	$(Q)$(call rte_mkdir, $(DESTDIR)$(docdir))
 	$(Q)tar -cf -      -C $O/doc html --exclude 'html/guides/.*' | \
-	    tar -xf -      -C $(DESTDIR)$(docdir) --strip-components=1 \
-		--keep-newer-files
+	    tar -xf -      -C $(DESTDIR)$(docdir) $(TAR_X_FLAGS)
 endif
 ifneq ($(wildcard $O/doc/*/*/*pdf),)
 	$(Q)$(call rte_mkdir,     $(DESTDIR)$(docdir)/guides)
-	$(Q)cp -a $O/doc/*/*/*pdf $(DESTDIR)$(docdir)/guides
+	$(Q)cp $(CP_FLAGS) $O/doc/*/*/*pdf $(DESTDIR)$(docdir)/guides
 endif
 	$(Q)$(call rte_mkdir,         $(DESTDIR)$(datadir))
-	$(Q)cp -a $(RTE_SDK)/examples $(DESTDIR)$(datadir)
+	$(Q)cp $(CP_FLAGS) $(RTE_SDK)/examples $(DESTDIR)$(datadir)
