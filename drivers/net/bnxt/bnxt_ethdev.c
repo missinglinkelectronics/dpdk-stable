@@ -137,6 +137,7 @@ static struct rte_pci_id bnxt_pci_id_map[] = {
 	ETH_RSS_NONFRAG_IPV6_UDP)
 
 static void bnxt_print_link_info(struct rte_eth_dev *eth_dev);
+static int bnxt_dev_uninit(struct rte_eth_dev *eth_dev);
 
 /***********************/
 
@@ -586,6 +587,8 @@ static void bnxt_dev_close_op(struct rte_eth_dev *eth_dev)
 		rte_free(bp->grp_info);
 		bp->grp_info = NULL;
 	}
+
+	bnxt_dev_uninit(eth_dev);
 }
 
 static void bnxt_mac_addr_remove_op(struct rte_eth_dev *eth_dev,
