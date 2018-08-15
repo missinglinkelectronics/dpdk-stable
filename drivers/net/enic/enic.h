@@ -127,6 +127,7 @@ struct enic {
 	u8 hw_ip_checksum;
 	u16 max_mtu;
 	u16 adv_filters;
+	uint8_t ig_vlan_rewrite_mode; /* devargs ig-vlan-rewrite */
 
 	unsigned int flags;
 	unsigned int priv_flags;
