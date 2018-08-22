@@ -6221,7 +6221,6 @@ static void cmd_quit_parsed(__attribute__((unused)) void *parsed_result,
 			    struct cmdline *cl,
 			    __attribute__((unused)) void *data)
 {
-	pmd_test_exit();
 	cmdline_quit(cl);
 }
 
