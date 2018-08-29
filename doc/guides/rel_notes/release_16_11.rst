@@ -1287,3 +1287,79 @@ Fixes in 16.11 LTS Release
 * vhost: fix realloc failure
 * vhost: fix typo in comment
 * vhost: improve dirty pages logging performance
+
+16.11.8
+~~~~~~~
+
+* app/testpmd: fix DCB config
+* app/testpmd: fix VLAN TCI mask set error for FDIR
+* crypto/qat: fix checks for 3GPP algo bit params
+* doc: fix bonding command in testpmd
+* eal: fix bitmap documentation
+* eal: fix return codes on thread naming failure
+* eal/linux: fix invalid syntax in interrupts
+* ethdev: check queue stats mapping input arguments
+* ethdev: fix a doxygen comment for port allocation
+* ethdev: fix queue statistics mapping documentation
+* examples/exception_path: fix out-of-bounds read
+* examples/ipsec-secgw: fix bypass rule processing
+* examples/ipsec-secgw: fix IPv4 checksum at Tx
+* examples/l3fwd: remove useless include
+* examples/multi_process: build l2fwd_fork app
+* hash: fix a multi-writer race condition
+* hash: fix doxygen of return values
+* hash: fix key slot size accuracy
+* hash: fix multiwriter lock memory allocation
+* kni: fix build on RHEL 7.5
+* kni: fix build with gcc 8.1
+* kni: fix crash with null name
+* maintainers: claim maintainership for ARM v7 and v8
+* maintainers: update for Mellanox PMDs
+* mbuf: fix typo in IPv6 macro comment
+* mk: fix permissions when using make install
+* net/bnx2x: fix FW command timeout during stop
+* net/bnxt: check access denied for HWRM commands
+* net/bnxt: fix close operation
+* net/bnxt: fix HW Tx checksum offload check
+* net/bnxt: fix incorrect IO address handling in Tx
+* net/bnxt: fix RETA size
+* net/bnxt: fix Rx ring count limitation
+* net/bnxt: fix Tx with multiple mbuf
+* net/bonding: do not clear active slave count
+* net/bonding: fix MAC address reset
+* net/bonding: fix race condition
+* net/cxgbe/base: update flash part information
+* net/cxgbe: fix init failure due to new flash parts
+* net/ena: change memory type
+* net/ena: check pointer before memset
+* net/ena: fix GENMASK_ULL macro
+* net/ena: fix SIGFPE with 0 Rx queue
+* net/ena: set link speed as none
+* net/enic: do not overwrite admin Tx queue limit
+* net/i40e: do not reset device info data
+* net/i40e: fix check of flow director programming status
+* net/i40e: fix link speed
+* net/i40e: fix shifts of 32-bit value
+* net/i40e: revert fix of flow director check
+* net/i40e: workaround performance degradation
+* net/ixgbe: fix mask bits register set error for FDIR
+* net/ixgbe: fix tunnel id format error for FDIR
+* net/ixgbe: fix tunnel type set error for FDIR
+* net/nfp: fix field initialization in Tx descriptor
+* net/null: add MAC address setting fake operation
+* net/pcap: fix multiple queues
+* net/qede/base: fix GRC attention callback
+* net/qede: fix default extended VLAN offload config
+* net/qede: fix MAC address removal failure message
+* net: rename u16 to fix shadowed declaration
+* net/thunderx: avoid sq door bell write on zero packet
+* net/thunderx: fix build with gcc optimization on
+* Revert "net/i40e: fix packet count for PF"
+* test/bonding: assign non-zero MAC to null devices
+* test/crypto: fix device id when stopping port
+* test: fix EAL flags autotest on FreeBSD
+* test: fix uninitialized port configuration
+* test/hash: fix multiwriter with non consecutive cores
+* test/hash: fix potential memory leak
+* test/virtual_pmd: add MAC address setting fake op
+* vhost: fix missing increment of log cache count
