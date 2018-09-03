@@ -741,7 +741,7 @@ vhost_user_set_vring_call(struct virtio_net *dev, struct VhostUserMsg *pmsg)
  *  In vhost-user, when we receive kick message, will test whether virtio
  *  device is ready for packet processing.
  */
-static void
+static int
 vhost_user_set_vring_kick(struct virtio_net *dev, struct VhostUserMsg *pmsg)
 {
 	struct vhost_vring_file file;
@@ -769,6 +769,8 @@ vhost_user_set_vring_kick(struct virtio_net *dev, struct VhostUserMsg *pmsg)
 		if (notify_ops->new_device(dev->vid) == 0)
 			dev->flags |= VIRTIO_DEV_RUNNING;
 	}
+
+	return 0;
 }
 
 static void
@@ -847,14 +849,19 @@ vhost_user_set_vring_enable(struct virtio_net *dev,
 	return 0;
 }
 
-static void
+static int
 vhost_user_set_protocol_features(struct virtio_net *dev,
 				 uint64_t protocol_features)
 {
-	if (protocol_features & ~VHOST_USER_PROTOCOL_FEATURES)
-		return;
+	if (protocol_features & ~VHOST_USER_PROTOCOL_FEATURES) {
+		RTE_LOG(ERR, VHOST_CONFIG,
+			"(%d) received invalid protocol features.\n",
+			dev->vid);
+		return -1;
+	}
 
 	dev->protocol_features = protocol_features;
+	return 0;
 }
 
 static int
@@ -1087,7 +1094,7 @@ vhost_user_msg_handler(int vid, int fd)
 		send_vhost_message(fd, &msg);
 		break;
 	case VHOST_USER_SET_FEATURES:
-		vhost_user_set_features(dev, msg.payload.u64);
+		ret = vhost_user_set_features(dev, msg.payload.u64);
 		break;
 
 	case VHOST_USER_GET_PROTOCOL_FEATURES:
@@ -1096,14 +1103,14 @@ vhost_user_msg_handler(int vid, int fd)
 		send_vhost_message(fd, &msg);
 		break;
 	case VHOST_USER_SET_PROTOCOL_FEATURES:
-		vhost_user_set_protocol_features(dev, msg.payload.u64);
+		ret = vhost_user_set_protocol_features(dev, msg.payload.u64);
 		break;
 
 	case VHOST_USER_SET_OWNER:
-		vhost_user_set_owner();
+		ret = vhost_user_set_owner();
 		break;
 	case VHOST_USER_RESET_OWNER:
-		vhost_user_reset_owner(dev);
+		ret = vhost_user_reset_owner(dev);
 		break;
 
 	case VHOST_USER_SET_MEM_TABLE:
@@ -1111,8 +1118,9 @@ vhost_user_msg_handler(int vid, int fd)
 		break;
 
 	case VHOST_USER_SET_LOG_BASE:
-		vhost_user_set_log_base(dev, &msg);
-
+		ret = vhost_user_set_log_base(dev, &msg);
+		if (ret)
+			break;
 		/* it needs a reply */
 		msg.size = sizeof(msg.payload.u64);
 		send_vhost_message(fd, &msg);
@@ -1123,23 +1131,25 @@ vhost_user_msg_handler(int vid, int fd)
 		break;
 
 	case VHOST_USER_SET_VRING_NUM:
-		vhost_user_set_vring_num(dev, &msg.payload.state);
+		ret = vhost_user_set_vring_num(dev, &msg.payload.state);
 		break;
 	case VHOST_USER_SET_VRING_ADDR:
-		vhost_user_set_vring_addr(&dev, &msg.payload.addr);
+		ret = vhost_user_set_vring_addr(&dev, &msg.payload.addr);
 		break;
 	case VHOST_USER_SET_VRING_BASE:
-		vhost_user_set_vring_base(dev, &msg.payload.state);
+		ret = vhost_user_set_vring_base(dev, &msg.payload.state);
 		break;
 
 	case VHOST_USER_GET_VRING_BASE:
 		ret = vhost_user_get_vring_base(dev, &msg.payload.state);
+		if (ret)
+			break;
 		msg.size = sizeof(msg.payload.state);
 		send_vhost_message(fd, &msg);
 		break;
 
 	case VHOST_USER_SET_VRING_KICK:
-		vhost_user_set_vring_kick(dev, &msg);
+		ret = vhost_user_set_vring_kick(dev, &msg);
 		break;
 	case VHOST_USER_SET_VRING_CALL:
 		vhost_user_set_vring_call(dev, &msg);
@@ -1158,10 +1168,10 @@ vhost_user_msg_handler(int vid, int fd)
 		break;
 
 	case VHOST_USER_SET_VRING_ENABLE:
-		vhost_user_set_vring_enable(dev, &msg.payload.state);
+		ret = vhost_user_set_vring_enable(dev, &msg.payload.state);
 		break;
 	case VHOST_USER_SEND_RARP:
-		vhost_user_send_rarp(dev, &msg);
+		ret = vhost_user_send_rarp(dev, &msg);
 		break;
 
 	default:
@@ -1171,6 +1181,12 @@ vhost_user_msg_handler(int vid, int fd)
 
 	if (unlock_required)
 		vhost_user_unlock_all_queue_pairs(dev);
+
+	if (ret) {
+		RTE_LOG(ERR, VHOST_CONFIG,
+			"vhost message handling failed.\n");
+		return -1;
+	}
 
 	return 0;
 }
