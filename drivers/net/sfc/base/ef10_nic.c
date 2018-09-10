@@ -20,15 +20,14 @@ efx_mcdi_get_port_assignment(
 	__out		uint32_t *portp)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_PORT_ASSIGNMENT_IN_LEN,
-			    MC_CMD_GET_PORT_ASSIGNMENT_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_PORT_ASSIGNMENT_IN_LEN,
+		MC_CMD_GET_PORT_ASSIGNMENT_OUT_LEN);
 	efx_rc_t rc;
 
 	EFSYS_ASSERT(enp->en_family == EFX_FAMILY_HUNTINGTON ||
 	    enp->en_family == EFX_FAMILY_MEDFORD ||
 	    enp->en_family == EFX_FAMILY_MEDFORD2);
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_PORT_ASSIGNMENT;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_PORT_ASSIGNMENT_IN_LEN;
@@ -66,15 +65,14 @@ efx_mcdi_get_port_modes(
 	__out_opt	uint32_t *current_modep)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_PORT_MODES_IN_LEN,
-			    MC_CMD_GET_PORT_MODES_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_PORT_MODES_IN_LEN,
+		MC_CMD_GET_PORT_MODES_OUT_LEN);
 	efx_rc_t rc;
 
 	EFSYS_ASSERT(enp->en_family == EFX_FAMILY_HUNTINGTON ||
 	    enp->en_family == EFX_FAMILY_MEDFORD ||
 	    enp->en_family == EFX_FAMILY_MEDFORD2);
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_PORT_MODES;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_PORT_MODES_IN_LEN;
@@ -174,13 +172,12 @@ efx_mcdi_vadaptor_alloc(
 	__in			uint32_t port_id)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_VADAPTOR_ALLOC_IN_LEN,
-			    MC_CMD_VADAPTOR_ALLOC_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_VADAPTOR_ALLOC_IN_LEN,
+		MC_CMD_VADAPTOR_ALLOC_OUT_LEN);
 	efx_rc_t rc;
 
 	EFSYS_ASSERT3U(enp->en_vport_id, ==, EVB_PORT_ID_NULL);
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_VADAPTOR_ALLOC;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_VADAPTOR_ALLOC_IN_LEN;
@@ -213,11 +210,10 @@ efx_mcdi_vadaptor_free(
 	__in			uint32_t port_id)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_VADAPTOR_FREE_IN_LEN,
-			    MC_CMD_VADAPTOR_FREE_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_VADAPTOR_FREE_IN_LEN,
+		MC_CMD_VADAPTOR_FREE_OUT_LEN);
 	efx_rc_t rc;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_VADAPTOR_FREE;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_VADAPTOR_FREE_IN_LEN;
@@ -247,15 +243,14 @@ efx_mcdi_get_mac_address_pf(
 	__out_ecount_opt(6)	uint8_t mac_addrp[6])
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_MAC_ADDRESSES_IN_LEN,
-			    MC_CMD_GET_MAC_ADDRESSES_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_MAC_ADDRESSES_IN_LEN,
+		MC_CMD_GET_MAC_ADDRESSES_OUT_LEN);
 	efx_rc_t rc;
 
 	EFSYS_ASSERT(enp->en_family == EFX_FAMILY_HUNTINGTON ||
 	    enp->en_family == EFX_FAMILY_MEDFORD ||
 	    enp->en_family == EFX_FAMILY_MEDFORD2);
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_MAC_ADDRESSES;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_MAC_ADDRESSES_IN_LEN;
@@ -306,15 +301,14 @@ efx_mcdi_get_mac_address_vf(
 	__out_ecount_opt(6)	uint8_t mac_addrp[6])
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_VPORT_GET_MAC_ADDRESSES_IN_LEN,
-			    MC_CMD_VPORT_GET_MAC_ADDRESSES_OUT_LENMAX)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_VPORT_GET_MAC_ADDRESSES_IN_LEN,
+		MC_CMD_VPORT_GET_MAC_ADDRESSES_OUT_LENMAX);
 	efx_rc_t rc;
 
 	EFSYS_ASSERT(enp->en_family == EFX_FAMILY_HUNTINGTON ||
 	    enp->en_family == EFX_FAMILY_MEDFORD ||
 	    enp->en_family == EFX_FAMILY_MEDFORD2);
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_VPORT_GET_MAC_ADDRESSES;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_VPORT_GET_MAC_ADDRESSES_IN_LEN;
@@ -371,15 +365,14 @@ efx_mcdi_get_clock(
 	__out		uint32_t *dpcpu_freqp)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_CLOCK_IN_LEN,
-			    MC_CMD_GET_CLOCK_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_CLOCK_IN_LEN,
+		MC_CMD_GET_CLOCK_OUT_LEN);
 	efx_rc_t rc;
 
 	EFSYS_ASSERT(enp->en_family == EFX_FAMILY_HUNTINGTON ||
 	    enp->en_family == EFX_FAMILY_MEDFORD ||
 	    enp->en_family == EFX_FAMILY_MEDFORD2);
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_CLOCK;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_CLOCK_IN_LEN;
@@ -429,12 +422,11 @@ efx_mcdi_get_rxdp_config(
 	__out		uint32_t *end_paddingp)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_RXDP_CONFIG_IN_LEN,
-			    MC_CMD_GET_RXDP_CONFIG_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_RXDP_CONFIG_IN_LEN,
+		MC_CMD_GET_RXDP_CONFIG_OUT_LEN);
 	uint32_t end_padding;
 	efx_rc_t rc;
 
-	memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_RXDP_CONFIG;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_RXDP_CONFIG_IN_LEN;
@@ -489,11 +481,10 @@ efx_mcdi_get_vector_cfg(
 	__out_opt	uint32_t *vf_nvecp)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_VECTOR_CFG_IN_LEN,
-			    MC_CMD_GET_VECTOR_CFG_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_VECTOR_CFG_IN_LEN,
+		MC_CMD_GET_VECTOR_CFG_OUT_LEN);
 	efx_rc_t rc;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_VECTOR_CFG;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_VECTOR_CFG_IN_LEN;
@@ -539,8 +530,8 @@ efx_mcdi_alloc_vis(
 	__out		uint32_t *vi_shiftp)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_ALLOC_VIS_IN_LEN,
-			    MC_CMD_ALLOC_VIS_EXT_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_ALLOC_VIS_IN_LEN,
+		MC_CMD_ALLOC_VIS_EXT_OUT_LEN);
 	efx_rc_t rc;
 
 	if (vi_countp == NULL) {
@@ -548,7 +539,6 @@ efx_mcdi_alloc_vis(
 		goto fail1;
 	}
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_ALLOC_VIS;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_ALLOC_VIS_IN_LEN;
@@ -631,8 +621,8 @@ efx_mcdi_alloc_piobuf(
 	__out		efx_piobuf_handle_t *handlep)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_ALLOC_PIOBUF_IN_LEN,
-			    MC_CMD_ALLOC_PIOBUF_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_ALLOC_PIOBUF_IN_LEN,
+		MC_CMD_ALLOC_PIOBUF_OUT_LEN);
 	efx_rc_t rc;
 
 	if (handlep == NULL) {
@@ -640,7 +630,6 @@ efx_mcdi_alloc_piobuf(
 		goto fail1;
 	}
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_ALLOC_PIOBUF;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_ALLOC_PIOBUF_IN_LEN;
@@ -679,11 +668,10 @@ efx_mcdi_free_piobuf(
 	__in		efx_piobuf_handle_t handle)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_FREE_PIOBUF_IN_LEN,
-			    MC_CMD_FREE_PIOBUF_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_FREE_PIOBUF_IN_LEN,
+		MC_CMD_FREE_PIOBUF_OUT_LEN);
 	efx_rc_t rc;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_FREE_PIOBUF;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_FREE_PIOBUF_IN_LEN;
@@ -714,11 +702,10 @@ efx_mcdi_link_piobuf(
 	__in		efx_piobuf_handle_t handle)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_LINK_PIOBUF_IN_LEN,
-			    MC_CMD_LINK_PIOBUF_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_LINK_PIOBUF_IN_LEN,
+		MC_CMD_LINK_PIOBUF_OUT_LEN);
 	efx_rc_t rc;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_LINK_PIOBUF;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_LINK_PIOBUF_IN_LEN;
@@ -749,11 +736,10 @@ efx_mcdi_unlink_piobuf(
 	__in		uint32_t vi_index)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_UNLINK_PIOBUF_IN_LEN,
-			    MC_CMD_UNLINK_PIOBUF_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_UNLINK_PIOBUF_IN_LEN,
+		MC_CMD_UNLINK_PIOBUF_OUT_LEN);
 	efx_rc_t rc;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_UNLINK_PIOBUF;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_UNLINK_PIOBUF_IN_LEN;
@@ -951,11 +937,10 @@ ef10_mcdi_get_pf_count(
 	__out		uint32_t *pf_countp)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_PF_COUNT_IN_LEN,
-			    MC_CMD_GET_PF_COUNT_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_PF_COUNT_IN_LEN,
+		MC_CMD_GET_PF_COUNT_OUT_LEN);
 	efx_rc_t rc;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_PF_COUNT;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_PF_COUNT_IN_LEN;
@@ -995,15 +980,14 @@ ef10_get_datapath_caps(
 {
 	efx_nic_cfg_t *encp = &(enp->en_nic_cfg);
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_CAPABILITIES_IN_LEN,
-			    MC_CMD_GET_CAPABILITIES_V5_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_CAPABILITIES_IN_LEN,
+		MC_CMD_GET_CAPABILITIES_V5_OUT_LEN);
 	efx_rc_t rc;
 
 	if ((rc = ef10_mcdi_get_pf_count(enp, &encp->enc_hw_pf_count)) != 0)
 		goto fail1;
 
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_CAPABILITIES;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_CAPABILITIES_IN_LEN;
@@ -2039,8 +2023,8 @@ ef10_nic_reset(
 	__in		efx_nic_t *enp)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_ENTITY_RESET_IN_LEN,
-			    MC_CMD_ENTITY_RESET_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_ENTITY_RESET_IN_LEN,
+		MC_CMD_ENTITY_RESET_OUT_LEN);
 	efx_rc_t rc;
 
 	/* ef10_nic_reset() is called to recover from BADASSERT failures. */
@@ -2049,7 +2033,6 @@ ef10_nic_reset(
 	if ((rc = efx_mcdi_exit_assertion_handler(enp)) != 0)
 		goto fail2;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_ENTITY_RESET;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_ENTITY_RESET_IN_LEN;
@@ -2386,11 +2369,10 @@ efx_mcdi_get_nic_global(
 	__out		uint32_t *valuep)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MAX(MC_CMD_GET_NIC_GLOBAL_IN_LEN,
-			    MC_CMD_GET_NIC_GLOBAL_OUT_LEN)];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_GET_NIC_GLOBAL_IN_LEN,
+		MC_CMD_GET_NIC_GLOBAL_OUT_LEN);
 	efx_rc_t rc;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_GET_NIC_GLOBAL;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_GET_NIC_GLOBAL_IN_LEN;
@@ -2430,10 +2412,9 @@ efx_mcdi_set_nic_global(
 	__in		uint32_t value)
 {
 	efx_mcdi_req_t req;
-	uint8_t payload[MC_CMD_SET_NIC_GLOBAL_IN_LEN];
+	EFX_MCDI_DECLARE_BUF(payload, MC_CMD_SET_NIC_GLOBAL_IN_LEN, 0);
 	efx_rc_t rc;
 
-	(void) memset(payload, 0, sizeof (payload));
 	req.emr_cmd = MC_CMD_SET_NIC_GLOBAL;
 	req.emr_in_buf = payload;
 	req.emr_in_length = MC_CMD_SET_NIC_GLOBAL_IN_LEN;
