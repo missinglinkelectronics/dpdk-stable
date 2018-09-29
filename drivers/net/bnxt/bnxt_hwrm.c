@@ -900,8 +900,11 @@ int bnxt_hwrm_vnic_cfg(struct bnxt *bp, struct bnxt_vnic_info *vnic)
 	req.lb_rule = rte_cpu_to_le_16(0xffff);
 	req.mru = rte_cpu_to_le_16(bp->eth_dev->data->mtu + ETHER_HDR_LEN +
 				   ETHER_CRC_LEN + VLAN_TAG_SIZE);
-	if (vnic->func_default)
+	/* Configure default VNIC only once. */
+	if (vnic->func_default && !(bp->flags & BNXT_FLAG_DFLT_VNIC_SET)) {
 		req.flags = 1;
+		bp->flags |= BNXT_FLAG_DFLT_VNIC_SET;
+	}
 	if (vnic->vlan_strip)
 		req.flags |=
 		    rte_cpu_to_le_32(HWRM_VNIC_CFG_INPUT_FLAGS_VLAN_STRIP_MODE);
@@ -978,6 +981,10 @@ int bnxt_hwrm_vnic_free(struct bnxt *bp, struct bnxt_vnic_info *vnic)
 	HWRM_CHECK_RESULT;
 
 	vnic->fw_vnic_id = INVALID_HW_RING_ID;
+	/* Configure default VNIC again if necessary. */
+	if (vnic->func_default && (bp->flags & BNXT_FLAG_DFLT_VNIC_SET))
+		bp->flags &= ~BNXT_FLAG_DFLT_VNIC_SET;
+
 	return rc;
 }
 
