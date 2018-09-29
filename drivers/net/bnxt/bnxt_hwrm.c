@@ -50,7 +50,7 @@
 #include "bnxt_vnic.h"
 #include "hsi_struct_def_dpdk.h"
 
-#define HWRM_CMD_TIMEOUT		2000
+#define HWRM_CMD_TIMEOUT		6000000
 
 /*
  * HWRM Functions (sent to HWRM)
@@ -97,7 +97,7 @@ static int bnxt_hwrm_send_message_locked(struct bnxt *bp, void *msg,
 			if (*valid == HWRM_RESP_VALID_KEY)
 				break;
 		}
-		rte_delay_us(600);
+		rte_delay_us(1);
 	}
 
 	if (i >= HWRM_CMD_TIMEOUT) {
