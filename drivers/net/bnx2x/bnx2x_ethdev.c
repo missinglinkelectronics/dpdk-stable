@@ -122,8 +122,11 @@ static __rte_unused void
 bnx2x_interrupt_handler(__rte_unused struct rte_intr_handle *handle, void *param)
 {
 	struct rte_eth_dev *dev = (struct rte_eth_dev *)param;
+	struct bnx2x_softc *sc = dev->data->dev_private;
 
+	atomic_store_rel_long(&sc->periodic_flags, PERIODIC_STOP);
 	bnx2x_interrupt_action(dev);
+	atomic_store_rel_long(&sc->periodic_flags, PERIODIC_GO);
 	rte_intr_enable(&(dev->pci_dev->intr_handle));
 }
 
