@@ -3501,7 +3501,7 @@ cmdline_parse_token_string_t cmd_csum_tunnel_csum =
 				csum, "csum");
 cmdline_parse_token_string_t cmd_csum_tunnel_parse =
 	TOKEN_STRING_INITIALIZER(struct cmd_csum_tunnel_result,
-				parse, "parse_tunnel");
+				parse, "parse-tunnel");
 cmdline_parse_token_string_t cmd_csum_tunnel_onoff =
 	TOKEN_STRING_INITIALIZER(struct cmd_csum_tunnel_result,
 				onoff, "on#off");
@@ -3513,7 +3513,7 @@ cmdline_parse_inst_t cmd_csum_tunnel = {
 	.f = cmd_csum_tunnel_parsed,
 	.data = NULL,
 	.help_str = "enable/disable parsing of tunnels for csum engine: "
-	"csum parse_tunnel on|off <tx-port>",
+	"csum parse-tunnel on|off <tx-port>",
 	.tokens = {
 		(void *)&cmd_csum_tunnel_csum,
 		(void *)&cmd_csum_tunnel_parse,
