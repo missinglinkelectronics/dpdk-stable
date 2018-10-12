@@ -1246,6 +1246,12 @@ vhost_user_set_log_base(struct virtio_net *dev, struct VhostUserMsg *msg)
 	dev->log_base = dev->log_addr + off;
 	dev->log_size = size;
 
+	/*
+	 * The spec is not clear about it (yet), but QEMU doesn't expect
+	 * any payload in the reply.
+	 */
+	msg->size = 0;
+
 	return 0;
 }
 
