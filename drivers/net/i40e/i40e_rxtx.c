@@ -74,6 +74,10 @@
 #define I40E_TXD_CMD (I40E_TX_DESC_CMD_EOP | I40E_TX_DESC_CMD_RS)
 
 #define I40E_TX_CKSUM_OFFLOAD_MASK (		 \
+		PKT_TX_OUTER_IPV4 |		 \
+		PKT_TX_OUTER_IPV6 |		 \
+		PKT_TX_IPV4 |			 \
+		PKT_TX_IPV6 |			 \
 		PKT_TX_IP_CKSUM |		 \
 		PKT_TX_L4_MASK |		 \
 		PKT_TX_TCP_SEG |		 \
