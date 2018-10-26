@@ -407,7 +407,7 @@ rte_hash_reset(struct rte_hash *h)
 
 	/* clear the free ring */
 	while (rte_ring_dequeue(h->free_slots, &ptr) == 0)
-		rte_pause();
+		continue;
 
 	/* Repopulate the free slots ring. Entry zero is reserved for key misses */
 	if (h->hw_trans_mem_support)
