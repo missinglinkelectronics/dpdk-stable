@@ -26,7 +26,6 @@
 #include <rte_spinlock.h>
 #include <rte_ring.h>
 #include <rte_compat.h>
-#include <rte_pause.h>
 
 #include "rte_hash.h"
 #include "rte_cuckoo_hash.h"
@@ -448,7 +447,7 @@ rte_hash_reset(struct rte_hash *h)
 
 	/* clear the free ring */
 	while (rte_ring_dequeue(h->free_slots, &ptr) == 0)
-		rte_pause();
+		continue;
 
 	/* Repopulate the free slots ring. Entry zero is reserved for key misses */
 	if (h->multi_writer_support)
