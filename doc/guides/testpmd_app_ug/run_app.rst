@@ -337,7 +337,7 @@ The commandline options are:
 
        io (the default)
        mac
-       mac_swap
+       macswap
        flowgen
        rxonly
        txonly
