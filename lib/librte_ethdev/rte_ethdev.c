@@ -3541,11 +3541,10 @@ rte_eth_dev_destroy(struct rte_eth_dev *ethdev,
 		return -ENODEV;
 
 	RTE_FUNC_PTR_OR_ERR_RET(*ethdev_uninit, -EINVAL);
-	if (ethdev_uninit) {
-		ret = ethdev_uninit(ethdev);
-		if (ret)
-			return ret;
-	}
+
+	ret = ethdev_uninit(ethdev);
+	if (ret)
+		return ret;
 
 	if (rte_eal_process_type() == RTE_PROC_PRIMARY)
 		rte_free(ethdev->data->dev_private);
