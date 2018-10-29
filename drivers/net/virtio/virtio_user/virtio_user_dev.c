@@ -142,9 +142,6 @@ virtio_user_start_device(struct virtio_user_dev *dev)
 	uint64_t features;
 	int ret;
 
-	/* Do not check return as already done in init, or reset in stop */
-	vhost_user_sock(dev->vhostfd, VHOST_USER_SET_OWNER, NULL);
-
 	/* Step 0: tell vhost to create queues */
 	if (virtio_user_queue_setup(dev, virtio_user_create_queue) < 0)
 		goto error;
@@ -185,6 +182,7 @@ error:
 
 int virtio_user_stop_device(struct virtio_user_dev *dev)
 {
+	struct vhost_vring_state state;
 	uint32_t i;
 
 	for (i = 0; i < dev->max_queue_pairs * 2; ++i) {
@@ -194,6 +192,17 @@ int virtio_user_stop_device(struct virtio_user_dev *dev)
 
 	for (i = 0; i < dev->max_queue_pairs; ++i)
 		vhost_user_enable_queue_pair(dev->vhostfd, i, 0);
+
+	/* Stop the backend. */
+	for (i = 0; i < dev->max_queue_pairs * 2; ++i) {
+		state.index = i;
+		if (vhost_user_sock(dev->vhostfd, VHOST_USER_GET_VRING_BASE,
+					   &state) < 0) {
+			PMD_DRV_LOG(ERR, "get_vring_base failed, index=%u\n",
+				    i);
+			return -1;
+		}
+	}
 
 	return 0;
 }
