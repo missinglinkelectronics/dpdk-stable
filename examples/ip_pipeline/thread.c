@@ -812,7 +812,7 @@ pipeline_port_in_stats_read(const char *pipeline_name,
 
 	/* Read response */
 	status = rsp->status;
-	if (status)
+	if (status == 0)
 		memcpy(stats, &rsp->port_in_stats_read.stats, sizeof(*stats));
 
 	/* Free response */
@@ -960,7 +960,7 @@ pipeline_port_out_stats_read(const char *pipeline_name,
 
 	/* Read response */
 	status = rsp->status;
-	if (status)
+	if (status == 0)
 		memcpy(stats, &rsp->port_out_stats_read.stats, sizeof(*stats));
 
 	/* Free response */
@@ -1016,7 +1016,7 @@ pipeline_table_stats_read(const char *pipeline_name,
 
 	/* Read response */
 	status = rsp->status;
-	if (status)
+	if (status == 0)
 		memcpy(stats, &rsp->table_stats_read.stats, sizeof(*stats));
 
 	/* Free response */
