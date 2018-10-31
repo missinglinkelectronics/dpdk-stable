@@ -1394,11 +1394,6 @@ eth_virtio_dev_init(struct rte_eth_dev *eth_dev)
 	if (ret < 0)
 		return ret;
 
-	/* Setup interrupt callback  */
-	if (eth_dev->data->dev_flags & RTE_ETH_DEV_INTR_LSC)
-		rte_intr_callback_register(&pci_dev->intr_handle,
-			virtio_interrupt_handler, eth_dev);
-
 	return 0;
 }
 
@@ -1423,11 +1418,6 @@ eth_virtio_dev_uninit(struct rte_eth_dev *eth_dev)
 	rte_free(eth_dev->data->mac_addrs);
 	eth_dev->data->mac_addrs = NULL;
 
-	/* reset interrupt callback  */
-	if (eth_dev->data->dev_flags & RTE_ETH_DEV_INTR_LSC)
-		rte_intr_callback_unregister(&pci_dev->intr_handle,
-						virtio_interrupt_handler,
-						eth_dev);
 	rte_eal_pci_unmap_device(pci_dev);
 
 	PMD_INIT_LOG(DEBUG, "dev_uninit completed");
@@ -1538,6 +1528,12 @@ virtio_dev_start(struct rte_eth_dev *dev)
 			return -ENOTSUP;
 		}
 
+		/* Setup interrupt callback  */
+		if (dev->data->dev_flags & RTE_ETH_DEV_INTR_LSC)
+			rte_intr_callback_register(&dev->pci_dev->intr_handle,
+						   virtio_interrupt_handler,
+						   dev);
+
 		if (rte_intr_enable(&dev->pci_dev->intr_handle) < 0) {
 			PMD_DRV_LOG(ERR, "interrupt enable failed");
 			return -EIO;
@@ -1645,8 +1641,16 @@ virtio_dev_stop(struct rte_eth_dev *dev)
 
 	PMD_INIT_LOG(DEBUG, "stop");
 
-	if (dev->data->dev_conf.intr_conf.lsc)
+	if (dev->data->dev_conf.intr_conf.lsc) {
 		rte_intr_disable(&dev->pci_dev->intr_handle);
+
+		/* Reset interrupt callback  */
+		if (dev->data->dev_flags & RTE_ETH_DEV_INTR_LSC) {
+			rte_intr_callback_unregister(&dev->pci_dev->intr_handle,
+						     virtio_interrupt_handler,
+						     dev);
+		}
+	}
 
 	hw->started = 0;
 	memset(&link, 0, sizeof(link));
