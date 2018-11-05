@@ -163,6 +163,13 @@ Runtime Config Options
   Currently hot-plugging of representor ports is not supported so all required
   representors must be specified on the creation of the PF.
 
+Vector RX Pre-conditions
+~~~~~~~~~~~~~~~~~~~~~~~~
+For Vector RX it is assumed that the number of descriptor rings will be a power
+of 2. With this pre-condition, the ring pointer can easily scroll back to the
+head after hitting the tail without a conditional check. In addition Vector RX
+can use this assumption to do a bit mask using ``ring_size - 1``.
+
 Driver compilation and testing
 ------------------------------
 
