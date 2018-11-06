@@ -231,7 +231,7 @@ tun_alloc(struct pmd_internals *pmd, int is_keepalive)
 	return fd;
 
 error:
-	if (fd > 0)
+	if (fd >= 0)
 		close(fd);
 	return -1;
 }
