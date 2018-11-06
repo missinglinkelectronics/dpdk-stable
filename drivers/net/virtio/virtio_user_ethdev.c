@@ -369,7 +369,7 @@ virtio_user_pmd_probe(const char *name, const char *params)
 		}
 	} else {
 		PMD_INIT_LOG(ERR, "arg %s is mandatory for virtio_user\n",
-			  VIRTIO_USER_ARG_QUEUE_SIZE);
+			     VIRTIO_USER_ARG_PATH);
 		goto end;
 	}
 
