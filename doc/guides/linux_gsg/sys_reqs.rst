@@ -86,6 +86,12 @@ Compilation of the DPDK
 
 .. note::
 
+*   Library for handling NUMA (Non Uniform Memory Access).
+
+    * numactl-devel in Red Hat/Fedora;
+
+    * libnuma-dev in Debian/Ubuntu;
+
     Python, version 2.6 or 2.7, to use various helper scripts included in the DPDK package.
 
 
