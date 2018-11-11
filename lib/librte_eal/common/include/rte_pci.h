@@ -248,6 +248,8 @@ TAILQ_HEAD(mapped_pci_res_list, mapped_pci_resource);
 do {                                                               \
 	unsigned long val;                                      \
 	char *end;                                              \
+	if (*in == '\0')                                        \
+		return -EINVAL;                                 \
 	errno = 0;                                              \
 	val = strtoul((in), &end, 16);                          \
 	if (errno != 0 || end[0] != (dlm) || val > (lim))       \
