@@ -5000,6 +5000,7 @@ ixgbe_dev_tx_queue_start(struct rte_eth_dev *dev, uint16_t tx_queue_id)
 
 	if (tx_queue_id < dev->data->nb_tx_queues) {
 		txq = dev->data->tx_queues[tx_queue_id];
+		IXGBE_WRITE_REG(hw, IXGBE_TDH(txq->reg_idx), 0);
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(txq->reg_idx));
 		txdctl |= IXGBE_TXDCTL_ENABLE;
 		IXGBE_WRITE_REG(hw, IXGBE_TXDCTL(txq->reg_idx), txdctl);
@@ -5017,7 +5018,6 @@ ixgbe_dev_tx_queue_start(struct rte_eth_dev *dev, uint16_t tx_queue_id)
 					     "Tx Queue %d", tx_queue_id);
 		}
 		rte_wmb();
-		IXGBE_WRITE_REG(hw, IXGBE_TDH(txq->reg_idx), 0);
 		IXGBE_WRITE_REG(hw, IXGBE_TDT(txq->reg_idx), 0);
 		dev->data->tx_queue_state[tx_queue_id] = RTE_ETH_QUEUE_STATE_STARTED;
 	} else
