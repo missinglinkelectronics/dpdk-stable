@@ -5815,6 +5815,7 @@ static void cmd_create_bonded_device_parsed(void *parsed_result,
 		nb_ports = rte_eth_dev_count_avail();
 		reconfig(port_id, res->socket);
 		rte_eth_promiscuous_enable(port_id);
+		ports[port_id].port_status = RTE_PORT_STOPPED;
 	}
 
 }
