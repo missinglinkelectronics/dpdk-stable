@@ -89,7 +89,7 @@ To use the DPDK QAT PMD an SRIOV-enabled QAT kernel driver is required. The
 VF devices exposed by this driver will be used by QAT PMD.
 
 To enable QAT in DPDK, follow the instructions mentioned in
-http://dpdk.org/doc/guides/linux_gsg/build_dpdk.html
+http://doc.dpdk.org/guides/linux_gsg/build_dpdk.html
 
 Quick instructions as follows:
 
@@ -106,7 +106,6 @@ than 4.4, see `Installation using 01.org QAT driver`_.
 For **Intel QuickAssist Technology C62x** and **Intel QuickAssist Technology C3xxx**
 device, kernel 4.5 or greater is needed.
 See instructions for `Installation using kernel.org driver`_ below.
-
 
 Installation using 01.org QAT driver
 ------------------------------------
