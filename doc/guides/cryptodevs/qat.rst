@@ -92,7 +92,7 @@ Building the DPDK QAT cryptodev PMD
 
 
 To enable QAT crypto in DPDK, follow the instructions for modifying the compile-time
-configuration file as described `here <http://dpdk.org/doc/guides/linux_gsg/build_dpdk.html>`_.
+configuration file as described `here <http://doc.dpdk.org/guides/linux_gsg/build_dpdk.html>`_.
 
 
 Quick instructions are as follows:
