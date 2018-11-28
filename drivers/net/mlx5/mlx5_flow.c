@@ -3265,7 +3265,7 @@ mlx5_ctrl_flow_vlan(struct rte_eth_dev *dev,
 	struct rte_flow_error error;
 	unsigned int i;
 
-	if (!priv->reta_idx_n) {
+	if (!priv->reta_idx_n || !priv->rxqs_n) {
 		rte_errno = EINVAL;
 		return -rte_errno;
 	}
