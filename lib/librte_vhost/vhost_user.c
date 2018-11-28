@@ -1087,6 +1087,7 @@ vhost_user_msg_handler(int vid, int fd)
 
 	}
 
+	ret = 0;
 	switch (msg.request) {
 	case VHOST_USER_GET_FEATURES:
 		msg.payload.u64 = vhost_user_get_features();
