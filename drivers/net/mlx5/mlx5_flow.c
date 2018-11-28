@@ -2490,7 +2490,7 @@ mlx5_ctrl_flow_vlan(struct rte_eth_dev *dev,
 		} local;
 	} action_rss;
 
-	if (!priv->reta_idx_n) {
+	if (!priv->reta_idx_n || !priv->rxqs_n) {
 		rte_errno = EINVAL;
 		return -rte_errno;
 	}
