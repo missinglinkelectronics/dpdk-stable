@@ -172,6 +172,8 @@ static const struct ena_stats ena_stats_ena_com_strings[] = {
 
 #define	ENA_TX_OFFLOAD_MASK	(\
 	PKT_TX_L4_MASK |         \
+	PKT_TX_IPV6 |            \
+	PKT_TX_IPV4 |            \
 	PKT_TX_IP_CKSUM |        \
 	PKT_TX_TCP_SEG)
 
