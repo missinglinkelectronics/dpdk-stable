@@ -601,6 +601,13 @@ rte_eth_dev_rx_queue_start(uint8_t port_id, uint16_t rx_queue_id)
 	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -EINVAL);
 
 	dev = &rte_eth_devices[port_id];
+	if (!dev->data->dev_started) {
+		RTE_PMD_DEBUG_TRACE(
+		    "port %d must be started before start any queue\n",
+		    port_id);
+		return -EINVAL;
+	}
+
 	if (rx_queue_id >= dev->data->nb_rx_queues) {
 		RTE_PMD_DEBUG_TRACE("Invalid RX queue_id=%d\n", rx_queue_id);
 		return -EINVAL;
@@ -627,12 +634,6 @@ rte_eth_dev_rx_queue_stop(uint8_t port_id, uint16_t rx_queue_id)
 	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -EINVAL);
 
 	dev = &rte_eth_devices[port_id];
-	if (!dev->data->dev_started) {
-		RTE_PMD_DEBUG_TRACE(
-		    "port %d must be started before start any queue\n", port_id);
-		return -EINVAL;
-	}
-
 	if (rx_queue_id >= dev->data->nb_rx_queues) {
 		RTE_PMD_DEBUG_TRACE("Invalid RX queue_id=%d\n", rx_queue_id);
 		return -EINVAL;
@@ -659,6 +660,13 @@ rte_eth_dev_tx_queue_start(uint8_t port_id, uint16_t tx_queue_id)
 	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -EINVAL);
 
 	dev = &rte_eth_devices[port_id];
+	if (!dev->data->dev_started) {
+		RTE_PMD_DEBUG_TRACE(
+		    "port %d must be started before start any queue\n",
+		    port_id);
+		return -EINVAL;
+	}
+
 	if (tx_queue_id >= dev->data->nb_tx_queues) {
 		RTE_PMD_DEBUG_TRACE("Invalid TX queue_id=%d\n", tx_queue_id);
 		return -EINVAL;
@@ -685,12 +693,6 @@ rte_eth_dev_tx_queue_stop(uint8_t port_id, uint16_t tx_queue_id)
 	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -EINVAL);
 
 	dev = &rte_eth_devices[port_id];
-	if (!dev->data->dev_started) {
-		RTE_PMD_DEBUG_TRACE(
-		    "port %d must be started before start any queue\n", port_id);
-		return -EINVAL;
-	}
-
 	if (tx_queue_id >= dev->data->nb_tx_queues) {
 		RTE_PMD_DEBUG_TRACE("Invalid TX queue_id=%d\n", tx_queue_id);
 		return -EINVAL;
