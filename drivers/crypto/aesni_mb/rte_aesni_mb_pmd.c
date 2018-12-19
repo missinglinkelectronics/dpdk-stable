@@ -403,7 +403,7 @@ aesni_mb_set_session_parameters(const struct aesni_mb_op_fns *mb_ops,
 		sess->chain_order = CIPHER_HASH;
 		auth_xform = xform->next;
 		cipher_xform = xform;
-		sess->auth.digest_len = xform->auth.digest_length;
+		sess->auth.digest_len = auth_xform->auth.digest_length;
 		break;
 	case AESNI_MB_OP_HASH_ONLY:
 		sess->chain_order = HASH_CIPHER;
