@@ -2987,6 +2987,7 @@ fm10k_params_init(struct rte_eth_dev *dev)
 	hw->bus.payload = fm10k_bus_payload_256;
 
 	info->rx_vec_allowed = true;
+	info->sm_down = false;
 }
 
 static int
