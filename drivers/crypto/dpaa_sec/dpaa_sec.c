@@ -1460,7 +1460,8 @@ cryptodev_dpaa_sec_probe(struct rte_dpaa_driver *dpaa_drv,
 
 	int retval;
 
-	sprintf(cryptodev_name, "dpaa_sec-%d", dpaa_dev->id.dev_id);
+	snprintf(cryptodev_name, sizeof(cryptodev_name), "dpaa_sec-%d",
+			dpaa_dev->id.dev_id);
 
 	cryptodev = rte_cryptodev_pmd_allocate(cryptodev_name, rte_socket_id());
 	if (cryptodev == NULL)
