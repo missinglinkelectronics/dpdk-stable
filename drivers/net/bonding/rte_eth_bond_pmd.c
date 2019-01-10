@@ -2466,6 +2466,9 @@ bond_ethdev_promiscuous_enable(struct rte_eth_dev *eth_dev)
 	case BONDING_MODE_TLB:
 	case BONDING_MODE_ALB:
 	default:
+		/* Do not touch promisc when there cannot be primary ports */
+		if (internals->slave_count == 0)
+			break;
 		rte_eth_promiscuous_enable(internals->current_primary_port);
 	}
 }
@@ -2494,6 +2497,9 @@ bond_ethdev_promiscuous_disable(struct rte_eth_dev *dev)
 	case BONDING_MODE_TLB:
 	case BONDING_MODE_ALB:
 	default:
+		/* Do not touch promisc when there cannot be primary ports */
+		if (internals->slave_count == 0)
+			break;
 		rte_eth_promiscuous_disable(internals->current_primary_port);
 	}
 }
