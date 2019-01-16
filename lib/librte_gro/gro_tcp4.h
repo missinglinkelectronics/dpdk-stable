@@ -42,6 +42,11 @@
  */
 #define TCP4_MAX_L3_LENGTH UINT16_MAX
 
+/* The maximum TCP header length */
+#define MAX_TCP_HLEN 60
+#define INVALID_TCP_HDRLEN(len) \
+	(((len) < sizeof(struct tcp_hdr)) || ((len) > MAX_TCP_HLEN))
+
 /* criteria of mergeing packets */
 struct tcp4_key {
 	struct ether_addr eth_saddr;
