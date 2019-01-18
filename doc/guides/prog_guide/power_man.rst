@@ -128,6 +128,8 @@ The power management mechanism is used to save power when performing L3 forwardi
 References
 ----------
 
-*   l3fwd-power: The sample application in DPDK that performs L3 forwarding with power management.
+*   The :doc:`../sample_app_ug/l3_forward_power_man`
+    chapter in the :doc:`../sample_app_ug/index` section.
 
-*   The "L3 Forwarding with Power Management Sample Application" chapter in the *DPDK Sample Application's User Guide*.
+*   The :doc:`../sample_app_ug/vm_power_management`
+    chapter in the :doc:`../sample_app_ug/index` section.
