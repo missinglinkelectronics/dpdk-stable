@@ -3244,7 +3244,7 @@ rte_eth_tx_prepare(uint16_t port_id, uint16_t queue_id,
 #ifdef RTE_LIBRTE_ETHDEV_DEBUG
 	if (!rte_eth_dev_is_valid_port(port_id)) {
 		RTE_PMD_DEBUG_TRACE("Invalid TX port_id=%d\n", port_id);
-		rte_errno = -EINVAL;
+		rte_errno = EINVAL;
 		return 0;
 	}
 #endif
@@ -3254,7 +3254,7 @@ rte_eth_tx_prepare(uint16_t port_id, uint16_t queue_id,
 #ifdef RTE_LIBRTE_ETHDEV_DEBUG
 	if (queue_id >= dev->data->nb_tx_queues) {
 		RTE_PMD_DEBUG_TRACE("Invalid TX queue_id=%d\n", queue_id);
-		rte_errno = -EINVAL;
+		rte_errno = EINVAL;
 		return 0;
 	}
 #endif
