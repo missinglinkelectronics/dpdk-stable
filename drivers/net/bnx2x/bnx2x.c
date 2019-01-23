@@ -6918,19 +6918,19 @@ static void bnx2x_link_report_locked(struct bnx2x_softc *sc)
 		return;
 	}
 
-	ELINK_DEBUG_P2(sc, "Change in link status : cur_data = %lx, last_reported_link = %lx",
+	PMD_DRV_LOG(DEBUG, sc, "Change in link status : cur_data = %lx, last_reported_link = %lx",
 		       cur_data.link_report_flags,
 		       sc->last_reported_link.link_report_flags);
 
 	sc->link_cnt++;
 
-	ELINK_DEBUG_P1(sc, "link status change count = %x", sc->link_cnt);
+	PMD_DRV_LOG(DEBUG, sc, "link status change count = %x", sc->link_cnt);
 	/* report new link params and remember the state for the next time */
 	rte_memcpy(&sc->last_reported_link, &cur_data, sizeof(cur_data));
 
 	if (bnx2x_test_bit(BNX2X_LINK_REPORT_LINK_DOWN,
 			 &cur_data.link_report_flags)) {
-		ELINK_DEBUG_P0(sc, "NIC Link is Down");
+		PMD_DRV_LOG(DEBUG, sc, "NIC Link is Down");
 	} else {
 		__rte_unused const char *duplex;
 		__rte_unused const char *flow;
@@ -6938,10 +6938,10 @@ static void bnx2x_link_report_locked(struct bnx2x_softc *sc)
 		if (bnx2x_test_and_clear_bit(BNX2X_LINK_REPORT_FULL_DUPLEX,
 					   &cur_data.link_report_flags)) {
 			duplex = "full";
-				ELINK_DEBUG_P0(sc, "link set to full duplex");
+				PMD_DRV_LOG(DEBUG, sc, "link set to full duplex");
 		} else {
 			duplex = "half";
-				ELINK_DEBUG_P0(sc, "link set to half duplex");
+				PMD_DRV_LOG(DEBUG, sc, "link set to half duplex");
 		}
 
 /*
