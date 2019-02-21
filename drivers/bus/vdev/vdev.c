@@ -105,9 +105,7 @@ vdev_probe_all_drivers(struct rte_vdev_device *dev)
 	int ret;
 
 	name = rte_vdev_device_name(dev);
-
-	VDEV_LOG(DEBUG, "Search driver %s to probe device %s\n", name,
-		rte_vdev_device_name(dev));
+	VDEV_LOG(DEBUG, "Search driver to probe device %s\n", name);
 
 	if (vdev_parse(name, &driver))
 		return -1;
