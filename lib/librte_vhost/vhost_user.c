@@ -1437,8 +1437,11 @@ vhost_user_msg_handler(int vid, int fd)
 	case VHOST_USER_SET_LOG_BASE:
 		vhost_user_set_log_base(dev, &msg);
 
-		/* it needs a reply */
-		msg.size = sizeof(msg.payload.u64);
+		/*
+		 * The spec is not clear about it (yet), but QEMU doesn't
+		 * expect any payload in the reply.
+		 */
+		msg.size = 0;
 		send_vhost_reply(fd, &msg);
 		break;
 	case VHOST_USER_SET_LOG_FD:
