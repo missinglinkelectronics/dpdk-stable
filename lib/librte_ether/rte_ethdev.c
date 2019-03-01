@@ -443,6 +443,7 @@ rte_eth_dev_detach(uint16_t port_id, char *name)
 		goto err;
 
 	rte_eth_devices[port_id].state = RTE_ETH_DEV_UNUSED;
+	memset(&rte_eth_dev_data[port_id], 0, sizeof(struct rte_eth_dev_data));
 	return 0;
 
 err:
