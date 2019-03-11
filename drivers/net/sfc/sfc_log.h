@@ -38,7 +38,8 @@
 		const struct sfc_adapter *__sa = (sa);			\
 									\
 		RTE_LOG(level, PMD,					\
-			RTE_FMT("sfc_efx " PCI_PRI_FMT " #%" PRIu8 ": "	\
+			RTE_FMT("PMD: sfc_efx "				\
+				PCI_PRI_FMT " #%" PRIu16		\
 				RTE_FMT_HEAD(__VA_ARGS__,) "\n",	\
 				__sa->pci_addr.domain,			\
 				__sa->pci_addr.bus,			\
