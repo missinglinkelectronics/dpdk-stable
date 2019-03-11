@@ -32,8 +32,6 @@
  *
  */
 
-#include <libgen.h>
-
 #include <rte_ethdev.h>
 #include <rte_malloc.h>
 #include <rte_hash.h>
