@@ -565,6 +565,7 @@ fill_vec_buf(struct virtio_net *dev, struct vhost_virtqueue *vq,
 	uint16_t idx = vq->avail->ring[avail_idx & (vq->size - 1)];
 	uint32_t vec_id = *vec_idx;
 	uint32_t len    = 0;
+	uint32_t nr_descs = vq->size;
 	uint64_t dlen;
 	struct vring_desc *descs = vq->desc;
 	struct vring_desc *idesc = NULL;
@@ -576,6 +577,7 @@ fill_vec_buf(struct virtio_net *dev, struct vhost_virtqueue *vq,
 
 	if (vq->desc[idx].flags & VRING_DESC_F_INDIRECT) {
 		dlen = vq->desc[idx].len;
+		nr_descs = dlen / sizeof(struct vring_desc);
 		descs = (struct vring_desc *)(uintptr_t)
 			vhost_iova_to_vva(dev, vq, vq->desc[idx].addr,
 						&dlen,
@@ -599,7 +601,7 @@ fill_vec_buf(struct virtio_net *dev, struct vhost_virtqueue *vq,
 	}
 
 	while (1) {
-		if (unlikely(vec_id >= BUF_VECTOR_MAX || idx >= vq->size)) {
+		if (unlikely(vec_id >= BUF_VECTOR_MAX || idx >= nr_descs)) {
 			free_ind_table(idesc);
 			return -1;
 		}
