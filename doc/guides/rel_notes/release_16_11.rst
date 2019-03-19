@@ -1363,3 +1363,120 @@ Fixes in 16.11 LTS Release
 * test/hash: fix potential memory leak
 * test/virtual_pmd: add MAC address setting fake op
 * vhost: fix missing increment of log cache count
+
+16.11.9
+~~~~~~~
+
+* acl: forbid rule with priority zero
+* app/testpmd: fix csum parse-tunnel command invocation
+* app/testpmd: fix displaying RSS hash functions
+* app/testpmd: fix duplicate exit
+* app/testpmd: fix L4 length for UDP checksum
+* app/testpmd: optimize mbuf pool allocation
+* build: enable ARM NEON flag when __aarch64__ defined
+* bus/pci: fix allocation of device path
+* config: enable more than 128 cores for arm64
+* config: make AVX and AVX512 configurable
+* doc: add VFIO in ENA guide
+* doc: fix formatting in IP reassembly app guide
+* doc: fix NUMA library name in Linux guide
+* doc: fix typo in testpmd guide
+* doc: fix wrong usage of bind command
+* eal: fix build
+* eal: fix build with gcc 9.0
+* eal: fix build with -O1
+* eal: introduce rte version of fls
+* eal/linux: fix memory leak of logid
+* eal/linux: handle UIO read failure in interrupt handler
+* eal: use correct data type for bitmap slab operations
+* ethdev: fix doxygen comment to be with structure
+* ethdev: fix invalid configuration after failure
+* ethdev: fix queue start and stop
+* examples/ipv4_multicast: fix leak of cloned packets
+* examples/vhost: remove unnecessary constant
+* fix dpdk.org URLs
+* fix global variable issues
+* hash: fix key store element alignment
+* hash: remove unnecessary pause
+* igb_uio: fix unexpected removal for hot-unplug
+* igb_uio: issue FLR during open and release of device file
+* igb_uio: remove device reset in open
+* igb_uio: remove device reset in release
+* ip_frag: check fragment length of incoming packet
+* ip_frag: fix overflow in key comparison
+* ip_frag: use key length for key comparison
+* kni: fix build on CentOS 7.4
+* kni: fix build on Linux < 3.14
+* kni: fix build on Linux 4.19
+* kni: fix build on Suse 12 SP3
+* kni: fix kernel FIFO synchronization
+* kni: fix possible uninitialized variable
+* kni: fix SLE version detection
+* kvargs: fix processing a null list
+* mk: disable gcc AVX512F support
+* net/bnx2x: fix call to link handling periodic function
+* net/bnx2x: fix logging to include device name
+* net/bnx2x: fix to add PHY lock
+* net/bnx2x: fix to disable further interrupts
+* net/bnx2x: fix VF link state update
+* net/bnxt: fix uninitialized pointer access in Tx
+* net/bnxt: reduce polling interval for valid bit
+* net/bnxt: remove excess log messages
+* net/bnxt: set a VNIC as default only once
+* net/bnxt: set MAC filtering as outer for non tunnel frames
+* net/bonding: do not ignore RSS key on device config
+* net/bonding: fix crash when stopping mode 4 port
+* net/bonding: fix Rx slave fairness
+* net/bonding: reduce slave starvation on Rx poll
+* net/bonding: stop and deactivate slaves on stop
+* net/bonding: support matching QinQ ethertype
+* net/bonding: use evenly distributed default RSS RETA
+* net/e1000/base: fix uninitialized variable
+* net/e1000: do not error out if Rx drop enable is set
+* net/ena: fix passing RSS hash to mbuf
+* net/enic: add dependency on librte_kvargs
+* net/enic: add devarg to specify ingress VLAN rewrite mode
+* net/enic: do not use non-standard integer types
+* net/enic: set Rx VLAN offload flag for non-stripped packets
+* net: fix build with pedantic
+* net/i40e/base: correct global reset timeout calculation
+* net/i40e/base: fix partition id calculation for X722
+* net/i40e/base: gracefully clean the resources
+* net/i40e/base: properly clean resources
+* net/i40e: enable loopback function for X722 MAC
+* net/i40e: fix send admin queue command before init
+* net/i40e: fix X710 Rx after reading some registers
+* net/i40e: keep promiscuous on if allmulticast is enabled
+* net/i40e: update Tx offload mask
+* net/igb: update Tx offload mask
+* net/ixgbe: fix maximum wait time in comment
+* net/ixgbe: fix TDH register write
+* net/ixgbe: update Tx offload mask
+* net/ixgbevf: fix link state
+* net/ixgbe: wait longer for link after fiber MAC setup
+* net/mlx5: fix build on PPC64
+* net/nfp: fix live MAC changes not supported
+* net/nfp: fix mbuf flags with checksum good
+* net/nfp: fix RSS
+* net/thunderx: fix Tx desc corruption in scatter-gather mode
+* net/vhost: fix parameters string
+* net/virtio: add missing supported features
+* net/virtio: register/unregister intr handler on start/stop
+* net/virtio-user: do not reset owner when driver resets
+* net/virtio-user: fix typo in error message
+* pci: fix parsing of address without function number
+* test/crypto: fix number of queue pairs
+* test/hash: fix bucket size in perf test
+* test/hash: fix build
+* test/kni: check module dependency
+* test/reorder: fix out of bound access
+* usertools: check for lspci dependency
+* version: 16.11.9-rc1
+* version: 16.11.9-rc2
+* vfio: fix build
+* vfio: fix build on old kernel
+* vhost: fix corner case for enqueue operation
+* vhost: fix payload size of reply
+* vhost: remove unneeded null pointer check
+* vhost-user: drop connection on message handling failures
+* vhost-user: fix false negative in handling user messages
