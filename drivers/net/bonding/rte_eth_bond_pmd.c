@@ -2083,7 +2083,7 @@ void
 bond_ethdev_close(struct rte_eth_dev *dev)
 {
 	struct bond_dev_private *internals = dev->data->dev_private;
-	uint8_t bond_port_id = internals->port_id;
+	uint16_t bond_port_id = internals->port_id;
 	int skipped = 0;
 
 	RTE_LOG(INFO, EAL, "Closing bonded device %s\n", dev->device->name);
@@ -2530,7 +2530,7 @@ bond_ethdev_lsc_event_callback(uint16_t port_id, enum rte_eth_event_type type,
 	if (type != RTE_ETH_EVENT_INTR_LSC || param == NULL)
 		return rc;
 
-	bonded_eth_dev = &rte_eth_devices[*(uint8_t *)param];
+	bonded_eth_dev = &rte_eth_devices[*(uint16_t *)param];
 
 	if (check_for_bonded_ethdev(bonded_eth_dev))
 		return rc;
