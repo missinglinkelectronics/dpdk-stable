@@ -988,7 +988,7 @@ fwd_port_stats_display(portid_t port_id, struct rte_eth_stats *stats)
 		printf("  RX-packets: %-14"PRIu64" RX-dropped: %-14"PRIu64"RX-total: "
 		       "%-"PRIu64"\n",
 		       stats->ipackets, stats->imissed,
-		       (uint64_t) (stats->ipackets + stats->imissed));
+		       stats->ipackets + stats->imissed);
 
 		if (cur_fwd_eng == &csum_fwd_engine)
 			printf("  Bad-ipcsum: %-14"PRIu64" Bad-l4csum: %-14"PRIu64" \n",
@@ -1001,13 +1001,13 @@ fwd_port_stats_display(portid_t port_id, struct rte_eth_stats *stats)
 		printf("  TX-packets: %-14"PRIu64" TX-dropped: %-14"PRIu64"TX-total: "
 		       "%-"PRIu64"\n",
 		       stats->opackets, port->tx_dropped,
-		       (uint64_t) (stats->opackets + port->tx_dropped));
+		       stats->opackets + port->tx_dropped);
 	}
 	else {
 		printf("  RX-packets:             %14"PRIu64"    RX-dropped:%14"PRIu64"    RX-total:"
 		       "%14"PRIu64"\n",
 		       stats->ipackets, stats->imissed,
-		       (uint64_t) (stats->ipackets + stats->imissed));
+		       stats->ipackets + stats->imissed);
 
 		if (cur_fwd_eng == &csum_fwd_engine)
 			printf("  Bad-ipcsum:%14"PRIu64"    Bad-l4csum:%14"PRIu64"\n",
@@ -1021,7 +1021,7 @@ fwd_port_stats_display(portid_t port_id, struct rte_eth_stats *stats)
 		printf("  TX-packets:             %14"PRIu64"    TX-dropped:%14"PRIu64"    TX-total:"
 		       "%14"PRIu64"\n",
 		       stats->opackets, port->tx_dropped,
-		       (uint64_t) (stats->opackets + port->tx_dropped));
+		       stats->opackets + port->tx_dropped);
 	}
 
 #ifdef RTE_TEST_PMD_RECORD_BURST_STATS
