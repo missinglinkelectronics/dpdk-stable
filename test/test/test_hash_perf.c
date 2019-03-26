@@ -112,9 +112,11 @@ create_table(unsigned with_data, unsigned table_index)
 
 	if (with_data)
 		/* Table will store 8-byte data */
-		sprintf(name, "test_hash%d_data", hashtest_key_lens[table_index]);
+		snprintf(name, sizeof(name), "test_hash%u_data",
+				hashtest_key_lens[table_index]);
 	else
-		sprintf(name, "test_hash%d", hashtest_key_lens[table_index]);
+		snprintf(name, sizeof(name), "test_hash%u",
+				hashtest_key_lens[table_index]);
 
 	ut_params.name = name;
 	ut_params.key_len = hashtest_key_lens[table_index];
