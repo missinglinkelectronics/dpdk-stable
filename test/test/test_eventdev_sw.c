@@ -412,7 +412,7 @@ run_prio_packet_test(struct test *t)
 			.mbuf = arp
 		};
 		err = rte_event_enqueue_burst(evdev, t->port[0], &ev, 1);
-		if (err < 0) {
+		if (err != 1) {
 			printf("%d: error failed to enqueue\n", __LINE__);
 			return -1;
 		}
@@ -504,7 +504,7 @@ test_single_directed_packet(struct test *t)
 
 	/* generate pkt and enqueue */
 	err = rte_event_enqueue_burst(evdev, rx_enq, &ev, 1);
-	if (err < 0) {
+	if (err != 1) {
 		printf("%d: error failed to enqueue\n", __LINE__);
 		return -1;
 	}
@@ -573,7 +573,7 @@ test_directed_forward_credits(struct test *t)
 
 	for (i = 0; i < 1000; i++) {
 		err = rte_event_enqueue_burst(evdev, 0, &ev, 1);
-		if (err < 0) {
+		if (err != 1) {
 			printf("%d: error failed to enqueue\n", __LINE__);
 			return -1;
 		}
@@ -734,7 +734,7 @@ burst_packets(struct test *t)
 		};
 		/* generate pkt and enqueue */
 		err = rte_event_enqueue_burst(evdev, t->port[rx_port], &ev, 1);
-		if (err < 0) {
+		if (err != 1) {
 			printf("%d: Failed to enqueue\n", __LINE__);
 			return -1;
 		}
@@ -822,7 +822,7 @@ abuse_inflights(struct test *t)
 
 	/* Enqueue op only */
 	err = rte_event_enqueue_burst(evdev, t->port[rx_enq], &release_ev, 1);
-	if (err < 0) {
+	if (err != 1) {
 		printf("%d: Failed to enqueue\n", __LINE__);
 		return -1;
 	}
@@ -1985,7 +1985,7 @@ load_balancing(struct test *t)
 		};
 		/* generate pkt and enqueue */
 		err = rte_event_enqueue_burst(evdev, t->port[rx_enq], &ev, 1);
-		if (err < 0) {
+		if (err != 1) {
 			printf("%d: Failed to enqueue\n", __LINE__);
 			return -1;
 		}
@@ -2084,7 +2084,7 @@ load_balancing_history(struct test *t)
 		}
 		arp->hash.rss = flows1[i];
 		err = rte_event_enqueue_burst(evdev, t->port[rx_enq], &ev, 1);
-		if (err < 0) {
+		if (err != 1) {
 			printf("%d: Failed to enqueue\n", __LINE__);
 			return -1;
 		}
@@ -2134,7 +2134,7 @@ load_balancing_history(struct test *t)
 		arp->hash.rss = flows2[i];
 
 		err = rte_event_enqueue_burst(evdev, t->port[rx_enq], &ev, 1);
-		if (err < 0) {
+		if (err != 1) {
 			printf("%d: Failed to enqueue\n", __LINE__);
 			return -1;
 		}
@@ -2244,7 +2244,7 @@ invalid_qid(struct test *t)
 		};
 		/* generate pkt and enqueue */
 		err = rte_event_enqueue_burst(evdev, t->port[rx_enq], &ev, 1);
-		if (err < 0) {
+		if (err != 1) {
 			printf("%d: Failed to enqueue\n", __LINE__);
 			return -1;
 		}
@@ -2331,7 +2331,7 @@ single_packet(struct test *t)
 	arp->seqn = MAGIC_SEQN;
 
 	err = rte_event_enqueue_burst(evdev, t->port[rx_enq], &ev, 1);
-	if (err < 0) {
+	if (err != 1) {
 		printf("%d: Failed to enqueue\n", __LINE__);
 		return -1;
 	}
@@ -2375,7 +2375,7 @@ single_packet(struct test *t)
 
 	rte_pktmbuf_free(ev.mbuf);
 	err = rte_event_enqueue_burst(evdev, t->port[wrk_enq], &release_ev, 1);
-	if (err < 0) {
+	if (err != 1) {
 		printf("%d: Failed to enqueue\n", __LINE__);
 		return -1;
 	}
