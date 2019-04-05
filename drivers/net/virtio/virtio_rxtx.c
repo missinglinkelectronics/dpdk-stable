@@ -1044,6 +1044,8 @@ virtio_xmit_pkts(void *tx_queue, struct rte_mbuf **tx_pkts, uint16_t nb_pkts)
 				rte_pktmbuf_free(txm);
 				continue;
 			}
+			/* vlan_insert may add a header mbuf */
+			tx_pkts[nb_tx] = txm;
 		}
 
 		/* optimize ring usage */
