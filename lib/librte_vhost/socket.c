@@ -241,7 +241,7 @@ vhost_user_add_connection(int fd, struct vhost_user_socket *vsocket)
 			RTE_LOG(ERR, VHOST_CONFIG,
 				"failed to add vhost user connection with fd %d\n",
 				fd);
-			goto err;
+			goto err_cleanup;
 		}
 	}
 
@@ -258,7 +258,7 @@ vhost_user_add_connection(int fd, struct vhost_user_socket *vsocket)
 		if (vsocket->notify_ops->destroy_connection)
 			vsocket->notify_ops->destroy_connection(conn->vid);
 
-		goto err;
+		goto err_cleanup;
 	}
 
 	pthread_mutex_lock(&vsocket->conn_mutex);
@@ -266,6 +266,8 @@ vhost_user_add_connection(int fd, struct vhost_user_socket *vsocket)
 	pthread_mutex_unlock(&vsocket->conn_mutex);
 	return;
 
+err_cleanup:
+	vhost_destroy_device(vid);
 err:
 	free(conn);
 	close(fd);
