@@ -596,6 +596,27 @@ mlx5_txq_ibv_verify(struct rte_eth_dev *dev)
 }
 
 /**
+ * Calcuate the total number of WQEBB for Tx queue.
+ *
+ * Simplified version of calc_sq_size() in rdma-core.
+ *
+ * @param txq_ctrl
+ *   Pointer to Tx queue control structure.
+ *
+ * @return
+ *   The number of WQEBB.
+ */
+static int
+txq_calc_wqebb_cnt(struct mlx5_txq_ctrl *txq_ctrl)
+{
+	unsigned int wqe_size;
+	const unsigned int desc = 1 << txq_ctrl->txq.elts_n;
+
+	wqe_size = MLX5_WQE_SIZE + txq_ctrl->max_inline_data;
+	return rte_align32pow2(wqe_size * desc) / MLX5_WQE_SIZE;
+}
+
+/**
  * Create a DPDK Tx queue.
  *
  * @param dev
@@ -640,10 +661,6 @@ mlx5_txq_new(struct rte_eth_dev *dev, uint16_t idx, uint16_t desc,
 	tmpl->idx = idx;
 	if (priv->mps == MLX5_MPW_ENHANCED)
 		tmpl->txq.mpw_hdr_dseg = priv->mpw_hdr_dseg;
-	DRV_LOG(DEBUG, "port %u priv->device_attr.max_qp_wr is %d",
-		dev->data->port_id, priv->device_attr.orig_attr.max_qp_wr);
-	DRV_LOG(DEBUG, "port %u priv->device_attr.max_sge is %d",
-		dev->data->port_id, priv->device_attr.orig_attr.max_sge);
 	if (priv->txq_inline && (priv->txqs_n >= priv->txqs_inline)) {
 		unsigned int ds_cnt;
 
@@ -698,6 +715,17 @@ mlx5_txq_new(struct rte_eth_dev *dev, uint16_t idx, uint16_t desc,
 	}
 	if (priv->tunnel_en)
 		tmpl->txq.tunnel_en = 1;
+	if (txq_calc_wqebb_cnt(tmpl) >
+	    priv->device_attr.orig_attr.max_qp_wr) {
+		DRV_LOG(ERR,
+			"port %u Tx WQEBB count (%d) exceeds the limit (%d),"
+			" try smaller queue size",
+			dev->data->port_id, txq_calc_wqebb_cnt(tmpl),
+			priv->device_attr.orig_attr.max_qp_wr);
+		rte_free(tmpl);
+		rte_errno = ENOMEM;
+		return NULL;
+	}
 	tmpl->txq.elts =
 		(struct rte_mbuf *(*)[1 << tmpl->txq.elts_n])(tmpl + 1);
 	tmpl->txq.mr_ctrl.cache_bh =
