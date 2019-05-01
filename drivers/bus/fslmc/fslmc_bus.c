@@ -165,8 +165,7 @@ scan_one_fslmc_device(char *dev_name)
 
 	t_ptr = strtok(NULL, ".");
 	if (!t_ptr) {
-		FSLMC_BUS_LOG(ERR, "Incorrect device string observed (%s).",
-			      t_ptr);
+		FSLMC_BUS_LOG(ERR, "Incorrect device string observed (null).")
 		goto cleanup;
 	}
 
