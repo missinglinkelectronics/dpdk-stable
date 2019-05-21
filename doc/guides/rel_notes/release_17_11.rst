@@ -1686,3 +1686,91 @@ Fixes in 17.11 LTS Release
 * vfio: do not needlessly setup device in secondary process
 * vhost: fix corner case for enqueue operation
 * vhost: remove unneeded null pointer check
+
+17.11.6
+~~~~~~~
+
+* app/testpmd: expand RED queue thresholds to 64 bits
+* app/testpmd: fix quit to stop all ports before close
+* crypto/qat: fix block size error handling
+* devtools: fix wrong headline lowercase for arm
+* doc: add dependency for PDF in contributing guide
+* doc: add missing loopback option in testpmd guide
+* doc: fix a parameter name in testpmd guide
+* doc: fix garbage text in generated HTML guides
+* doc: fix references in power management guide
+* drivers/crypto: fix PMDs memory leak
+* drivers: fix sprintf with snprintf
+* drivers/net: fix several Tx prepare functions
+* eal: check string parameter lengths
+* eal: fix core number validation
+* eal: fix out of bound access when no CPU available
+* efd: fix tail queue leak
+* ethdev: clear ethdev data upon detach
+* ethdev: fix errno to have positive value
+* ethdev: fix typo in queue setup error log
+* eventdev: fix xstats documentation typo
+* examples/bond: fix crash when there is no active slave
+* examples/flow_filtering: fix example documentation
+* examples/ipsec-secgw: fix outbound codepath for single SA
+* examples/ipsec-secgw: make local variables static
+* examples/tep_term: remove unused constant
+* examples/vhost: fix path allocation failure handling
+* gro: check invalid TCP header length
+* gso: fix VxLAN/GRE tunnel checks
+* kni: fix build for dev_open in Linux 5.0
+* kni: fix build for igb_ndo_bridge_setlink in Linux 5.0
+* kni: fix build on RHEL 8
+* kni: fix build on RHEL8 for arm and Power9
+* mk: fix scope of disabling AVX512F support
+* net/af_packet: fix setting MTU decrements sockaddr twice
+* net/bnx2x: cleanup info logs
+* net/bonding: fix possible null pointer reference
+* net/dpaa2: fix device init for secondary process
+* net/dpaa: fix secondary process
+* net/ena: add supported RSS offloads types
+* net/ena: fix dev init with multi-process
+* net/ena: fix errno to positive value
+* net/ena: update completion queue after cleanup
+* net/enic: remove useless include
+* net: fix underflow for checksum of invalid IPv4 packets
+* net/fm10k: fix internal switch initial status
+* net/i40e: fix get RSS conf
+* net/i40e: fix getting RSS configuration
+* net/i40e: fix queue region DCB configure
+* net/i40e: fix statistics inconsistency
+* net/i40e: fix using recovery mode firmware
+* net/i40e: fix VF overwrite PF RSS LUT for X722
+* net/i40e: remove redundant reset of queue number
+* net/i40e: revert fix offload not supported mask
+* net/igb: fix LSC interrupt when using MSI-X
+* net/ixgbe: fix over using multicast table for VF
+* net/ixgbe: fix overwriting RSS RETA
+* net/mlx5: fix validation of Rx queue number
+* net/qede: fix performance bottleneck in Rx path
+* net/qede: remove prefetch in Tx path
+* net/sfc/base: fix Tx descriptor max number check
+* net/sfc: discard last seen VLAN TCI if Tx packet is dropped
+* net/sfc: fix datapath name references in logs
+* net/sfc: fix port ID log
+* net/sfc: fix Rx packets counter
+* net/sfc: fix typo in preprocessor check
+* net/sfc: fix VF error/missed stats mapping
+* net/sfc: pass HW Tx queue index on creation
+* net/tap: add buffer overflow checks before checksum
+* net/tap: fix possible uninitialized variable access
+* net/virtio: add barrier before reading the flags
+* net/virtio: fix resuming port with Rx vector path
+* net/virtio-user: fix used ring in cvq handling
+* test/crypto: fix misleading trace message
+* test/memzone: fix typo
+* test/memzone: handle previously allocated memzones
+* timer: fix race condition
+* vfio: fix error message
+* vhost: fix access for indirect descriptors
+* vhost: fix crash after mmap failure
+* vhost: fix error handling when mem table gets updated
+* vhost: fix memory leak on realloc failure
+* vhost: fix payload size of reply
+* vhost: fix possible out of bound access in vector filling
+* vhost: fix race condition when adding fd in the fdset
