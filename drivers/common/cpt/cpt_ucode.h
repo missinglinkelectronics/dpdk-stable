@@ -89,8 +89,7 @@ cpt_fc_ciph_validate_key_aes(uint16_t key_len)
 }
 
 static __rte_always_inline int
-cpt_fc_ciph_validate_key(cipher_type_t type, struct cpt_ctx *cpt_ctx,
-		uint16_t key_len)
+cpt_fc_ciph_set_type(cipher_type_t type, struct cpt_ctx *ctx, uint16_t key_len)
 {
 	int fc_type = 0;
 	switch (type) {
@@ -125,7 +124,7 @@ cpt_fc_ciph_validate_key(cipher_type_t type, struct cpt_ctx *cpt_ctx,
 		if (unlikely(key_len != 16))
 			return -1;
 		/* No support for AEAD yet */
-		if (unlikely(cpt_ctx->hash_type))
+		if (unlikely(ctx->hash_type))
 			return -1;
 		fc_type = ZUC_SNOW3G;
 		break;
@@ -134,14 +133,16 @@ cpt_fc_ciph_validate_key(cipher_type_t type, struct cpt_ctx *cpt_ctx,
 		if (unlikely(key_len != 16))
 			return -1;
 		/* No support for AEAD yet */
-		if (unlikely(cpt_ctx->hash_type))
+		if (unlikely(ctx->hash_type))
 			return -1;
 		fc_type = KASUMI;
 		break;
 	default:
 		return -1;
 	}
-	return fc_type;
+
+	ctx->fc_type = fc_type;
+	return 0;
 }
 
 static __rte_always_inline void
@@ -181,7 +182,6 @@ cpt_fc_ciph_set_key_snow3g_uea2(struct cpt_ctx *cpt_ctx, uint8_t *key,
 	cpt_ctx->snow3g = 1;
 	gen_key_snow3g(key, keyx);
 	memcpy(cpt_ctx->zs_ctx.ci_key, keyx, key_len);
-	cpt_ctx->fc_type = ZUC_SNOW3G;
 	cpt_ctx->zsk_flags = 0;
 }
 
@@ -192,7 +192,6 @@ cpt_fc_ciph_set_key_zuc_eea3(struct cpt_ctx *cpt_ctx, uint8_t *key,
 	cpt_ctx->snow3g = 0;
 	memcpy(cpt_ctx->zs_ctx.ci_key, key, key_len);
 	memcpy(cpt_ctx->zs_ctx.zuc_const, zuc_d, 32);
-	cpt_ctx->fc_type = ZUC_SNOW3G;
 	cpt_ctx->zsk_flags = 0;
 }
 
@@ -203,7 +202,6 @@ cpt_fc_ciph_set_key_kasumi_f8_ecb(struct cpt_ctx *cpt_ctx, uint8_t *key,
 	cpt_ctx->k_ecb = 1;
 	memcpy(cpt_ctx->k_ctx.ci_key, key, key_len);
 	cpt_ctx->zsk_flags = 0;
-	cpt_ctx->fc_type = KASUMI;
 }
 
 static __rte_always_inline void
@@ -212,7 +210,6 @@ cpt_fc_ciph_set_key_kasumi_f8_cbc(struct cpt_ctx *cpt_ctx, uint8_t *key,
 {
 	memcpy(cpt_ctx->k_ctx.ci_key, key, key_len);
 	cpt_ctx->zsk_flags = 0;
-	cpt_ctx->fc_type = KASUMI;
 }
 
 static __rte_always_inline int
@@ -222,15 +219,13 @@ cpt_fc_ciph_set_key(void *ctx, cipher_type_t type, uint8_t *key,
 	struct cpt_ctx *cpt_ctx = ctx;
 	mc_fc_context_t *fctx = &cpt_ctx->fctx;
 	uint64_t *ctrl_flags = NULL;
-	int fc_type;
+	int ret;
 
-	/* Validate key before proceeding */
-	fc_type = cpt_fc_ciph_validate_key(type, cpt_ctx, key_len);
-	if (unlikely(fc_type == -1))
+	ret = cpt_fc_ciph_set_type(type, cpt_ctx, key_len);
+	if (unlikely(ret))
 		return -1;
 
-	if (fc_type == FC_GEN) {
-		cpt_ctx->fc_type = FC_GEN;
+	if (cpt_ctx->fc_type == FC_GEN) {
 		ctrl_flags = (uint64_t *)&(fctx->enc.enc_ctrl.flags);
 		*ctrl_flags = rte_be_to_cpu_64(*ctrl_flags);
 		/*
@@ -468,7 +463,6 @@ cpt_digest_gen_prep(uint32_t flags,
 {
 	struct cpt_request_info *req;
 	uint32_t size, i;
-	int32_t m_size;
 	uint16_t data_len, mac_len, key_len;
 	auth_type_t hash_type;
 	buf_ptr_t *meta_p;
@@ -498,7 +492,6 @@ cpt_digest_gen_prep(uint32_t flags,
 
 	m_vaddr = meta_p->vaddr;
 	m_dma = meta_p->dma_addr;
-	m_size = meta_p->size;
 
 	/*
 	 * Save initial space that followed app data for completion code &
@@ -514,14 +507,12 @@ cpt_digest_gen_prep(uint32_t flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	req = m_vaddr;
 
 	size = sizeof(struct cpt_request_info);
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	hash_type = ctx->hash_type;
 	mac_len = ctx->mac_len;
@@ -634,7 +625,6 @@ cpt_digest_gen_prep(uint32_t flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* cpt alternate completion address saved earlier */
 	req->alternate_caddr = (uint64_t *)((uint8_t *)c_vaddr - 8);
@@ -692,13 +682,11 @@ cpt_enc_hmac_prep(uint32_t flags,
 	vq_cmd_word3_t vq_cmd_w3;
 	void *c_vaddr;
 	uint64_t c_dma;
-	int32_t m_size;
 	opcode_info_t opcode;
 
 	meta_p = &fc_params->meta_buf;
 	m_vaddr = meta_p->vaddr;
 	m_dma = meta_p->dma_addr;
-	m_size = meta_p->size;
 
 	encr_offset = ENCR_OFFSET(d_offs);
 	auth_offset = AUTH_OFFSET(d_offs);
@@ -734,7 +722,6 @@ cpt_enc_hmac_prep(uint32_t flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* start cpt request info struct at 8 byte boundary */
 	size = (uint8_t *)RTE_PTR_ALIGN(m_vaddr, 8) -
@@ -745,7 +732,6 @@ cpt_enc_hmac_prep(uint32_t flags,
 	size += sizeof(struct cpt_request_info);
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	if (hash_type == GMAC_TYPE)
 		encr_data_len = 0;
@@ -865,7 +851,6 @@ cpt_enc_hmac_prep(uint32_t flags,
 
 		m_vaddr = (uint8_t *)m_vaddr + size;
 		m_dma += size;
-		m_size -= size;
 
 		opcode.s.major |= CPT_DMA_MODE;
 
@@ -1013,7 +998,6 @@ cpt_enc_hmac_prep(uint32_t flags,
 
 		m_vaddr = (uint8_t *)m_vaddr + size;
 		m_dma += size;
-		m_size -= size;
 
 		/* cpt alternate completion address saved earlier */
 		req->alternate_caddr = (uint64_t *)((uint8_t *)c_vaddr - 8);
@@ -1063,7 +1047,7 @@ cpt_dec_hmac_prep(uint32_t flags,
 	uint32_t iv_offset = 0, size;
 	int32_t inputlen, outputlen, enc_dlen, auth_dlen;
 	struct cpt_ctx *cpt_ctx;
-	int32_t hash_type, mac_len, m_size;
+	int32_t hash_type, mac_len;
 	uint8_t iv_len = 16;
 	struct cpt_request_info *req;
 	buf_ptr_t *meta_p, *aad_buf = NULL;
@@ -1081,7 +1065,6 @@ cpt_dec_hmac_prep(uint32_t flags,
 	meta_p = &fc_params->meta_buf;
 	m_vaddr = meta_p->vaddr;
 	m_dma = meta_p->dma_addr;
-	m_size = meta_p->size;
 
 	encr_offset = ENCR_OFFSET(d_offs);
 	auth_offset = AUTH_OFFSET(d_offs);
@@ -1147,7 +1130,6 @@ cpt_dec_hmac_prep(uint32_t flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* start cpt request info structure at 8 byte alignment */
 	size = (uint8_t *)RTE_PTR_ALIGN(m_vaddr, 8) -
@@ -1158,7 +1140,6 @@ cpt_dec_hmac_prep(uint32_t flags,
 	size += sizeof(struct cpt_request_info);
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* Decryption */
 	opcode.s.major = CPT_MAJOR_OP_FC;
@@ -1245,7 +1226,6 @@ cpt_dec_hmac_prep(uint32_t flags,
 
 		m_vaddr = (uint8_t *)m_vaddr + size;
 		m_dma += size;
-		m_size -= size;
 
 		opcode.s.major |= CPT_DMA_MODE;
 
@@ -1394,7 +1374,6 @@ cpt_dec_hmac_prep(uint32_t flags,
 
 		m_vaddr = (uint8_t *)m_vaddr + size;
 		m_dma += size;
-		m_size -= size;
 
 		/* cpt alternate completion address saved earlier */
 		req->alternate_caddr = (uint64_t *)((uint8_t *)c_vaddr - 8);
@@ -1451,7 +1430,7 @@ cpt_zuc_snow3g_enc_prep(uint32_t req_flags,
 	buf_ptr_t *buf_p;
 	uint32_t encr_offset = 0, auth_offset = 0;
 	uint32_t encr_data_len = 0, auth_data_len = 0;
-	int flags, iv_len = 16, m_size;
+	int flags, iv_len = 16;
 	void *m_vaddr, *c_vaddr;
 	uint64_t m_dma, c_dma, offset_ctrl;
 	uint64_t *offset_vaddr, offset_dma;
@@ -1463,7 +1442,6 @@ cpt_zuc_snow3g_enc_prep(uint32_t req_flags,
 	buf_p = &params->meta_buf;
 	m_vaddr = buf_p->vaddr;
 	m_dma = buf_p->dma_addr;
-	m_size = buf_p->size;
 
 	cpt_ctx = params->ctx_buf.vaddr;
 	flags = cpt_ctx->zsk_flags;
@@ -1485,7 +1463,6 @@ cpt_zuc_snow3g_enc_prep(uint32_t req_flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* Reserve memory for cpt request info */
 	req = m_vaddr;
@@ -1493,7 +1470,6 @@ cpt_zuc_snow3g_enc_prep(uint32_t req_flags,
 	size = sizeof(struct cpt_request_info);
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	opcode.s.major = CPT_MAJOR_OP_ZUC_SNOW3G;
 
@@ -1617,7 +1593,6 @@ cpt_zuc_snow3g_enc_prep(uint32_t req_flags,
 
 		m_vaddr = (uint8_t *)m_vaddr + OFF_CTRL_LEN + iv_len;
 		m_dma += OFF_CTRL_LEN + iv_len;
-		m_size -= OFF_CTRL_LEN + iv_len;
 
 		opcode.s.major |= CPT_DMA_MODE;
 
@@ -1718,7 +1693,6 @@ cpt_zuc_snow3g_enc_prep(uint32_t req_flags,
 
 		m_vaddr = (uint8_t *)m_vaddr + size;
 		m_dma += size;
-		m_size -= size;
 
 		/* cpt alternate completion address saved earlier */
 		req->alternate_caddr = (uint64_t *)((uint8_t *)c_vaddr - 8);
@@ -1772,7 +1746,7 @@ cpt_zuc_snow3g_dec_prep(uint32_t req_flags,
 	buf_ptr_t *buf_p;
 	uint32_t encr_offset;
 	uint32_t encr_data_len;
-	int flags, m_size;
+	int flags;
 	void *m_vaddr, *c_vaddr;
 	uint64_t m_dma, c_dma;
 	uint64_t *offset_vaddr, offset_dma;
@@ -1784,7 +1758,6 @@ cpt_zuc_snow3g_dec_prep(uint32_t req_flags,
 	buf_p = &params->meta_buf;
 	m_vaddr = buf_p->vaddr;
 	m_dma = buf_p->dma_addr;
-	m_size = buf_p->size;
 
 	/*
 	 * Microcode expects offsets in bytes
@@ -1811,7 +1784,6 @@ cpt_zuc_snow3g_dec_prep(uint32_t req_flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* Reserve memory for cpt request info */
 	req = m_vaddr;
@@ -1819,7 +1791,6 @@ cpt_zuc_snow3g_dec_prep(uint32_t req_flags,
 	size = sizeof(struct cpt_request_info);
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	opcode.s.major = CPT_MAJOR_OP_ZUC_SNOW3G;
 
@@ -1909,7 +1880,6 @@ cpt_zuc_snow3g_dec_prep(uint32_t req_flags,
 
 		m_vaddr = (uint8_t *)m_vaddr + OFF_CTRL_LEN + iv_len;
 		m_dma += OFF_CTRL_LEN + iv_len;
-		m_size -= OFF_CTRL_LEN + iv_len;
 
 		opcode.s.major |= CPT_DMA_MODE;
 
@@ -1986,7 +1956,6 @@ cpt_zuc_snow3g_dec_prep(uint32_t req_flags,
 
 		m_vaddr = (uint8_t *)m_vaddr + size;
 		m_dma += size;
-		m_size -= size;
 
 		/* cpt alternate completion address saved earlier */
 		req->alternate_caddr = (uint64_t *)((uint8_t *)c_vaddr - 8);
@@ -2041,7 +2010,7 @@ cpt_kasumi_enc_prep(uint32_t req_flags,
 	buf_ptr_t *buf_p;
 	uint32_t encr_offset, auth_offset;
 	uint32_t encr_data_len, auth_data_len;
-	int flags, m_size;
+	int flags;
 	uint8_t *iv_s, *iv_d, iv_len = 8;
 	uint8_t dir = 0;
 	void *m_vaddr, *c_vaddr;
@@ -2059,7 +2028,6 @@ cpt_kasumi_enc_prep(uint32_t req_flags,
 	buf_p = &params->meta_buf;
 	m_vaddr = buf_p->vaddr;
 	m_dma = buf_p->dma_addr;
-	m_size = buf_p->size;
 
 	encr_offset = ENCR_OFFSET(d_offs) / 8;
 	auth_offset = AUTH_OFFSET(d_offs) / 8;
@@ -2092,7 +2060,6 @@ cpt_kasumi_enc_prep(uint32_t req_flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* Reserve memory for cpt request info */
 	req = m_vaddr;
@@ -2100,7 +2067,6 @@ cpt_kasumi_enc_prep(uint32_t req_flags,
 	size = sizeof(struct cpt_request_info);
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	opcode.s.major = CPT_MAJOR_OP_KASUMI | CPT_DMA_MODE;
 
@@ -2128,7 +2094,6 @@ cpt_kasumi_enc_prep(uint32_t req_flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + OFF_CTRL_LEN + iv_len;
 	m_dma += OFF_CTRL_LEN + iv_len;
-	m_size -= OFF_CTRL_LEN + iv_len;
 
 	/* DPTR has SG list */
 	in_buffer = m_vaddr;
@@ -2236,7 +2201,6 @@ cpt_kasumi_enc_prep(uint32_t req_flags,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* cpt alternate completion address saved earlier */
 	req->alternate_caddr = (uint64_t *)((uint8_t *)c_vaddr - 8);
@@ -2288,7 +2252,7 @@ cpt_kasumi_dec_prep(uint64_t d_offs,
 	buf_ptr_t *buf_p;
 	uint32_t encr_offset;
 	uint32_t encr_data_len;
-	int flags, m_size;
+	int flags;
 	uint8_t dir = 0;
 	void *m_vaddr, *c_vaddr;
 	uint64_t m_dma, c_dma;
@@ -2305,7 +2269,6 @@ cpt_kasumi_dec_prep(uint64_t d_offs,
 	buf_p = &params->meta_buf;
 	m_vaddr = buf_p->vaddr;
 	m_dma = buf_p->dma_addr;
-	m_size = buf_p->size;
 
 	encr_offset = ENCR_OFFSET(d_offs) / 8;
 	encr_data_len = ENCR_DLEN(d_lens);
@@ -2327,7 +2290,6 @@ cpt_kasumi_dec_prep(uint64_t d_offs,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* Reserve memory for cpt request info */
 	req = m_vaddr;
@@ -2335,7 +2297,6 @@ cpt_kasumi_dec_prep(uint64_t d_offs,
 	size = sizeof(struct cpt_request_info);
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	opcode.s.major = CPT_MAJOR_OP_KASUMI | CPT_DMA_MODE;
 
@@ -2362,7 +2323,6 @@ cpt_kasumi_dec_prep(uint64_t d_offs,
 
 	m_vaddr = (uint8_t *)m_vaddr + OFF_CTRL_LEN + iv_len;
 	m_dma += OFF_CTRL_LEN + iv_len;
-	m_size -= OFF_CTRL_LEN + iv_len;
 
 	/* DPTR has SG list */
 	in_buffer = m_vaddr;
@@ -2431,7 +2391,6 @@ cpt_kasumi_dec_prep(uint64_t d_offs,
 
 	m_vaddr = (uint8_t *)m_vaddr + size;
 	m_dma += size;
-	m_size -= size;
 
 	/* cpt alternate completion address saved earlier */
 	req->alternate_caddr = (uint64_t *)((uint8_t *)c_vaddr - 8);
@@ -2628,9 +2587,9 @@ fill_sess_aead(struct rte_crypto_sym_xform *xform,
 	cipher_type_t enc_type = 0; /* NULL Cipher type */
 	auth_type_t auth_type = 0; /* NULL Auth type */
 	uint32_t cipher_key_len = 0;
-	uint8_t zsk_flag = 0, aes_gcm = 0;
+	uint8_t aes_gcm = 0;
 	aead_form = &xform->aead;
-	void *ctx;
+	void *ctx = SESS_PRIV(sess);
 
 	if (aead_form->op == RTE_CRYPTO_AEAD_OP_ENCRYPT &&
 	   aead_form->algo == RTE_CRYPTO_AEAD_AES_GCM) {
@@ -2664,13 +2623,12 @@ fill_sess_aead(struct rte_crypto_sym_xform *xform,
 			       (unsigned int long)aead_form->key.length);
 		return -1;
 	}
-	sess->zsk_flag = zsk_flag;
+	sess->zsk_flag = 0;
 	sess->aes_gcm = aes_gcm;
 	sess->mac_len = aead_form->digest_length;
 	sess->iv_offset = aead_form->iv.offset;
 	sess->iv_length = aead_form->iv.length;
 	sess->aad_length = aead_form->aad_length;
-	ctx = (void *)((uint8_t *)sess + sizeof(struct cpt_sess_misc)),
 
 	cpt_fc_ciph_set_key(ctx, enc_type, aead_form->key.data,
 			aead_form->key.length, NULL);
@@ -2687,10 +2645,7 @@ fill_sess_cipher(struct rte_crypto_sym_xform *xform,
 	struct rte_crypto_cipher_xform *c_form;
 	cipher_type_t enc_type = 0; /* NULL Cipher type */
 	uint32_t cipher_key_len = 0;
-	uint8_t zsk_flag = 0, aes_gcm = 0, aes_ctr = 0, is_null = 0;
-
-	if (xform->type != RTE_CRYPTO_SYM_XFORM_CIPHER)
-		return -1;
+	uint8_t zsk_flag = 0, aes_ctr = 0, is_null = 0;
 
 	c_form = &xform->cipher;
 
@@ -2772,7 +2727,7 @@ fill_sess_cipher(struct rte_crypto_sym_xform *xform,
 	}
 
 	sess->zsk_flag = zsk_flag;
-	sess->aes_gcm = aes_gcm;
+	sess->aes_gcm = 0;
 	sess->aes_ctr = aes_ctr;
 	sess->iv_offset = c_form->iv.offset;
 	sess->iv_length = c_form->iv.length;
@@ -2791,9 +2746,6 @@ fill_sess_auth(struct rte_crypto_sym_xform *xform,
 	struct rte_crypto_auth_xform *a_form;
 	auth_type_t auth_type = 0; /* NULL Auth type */
 	uint8_t zsk_flag = 0, aes_gcm = 0, is_null = 0;
-
-	if (xform->type != RTE_CRYPTO_SYM_XFORM_AUTH)
-		goto error_out;
 
 	a_form = &xform->auth;
 
@@ -2866,11 +2818,11 @@ fill_sess_auth(struct rte_crypto_sym_xform *xform,
 	case RTE_CRYPTO_AUTH_AES_CBC_MAC:
 		CPT_LOG_DP_ERR("Crypto: Unsupported hash algo %u",
 			       a_form->algo);
-		goto error_out;
+		return -1;
 	default:
 		CPT_LOG_DP_ERR("Crypto: Undefined Hash algo %u specified",
 			       a_form->algo);
-		goto error_out;
+		return -1;
 	}
 
 	sess->zsk_flag = zsk_flag;
@@ -2885,9 +2837,6 @@ fill_sess_auth(struct rte_crypto_sym_xform *xform,
 			    a_form->key.length, a_form->digest_length);
 
 	return 0;
-
-error_out:
-	return -1;
 }
 
 static __rte_always_inline int
@@ -2897,11 +2846,7 @@ fill_sess_gmac(struct rte_crypto_sym_xform *xform,
 	struct rte_crypto_auth_xform *a_form;
 	cipher_type_t enc_type = 0; /* NULL Cipher type */
 	auth_type_t auth_type = 0; /* NULL Auth type */
-	uint8_t zsk_flag = 0, aes_gcm = 0;
-	void *ctx;
-
-	if (xform->type != RTE_CRYPTO_SYM_XFORM_AUTH)
-		return -1;
+	void *ctx = SESS_PRIV(sess);
 
 	a_form = &xform->auth;
 
@@ -2925,13 +2870,12 @@ fill_sess_gmac(struct rte_crypto_sym_xform *xform,
 		return -1;
 	}
 
-	sess->zsk_flag = zsk_flag;
-	sess->aes_gcm = aes_gcm;
+	sess->zsk_flag = 0;
+	sess->aes_gcm = 0;
 	sess->is_gmac = 1;
 	sess->iv_offset = a_form->iv.offset;
 	sess->iv_length = a_form->iv.length;
 	sess->mac_len = a_form->digest_length;
-	ctx = (void *)((uint8_t *)sess + sizeof(struct cpt_sess_misc)),
 
 	cpt_fc_ciph_set_key(ctx, enc_type, a_form->key.data,
 			a_form->key.length, NULL);
@@ -3131,9 +3075,6 @@ fill_fc_params(struct rte_crypto_op *cop,
 	void *prep_req = NULL;
 	struct rte_mbuf *m_src, *m_dst;
 	uint8_t cpt_op = sess_misc->cpt_op;
-	uint8_t zsk_flag = sess_misc->zsk_flag;
-	uint8_t aes_gcm = sess_misc->aes_gcm;
-	uint16_t mac_len = sess_misc->mac_len;
 #ifdef CPT_ALWAYS_USE_SG_MODE
 	uint8_t inplace = 0;
 #else
@@ -3160,21 +3101,17 @@ fill_fc_params(struct rte_crypto_op *cop,
 		}
 	}
 
-	if (zsk_flag) {
+	if (sess_misc->zsk_flag) {
 		fc_params.auth_iv_buf = rte_crypto_op_ctod_offset(cop,
 					uint8_t *,
 					sess_misc->auth_iv_offset);
-		if (zsk_flag == K_F9) {
-			CPT_LOG_DP_ERR("Should not reach here for "
-			"kasumi F9\n");
-		}
-		if (zsk_flag != ZS_EA)
+		if (sess_misc->zsk_flag != ZS_EA)
 			inplace = 0;
 	}
 	m_src = sym_op->m_src;
 	m_dst = sym_op->m_dst;
 
-	if (aes_gcm) {
+	if (sess_misc->aes_gcm) {
 		uint8_t *salt;
 		uint8_t *aad_data;
 		uint16_t aad_len;
@@ -3208,7 +3145,7 @@ fill_fc_params(struct rte_crypto_op *cop,
 			sess_misc->salt = *(uint32_t *)salt;
 		}
 		fc_params.iv_buf = salt + 4;
-		if (likely(mac_len)) {
+		if (likely(sess_misc->mac_len)) {
 			struct rte_mbuf *m = (cpt_op & CPT_OP_ENCODE) ? m_dst :
 					     m_src;
 
@@ -3251,7 +3188,7 @@ fill_fc_params(struct rte_crypto_op *cop,
 			}
 			fc_params.iv_buf = salt + 4;
 		}
-		if (likely(mac_len)) {
+		if (likely(sess_misc->mac_len)) {
 			struct rte_mbuf *m;
 
 			m = (cpt_op & CPT_OP_ENCODE) ? m_dst : m_src;
@@ -3310,7 +3247,6 @@ fill_fc_params(struct rte_crypto_op *cop,
 			uint32_t pkt_len;
 
 			/* Try to make room as much as src has */
-			m_dst = sym_op->m_dst;
 			pkt_len = rte_pktmbuf_pkt_len(m_dst);
 
 			if (unlikely(pkt_len < rte_pktmbuf_pkt_len(m_src))) {
@@ -3494,7 +3430,6 @@ fill_digest_params(struct rte_crypto_op *cop,
 	void *prep_req = NULL;
 	struct rte_mbuf *m_src, *m_dst;
 	uint16_t auth_op = sess->cpt_op & CPT_OP_AUTH_MASK;
-	uint8_t zsk_flag = sess->zsk_flag;
 	uint16_t mac_len = sess->mac_len;
 	fc_params_t params;
 	char src[SRC_IOV_SIZE];
@@ -3526,7 +3461,7 @@ fill_digest_params(struct rte_crypto_op *cop,
 
 	flags = VALID_MAC_BUF;
 	params.src_iov = (void *)src;
-	if (unlikely(zsk_flag)) {
+	if (unlikely(sess->zsk_flag)) {
 		/*
 		 * Since for Zuc, Kasumi, Snow3g offsets are in bits
 		 * we will send pass through even for auth only case,
@@ -3536,10 +3471,9 @@ fill_digest_params(struct rte_crypto_op *cop,
 		auth_range_off = 0;
 		params.auth_iv_buf = rte_crypto_op_ctod_offset(cop,
 					uint8_t *, sess->auth_iv_offset);
-		if (zsk_flag == K_F9) {
+		if (sess->zsk_flag == K_F9) {
 			uint32_t length_in_bits, num_bytes;
 			uint8_t *src, direction = 0;
-			uint32_t counter_num_bytes;
 
 			memcpy(iv_buf, rte_pktmbuf_mtod(cop->sym->m_src,
 							uint8_t *), 8);
@@ -3549,10 +3483,9 @@ fill_digest_params(struct rte_crypto_op *cop,
 			 */
 			length_in_bits = cop->sym->auth.data.length;
 			num_bytes = (length_in_bits >> 3);
-			counter_num_bytes = num_bytes;
 			src = rte_pktmbuf_mtod(cop->sym->m_src, uint8_t *);
 			find_kasumif9_direction_and_length(src,
-						counter_num_bytes,
+						num_bytes,
 						&length_in_bits,
 						&direction);
 			length_in_bits -= 64;
