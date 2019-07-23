@@ -51,7 +51,7 @@ static void *
 create_shared_memory(const char *filename, const size_t mem_size)
 {
 	void *retval;
-	int fd = open(filename, O_CREAT | O_RDWR, 0666);
+	int fd = open(filename, O_CREAT | O_RDWR, 0600);
 	if (fd < 0)
 		return NULL;
 	if (ftruncate(fd, mem_size) < 0) {
