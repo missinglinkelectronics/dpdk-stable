@@ -1112,12 +1112,6 @@ make_rarp_packet(struct rte_mbuf *rarp_mbuf, const struct ether_addr *mac)
 	return 0;
 }
 
-static __rte_always_inline void
-put_zmbuf(struct zcopy_mbuf *zmbuf)
-{
-	zmbuf->in_use = 0;
-}
-
 static __rte_always_inline int
 copy_desc_to_mbuf(struct virtio_net *dev, struct vhost_virtqueue *vq,
 		  struct vring_desc *descs, uint16_t max_desc,
