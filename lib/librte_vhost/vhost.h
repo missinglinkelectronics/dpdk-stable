@@ -513,4 +513,20 @@ vhost_iova_to_vva(struct virtio_net *dev, struct vhost_virtqueue *vq,
 	return __vhost_iova_to_vva(dev, vq, iova, len, perm);
 }
 
+static __rte_always_inline void
+restore_mbuf(struct rte_mbuf *m)
+{
+	uint32_t mbuf_size, priv_size;
+
+	while (m) {
+		priv_size = rte_pktmbuf_priv_size(m->pool);
+		mbuf_size = sizeof(struct rte_mbuf) + priv_size;
+		/* start of buffer is after mbuf structure and priv data */
+
+		m->buf_addr = (char *)m + mbuf_size;
+		m->buf_iova = rte_mempool_virt2iova(m) + mbuf_size;
+		m = m->next;
+	}
+}
+
 #endif /* _VHOST_NET_CDEV_H_ */
