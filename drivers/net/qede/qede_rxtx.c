@@ -1821,7 +1821,7 @@ qede_xmit_prep_pkts(__rte_unused void *p_txq, struct rte_mbuf **tx_pkts,
 				temp = ol_flags & PKT_TX_TUNNEL_MASK;
 				if (temp == PKT_TX_TUNNEL_VXLAN ||
 				    temp == PKT_TX_TUNNEL_MPLSINUDP)
-					break;
+					continue;
 			}
 
 			rte_errno = -ENOTSUP;
