@@ -161,7 +161,7 @@ vring_translate(struct virtio_net *dev, struct vhost_virtqueue *vq)
 	uint64_t req_size, size;
 
 	if (!(dev->features & (1ULL << VIRTIO_F_IOMMU_PLATFORM)))
-		goto out;
+		return -1;
 
 	req_size = sizeof(struct vring_desc) * vq->size;
 	size = req_size;
@@ -193,7 +193,6 @@ vring_translate(struct virtio_net *dev, struct vhost_virtqueue *vq)
 	if (!vq->used || size != req_size)
 		return -1;
 
-out:
 	vq->access_ok = 1;
 
 	return 0;

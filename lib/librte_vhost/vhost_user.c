@@ -521,6 +521,7 @@ translate_ring_addresses(struct virtio_net *dev, int vq_index)
 	}
 
 	vq->log_guest_addr = addr->log_guest_addr;
+	vq->access_ok = 1;
 
 	LOG_DEBUG(VHOST_CONFIG, "(%d) mapped address desc: %p\n",
 			dev->vid, vq->desc);
@@ -544,12 +545,15 @@ vhost_user_set_vring_addr(struct virtio_net **pdev, VhostUserMsg *msg)
 	struct vhost_virtqueue *vq;
 	struct vhost_vring_addr *addr = &msg->payload.addr;
 	struct virtio_net *dev = *pdev;
+	bool access_ok;
 
 	if (dev->mem == NULL)
 		return -1;
 
 	/* addr->index refers to the queue index. The txq 1, rxq is 0. */
 	vq = dev->virtqueue[msg->payload.addr.index];
+
+	access_ok = vq->access_ok;
 
 	/*
 	 * Rings addresses should not be interpreted as long as the ring is not
@@ -559,8 +563,9 @@ vhost_user_set_vring_addr(struct virtio_net **pdev, VhostUserMsg *msg)
 
 	vring_invalidate(dev, vq);
 
-	if (vq->enabled && (dev->features &
-				(1ULL << VHOST_USER_F_PROTOCOL_FEATURES))) {
+	if ((vq->enabled && (dev->features &
+				(1ULL << VHOST_USER_F_PROTOCOL_FEATURES))) ||
+			access_ok) {
 		dev = translate_ring_addresses(dev, msg->payload.addr.index);
 		if (!dev)
 			return -1;
@@ -1013,6 +1018,8 @@ vhost_user_get_vring_base(struct virtio_net *dev,
 
 	rte_free(vq->batch_copy_elems);
 	vq->batch_copy_elems = NULL;
+
+	vring_invalidate(dev, vq);
 
 	return 0;
 }
