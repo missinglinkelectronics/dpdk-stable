@@ -98,10 +98,12 @@ static struct rte_service_spec_impl *rte_services;
 static struct core_state *lcore_states;
 static uint32_t rte_service_library_initialized;
 
-int32_t rte_service_init(void)
+int32_t
+rte_service_init(void)
 {
 	if (rte_service_library_initialized) {
-		printf("service library init() called, init flag %d\n",
+		RTE_LOG(NOTICE, EAL,
+			"service library init() called, init flag %d\n",
 			rte_service_library_initialized);
 		return -EALREADY;
 	}
@@ -110,14 +112,14 @@ int32_t rte_service_init(void)
 			sizeof(struct rte_service_spec_impl),
 			RTE_CACHE_LINE_SIZE);
 	if (!rte_services) {
-		printf("error allocating rte services array\n");
+		RTE_LOG(ERR, EAL, "error allocating rte services array\n");
 		goto fail_mem;
 	}
 
 	lcore_states = rte_calloc("rte_service_core_states", RTE_MAX_LCORE,
 			sizeof(struct core_state), RTE_CACHE_LINE_SIZE);
 	if (!lcore_states) {
-		printf("error allocating core states array\n");
+		RTE_LOG(ERR, EAL, "error allocating core states array\n");
 		goto fail_mem;
 	}
 
@@ -136,10 +138,8 @@ int32_t rte_service_init(void)
 	rte_service_library_initialized = 1;
 	return 0;
 fail_mem:
-	if (rte_services)
-		rte_free(rte_services);
-	if (lcore_states)
-		rte_free(lcore_states);
+	rte_free(rte_services);
+	rte_free(lcore_states);
 	return -ENOMEM;
 }
 
@@ -384,8 +384,8 @@ service_run(uint32_t i, struct core_state *cs, uint64_t service_mask)
 	return 0;
 }
 
-int32_t rte_service_run_iter_on_app_lcore(uint32_t id,
-		uint32_t serialize_mt_unsafe)
+int32_t
+rte_service_run_iter_on_app_lcore(uint32_t id, uint32_t serialize_mt_unsafe)
 {
 	/* run service on calling core, using all-ones as the service mask */
 	if (!service_valid(id))
