@@ -81,6 +81,8 @@ ifeq ($(RTE_DEVEL_BUILD),y)
 WERROR_FLAGS += -Werror
 endif
 
+WERROR_FLAGS += -Wno-address-of-packed-member
+
 # There are many issues reported for strict alignment architectures
 # which are not necessarily fatal. Report as warnings.
 ifeq ($(CONFIG_RTE_ARCH_STRICT_ALIGN),y)
