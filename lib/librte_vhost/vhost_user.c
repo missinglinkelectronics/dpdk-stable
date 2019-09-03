@@ -75,6 +75,36 @@ static const char *vhost_message_str[VHOST_USER_MAX] = {
 	[VHOST_USER_SEND_RARP]  = "VHOST_USER_SEND_RARP",
 };
 
+static void
+close_msg_fds(struct VhostUserMsg *msg)
+{
+	int i;
+
+	for (i = 0; i < msg->fd_num; i++)
+		close(msg->fds[i]);
+}
+
+/*
+ * Ensure the expected number of FDs is received,
+ * close all FDs and return an error if this is not the case.
+ */
+static int
+validate_msg_fds(struct VhostUserMsg *msg, int expected_fds)
+{
+	if (msg->fd_num == expected_fds)
+		return 0;
+
+	RTE_LOG(ERR, VHOST_CONFIG,
+		" Expect %d FDs for request %s, received %d\n",
+		expected_fds,
+		vhost_message_str[msg->request],
+		msg->fd_num);
+
+	close_msg_fds(msg);
+
+	return -1;
+}
+
 static uint64_t
 get_blk_size(int fd)
 {
@@ -1104,35 +1134,59 @@ vhost_user_msg_handler(int vid, int fd)
 	ret = 0;
 	switch (msg.request) {
 	case VHOST_USER_GET_FEATURES:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		msg.payload.u64 = vhost_user_get_features();
 		msg.size = sizeof(msg.payload.u64);
 		send_vhost_message(fd, &msg);
 		break;
 	case VHOST_USER_SET_FEATURES:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_set_features(dev, msg.payload.u64);
 		break;
 
 	case VHOST_USER_GET_PROTOCOL_FEATURES:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		msg.payload.u64 = VHOST_USER_PROTOCOL_FEATURES;
 		msg.size = sizeof(msg.payload.u64);
 		send_vhost_message(fd, &msg);
 		break;
 	case VHOST_USER_SET_PROTOCOL_FEATURES:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_set_protocol_features(dev, msg.payload.u64);
 		break;
 
 	case VHOST_USER_SET_OWNER:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_set_owner();
 		break;
 	case VHOST_USER_RESET_OWNER:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_reset_owner(dev);
 		break;
 
 	case VHOST_USER_SET_MEM_TABLE:
+		if (validate_msg_fds(&msg, msg.payload.memory.nregions) != 0)
+			return -1;
+
 		vhost_user_set_mem_table(dev, &msg);
 		break;
 
 	case VHOST_USER_SET_LOG_BASE:
+		if (validate_msg_fds(&msg, 1) != 0)
+			return -1;
+
 		ret = vhost_user_set_log_base(dev, &msg);
 		if (ret)
 			break;
@@ -1144,21 +1198,36 @@ vhost_user_msg_handler(int vid, int fd)
 		send_vhost_message(fd, &msg);
 		break;
 	case VHOST_USER_SET_LOG_FD:
+		if (validate_msg_fds(&msg, 1) != 0)
+			return -1;
+
 		close(msg.fds[0]);
 		RTE_LOG(INFO, VHOST_CONFIG, "not implemented.\n");
 		break;
 
 	case VHOST_USER_SET_VRING_NUM:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_set_vring_num(dev, &msg.payload.state);
 		break;
 	case VHOST_USER_SET_VRING_ADDR:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_set_vring_addr(&dev, &msg.payload.addr);
 		break;
 	case VHOST_USER_SET_VRING_BASE:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_set_vring_base(dev, &msg.payload.state);
 		break;
 
 	case VHOST_USER_GET_VRING_BASE:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_get_vring_base(dev, &msg.payload.state);
 		if (ret)
 			break;
@@ -1167,28 +1236,46 @@ vhost_user_msg_handler(int vid, int fd)
 		break;
 
 	case VHOST_USER_SET_VRING_KICK:
+		if (validate_msg_fds(&msg, 1) != 0)
+			return -1;
+
 		ret = vhost_user_set_vring_kick(dev, &msg);
 		break;
 	case VHOST_USER_SET_VRING_CALL:
+		if (validate_msg_fds(&msg, 1) != 0)
+			return -1;
+
 		vhost_user_set_vring_call(dev, &msg);
 		break;
 
 	case VHOST_USER_SET_VRING_ERR:
+		if (validate_msg_fds(&msg, 1) != 0)
+			return -1;
+
 		if (!(msg.payload.u64 & VHOST_USER_VRING_NOFD_MASK))
 			close(msg.fds[0]);
 		RTE_LOG(INFO, VHOST_CONFIG, "not implemented\n");
 		break;
 
 	case VHOST_USER_GET_QUEUE_NUM:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		msg.payload.u64 = VHOST_MAX_QUEUE_PAIRS;
 		msg.size = sizeof(msg.payload.u64);
 		send_vhost_message(fd, &msg);
 		break;
 
 	case VHOST_USER_SET_VRING_ENABLE:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_set_vring_enable(dev, &msg.payload.state);
 		break;
 	case VHOST_USER_SEND_RARP:
+		if (validate_msg_fds(&msg, 0) != 0)
+			return -1;
+
 		ret = vhost_user_send_rarp(dev, &msg);
 		break;
 
