@@ -143,14 +143,14 @@ struct rte_security_ipsec_tunnel_param {
  * IPsec Security Association option flags
  */
 struct rte_security_ipsec_sa_options {
-	/**< Extended Sequence Numbers (ESN)
+	/** Extended Sequence Numbers (ESN)
 	 *
 	 * * 1: Use extended (64 bit) sequence numbers
 	 * * 0: Use normal sequence numbers
 	 */
 	uint32_t esn : 1;
 
-	/**< UDP encapsulation
+	/** UDP encapsulation
 	 *
 	 * * 1: Do UDP encapsulation/decapsulation so that IPSEC packets can
 	 *      traverse through NAT boxes.
@@ -158,7 +158,7 @@ struct rte_security_ipsec_sa_options {
 	 */
 	uint32_t udp_encap : 1;
 
-	/**< Copy DSCP bits
+	/** Copy DSCP bits
 	 *
 	 * * 1: Copy IPv4 or IPv6 DSCP bits from inner IP header to
 	 *      the outer IP header in encapsulation, and vice versa in
@@ -167,7 +167,7 @@ struct rte_security_ipsec_sa_options {
 	 */
 	uint32_t copy_dscp : 1;
 
-	/**< Copy IPv6 Flow Label
+	/** Copy IPv6 Flow Label
 	 *
 	 * * 1: Copy IPv6 flow label from inner IPv6 header to the
 	 *      outer IPv6 header.
@@ -175,7 +175,7 @@ struct rte_security_ipsec_sa_options {
 	 */
 	uint32_t copy_flabel : 1;
 
-	/**< Copy IPv4 Don't Fragment bit
+	/** Copy IPv4 Don't Fragment bit
 	 *
 	 * * 1: Copy the DF bit from the inner IPv4 header to the outer
 	 *      IPv4 header.
@@ -183,7 +183,7 @@ struct rte_security_ipsec_sa_options {
 	 */
 	uint32_t copy_df : 1;
 
-	/**< Decrement inner packet Time To Live (TTL) field
+	/** Decrement inner packet Time To Live (TTL) field
 	 *
 	 * * 1: In tunnel mode, decrement inner packet IPv4 TTL or
 	 *      IPv6 Hop Limit after tunnel decapsulation, or before tunnel
