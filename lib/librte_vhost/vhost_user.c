@@ -1177,6 +1177,9 @@ vhost_user_set_req_fd(struct virtio_net *dev, struct VhostUserMsg *msg)
 		return -1;
 	}
 
+	if (dev->slave_req_fd >= 0)
+		close(dev->slave_req_fd);
+
 	dev->slave_req_fd = fd;
 
 	return 0;
