@@ -350,15 +350,15 @@ struct igb_flow_mem {
 };
 
 TAILQ_HEAD(igb_ntuple_filter_list, igb_ntuple_filter_ele);
-struct igb_ntuple_filter_list igb_filter_ntuple_list;
+extern struct igb_ntuple_filter_list igb_filter_ntuple_list;
 TAILQ_HEAD(igb_ethertype_filter_list, igb_ethertype_filter_ele);
-struct igb_ethertype_filter_list igb_filter_ethertype_list;
+extern struct igb_ethertype_filter_list igb_filter_ethertype_list;
 TAILQ_HEAD(igb_syn_filter_list, igb_eth_syn_filter_ele);
-struct igb_syn_filter_list igb_filter_syn_list;
+extern struct igb_syn_filter_list igb_filter_syn_list;
 TAILQ_HEAD(igb_flex_filter_list, igb_flex_filter_ele);
-struct igb_flex_filter_list igb_filter_flex_list;
+extern struct igb_flex_filter_list igb_filter_flex_list;
 TAILQ_HEAD(igb_flow_mem_list, igb_flow_mem);
-struct igb_flow_mem_list igb_flow_list;
+extern struct igb_flow_mem_list igb_flow_list;
 
 extern const struct rte_flow_ops igb_flow_ops;
 
