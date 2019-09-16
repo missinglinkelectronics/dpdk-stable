@@ -142,6 +142,12 @@ static int bnxt_hwrm_send_message(struct bnxt *bp, void *msg,
 	/* Ring channel doorbell */
 	bar = (uint8_t *)bp->bar0 + 0x100;
 	rte_write32(1, bar);
+	/*
+	 * Make sure the channel doorbell ring command complete before
+	 * reading the response to avoid getting stale or invalid
+	 * responses.
+	 */
+	rte_io_mb();
 
 	/* Poll for the valid bit */
 	for (i = 0; i < HWRM_CMD_TIMEOUT; i++) {
