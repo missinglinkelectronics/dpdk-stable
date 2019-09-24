@@ -1860,6 +1860,13 @@ reset_port(portid_t pid)
 	if (port_id_is_invalid(pid, ENABLED_WARN))
 		return;
 
+	port = &ports[pid];
+	if ((pid == (portid_t)RTE_PORT_ALL && !all_ports_stopped()) ||
+		(pid != (portid_t)RTE_PORT_ALL && !((port->port_status != RTE_PORT_STOPPED) && (port->slave_flag == 0)))) {
+		printf("Can not reset port(s), please stop port(s) first.\n");
+		return;
+	}
+
 	printf("Resetting ports...\n");
 
 	RTE_ETH_FOREACH_DEV(pi) {
