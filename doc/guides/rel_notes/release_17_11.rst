@@ -1774,3 +1774,211 @@ Fixes in 17.11 LTS Release
 * vhost: fix payload size of reply
 * vhost: fix possible out of bound access in vector filling
 * vhost: fix race condition when adding fd in the fdset
+
+17.11.7 Release Notes
+---------------------
+
+17.11.7 Fixes
+~~~~~~~~~~~~~
+
+* app/crypto-perf: check range of socket id
+* app/test: fix build with musl libc
+* app/test: fix sprintf with strlcat
+* app/testpmd: fix a typo in log message
+* app/testpmd: fix stdout flush after printing stats
+* app/testpmd: fix typo in comment
+* app/testpmd: remove unused field from port struct
+* app/testpmd: remove useless casts on statistics
+* app/testpmd: revert fixed flag for exact link speed
+* app/testpmd: set fixed flag for exact link speed
+* bitrate: fix unchecked return value
+* build: fix crash by disabling AVX512 with binutils 2.31
+* bus/dpaa: fix Rx discard register mask
+* bus/fslmc: fix build with musl libc
+* bus/fslmc: fix warning with GCC 9
+* bus/fslmc: remove unused include of error.h
+* bus/vdev: fix debug message on probing
+* cfgfile: replace strcat with strlcat
+* cryptodev: fix driver name comparison
+* crypto/dpaa2_sec: fix session clearing
+* crypto/qat: fix not included algs for zero counter
+* doc: fix a minor typo in testpmd guide
+* doc: fix broken link in LPM guide
+* doc: fix examples in bonding guide
+* doc: fix interactive commands in testpmd guide
+* doc: fix link in Linux getting started guide
+* doc: fix links to doxygen and sphinx sites
+* doc: fix typo in mlx5 guide
+* doc: remove reference to rte.doc.mk in programmers guide
+* drivers/net: do not use private ethdev data
+* drivers/net: fix possible overflow using strlcat
+* drivers/net: fix shifting 32-bit signed variable 31 times
+* eal: fix check when retrieving current CPU affinity
+* eal: fix typo in comment of vector function
+* eal: improve musl compatibility of string functions
+* eal/linux: fix log levels for pagemap reading failure
+* eal/ppc: fix global memory barrier
+* eal: remove dead code in core list parsing
+* eal: support strlcat function
+* eal: tighten permissions on shared memory files
+* ethdev: fix a typo
+* event/sw: fix enqueue checks in self-test
+* examples/ethtool: fix two typos
+* examples/ipsec-secgw: fix AES-CTR block size
+* examples/ipsec-secgw: fix build error log
+* examples/ipsec-secgw: fix debug logs
+* examples/l2fwd-cat: fix build on FreeBSD
+* examples/vhost_scsi: fix null-check for parameter
+* examples/vm_power_manager: fix PMD specific code
+* hash: fix doc about thread/process safety
+* igb_uio: fix build on Linux 5.3 for fall through
+* kni: fix build on RHEL8
+* kni: fix build with Linux 5.1
+* maintainers: update for IBM POWER
+* malloc: fix documentation of realloc function
+* mbuf: fix a typo
+* mk: disable warnings for packed mem config data structure
+* mk: fix AVX512 disabled warning on non x86
+* mk: fix build of shared library with libbsd
+* net/bnx2x: fix DMAE timeout
+* net/bnx2x: fix memory leak
+* net/bnx2x: fix optic module verification
+* net/bnx2x: fix race for periodic flags
+* net/bnx2x: fix ramrod timeout
+* net/bnx2x: fix segfaults due to stale interrupt status
+* net/bnxt: fix Rx VLAN offload flags
+* net/bnxt: support IOVA VA mode
+* net/bonding: avoid warning for invalid port
+* net/bonding: fix buffer length when printing strings
+* net/bonding: fix LACP negotiation
+* net/bonding: fix port id types
+* net/bonding: fix queue index types
+* net/bonding: fix reset active slave
+* net/cxgbe: fix missing checksum flags and packet type
+* net/cxgbe: update Chelsio T5/T6 NIC device ids
+* net/enic: check for unsupported flow item types
+* net/enic: fix flow director SCTP matching
+* net/enic: fix SCTP match for flow API
+* net: fix Tx VLAN flag for offload emulation
+* net/fm10k: fix VLAN strip offload flag
+* net/i40e: fix dereference before null check in mbuf release
+* net/i40e: fix link speed for X722
+* net/i40e: fix time sync for 25G
+* net/ixgbe: fix crash on remove
+* net/ixgbe: fix warning with GCC 9
+* net/kni: fix return value check
+* net/mlx5: check Tx queue size overflow
+* net/mlx5: fix comments mixing Rx and Tx
+* net/mlx5: fix hex dump of error completion
+* net/mlx5: fix instruction hotspot on replenishing Rx buffer
+* net/mlx5: fix max number of queues for NEON Tx
+* net/mlx5: fix packet inline on Tx queue wraparound
+* net/mlx5: fix release of Rx queue object
+* net/mlx5: fix sync when handling Tx completions
+* net/nfp: fix RSS query
+* net/null: add MAC address setting fake operation
+* net/octeontx: fix vdev name
+* net/qede: fix Tx packet prepare for tunnel packets
+* net/qede: support IOVA VA mode
+* net/ring: avoid hard-coded length
+* net/ring: check length of ring name
+* net/ring: fix return value check
+* net/ring: use calloc style where appropriate
+* net/sfc: log port ID as 16-bit unsigned integer on panic
+* net/sfc: remove control path logging from Rx queue count
+* net/virtio: add barrier in interrupt enable
+* net/virtio: fix buffer leak on VLAN insert
+* net/virtio: fix dangling pointer on failure
+* net/virtio: fix duplicate naming of include guard
+* net/virtio: remove forward declaration
+* net/virtio: remove useless condition
+* power: fix frequency list buffer validation
+* ring: fix an error message
+* ring: fix namesize macro documentation block
+* spinlock: reimplement with atomic one-way barrier
+* test/bonding: assign non-zero MAC to null devices
+* test/distributor: replace sprintf with strlcpy
+* test/hash: replace sprintf with snprintf
+* test/rwlock: add missing inttypes include
+* test/rwlock: benchmark on all available cores
+* test/spinlock: amortize the cost of getting time
+* test/spinlock: remove delay for correct benchmarking
+* test/virtual_pmd: add MAC address setting fake op
+* version: 17.11.7-rc1
+* vhost: fix device leak on connection add failure
+* vhost: fix potential use-after-free for memory region
+* vhost: fix potential use-after-free for zero copy mbuf
+* vhost: fix silent queue enabling with legacy guests
+* vhost: restore mbuf first when freeing zmbuf
+
+17.11.7 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Mellanox(R) Testing
+
+   * Basic functionality
+
+      * Send and receive multiple types of traffic
+      * testpmd xstats counter test
+      * testpmd timestamp test
+      * Changing/checking link status through testpmd
+      * RTE flow and flow_director tests
+      * Some RSS tests
+      * VLAN stripping and insertion tests
+      * Checksum and TSO tests
+      * ptype tests
+      * Port interrupt testing
+      * Multi-process testing
+
+   * OFED versions tested
+
+      * rdma-core v25.0
+      * MLNX_OFED_LINUX-4.6-1.0.1.1
+
+   * Tested NICs
+
+      * ConnectX-4 Lx (fw 14.25.6406).
+      * ConnectX-5 (fw 16.25.6406).
+
+   * OS tested
+
+      * RHEL7.4 (kernel 5.3.0-rc4).
+      * RHEL7.4 (kernel 3.10.0-693.el7.x86_64).
+
+* Red Hat(R) Testing
+
+   * Functionality
+
+      * PF
+      * VF
+      * vhost single/multi queues and cross-NUMA
+      * vhostclient reconnect
+      * vhost live migration with single/multi queues and cross-NUMA
+      * OVS PVP
+
+* Intel(R) Testing
+
+   * Basic Intel(R) NIC(ixgbe and i40e) testing
+
+      * vlan
+      * vxlan
+      * Jumbo frames
+      * Generic filter
+      * Flow director
+      * PF and VF
+      * Intel NIC single core/NIC performance
+
+   * Basic cryptodev and virtio testing
+
+      * cryptodev
+      * vhost/virtio basic loopback, PVP and performance test
+
+17.11.7 Known Issues
+~~~~~~~~~~~~~~~~~~~~
+
+* DPDK 17.11.7 contains fixes up to DPDK v19.08. Issues identified/fixed in DPDK master branch after DPDK v19.08 may be present in DPDK 17.11.7
+
+Fixes skipped and status unresolved
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
