@@ -489,7 +489,7 @@ test_lpm_perf(void)
 			(double)total_time / ((double)ITERATIONS * BATCH_SIZE),
 			(count * 100.0) / (double)(ITERATIONS * BATCH_SIZE));
 
-	/* Delete */
+	/* Measure Delete */
 	status = 0;
 	begin = rte_rdtsc();
 
@@ -499,7 +499,7 @@ test_lpm_perf(void)
 				large_route_table[i].depth);
 	}
 
-	total_time += rte_rdtsc() - begin;
+	total_time = rte_rdtsc() - begin;
 
 	printf("Average LPM Delete: %g cycles\n",
 			(double)total_time / NUM_ROUTE_ENTRIES);
