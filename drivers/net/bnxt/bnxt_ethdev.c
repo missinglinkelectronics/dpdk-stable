@@ -433,6 +433,7 @@ static int bnxt_init_nic(struct bnxt *bp)
 static void bnxt_dev_info_get_op(struct rte_eth_dev *eth_dev,
 				  struct rte_eth_dev_info *dev_info)
 {
+	struct rte_pci_device *pdev = RTE_DEV_TO_PCI(eth_dev->device);
 	struct bnxt *bp = (struct bnxt *)eth_dev->data->dev_private;
 	uint16_t max_vnics, i, j, vpool, vrxq;
 	unsigned int max_rx_rings;
@@ -445,7 +446,7 @@ static void bnxt_dev_info_get_op(struct rte_eth_dev *eth_dev,
 
 	/* PF/VF specifics */
 	if (BNXT_PF(bp))
-		dev_info->max_vfs = bp->pdev->max_vfs;
+		dev_info->max_vfs = pdev->max_vfs;
 	max_rx_rings = RTE_MIN(bp->max_vnics, RTE_MIN(bp->max_l2_ctx,
 						RTE_MIN(bp->max_rsscos_ctx,
 						bp->max_stat_ctx)));
@@ -2845,15 +2846,19 @@ bnxt_dev_init(struct rte_eth_dev *eth_dev)
 	if (version_printed++ == 0)
 		RTE_LOG(INFO, PMD, "%s\n", bnxt_version);
 
+	eth_dev->dev_ops = &bnxt_dev_ops;
+	eth_dev->rx_pkt_burst = &bnxt_recv_pkts;
+	eth_dev->tx_pkt_burst = &bnxt_xmit_pkts;
+
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
+		return 0;
+
 	rte_eth_copy_pci_info(eth_dev, pci_dev);
 
 	bp = eth_dev->data->dev_private;
 
 	rte_atomic64_init(&bp->rx_mbuf_alloc_fail);
 	bp->dev_stopped = 1;
-
-	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
-		goto skip_init;
 
 	if (bnxt_vf_pciid(pci_dev->id.device_id))
 		bp->flags |= BNXT_FLAG_VF;
@@ -2864,12 +2869,6 @@ bnxt_dev_init(struct rte_eth_dev *eth_dev)
 			"Board initialization failed rc: %x\n", rc);
 		goto error;
 	}
-skip_init:
-	eth_dev->dev_ops = &bnxt_dev_ops;
-	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
-		return 0;
-	eth_dev->rx_pkt_burst = &bnxt_recv_pkts;
-	eth_dev->tx_pkt_burst = &bnxt_xmit_pkts;
 
 	if (BNXT_PF(bp) && pci_dev->id.device_id != BROADCOM_DEV_ID_NS2) {
 		snprintf(mz_name, RTE_MEMZONE_NAMESIZE,
