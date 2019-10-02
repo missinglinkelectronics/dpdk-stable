@@ -592,6 +592,8 @@ static int bnxt_dev_start_op(struct rte_eth_dev *eth_dev)
 	}
 	bp->dev_stopped = 0;
 
+	bnxt_enable_int(bp);
+
 	rc = bnxt_init_chip(bp);
 	if (rc)
 		goto error;
@@ -644,15 +646,29 @@ static int bnxt_dev_set_link_down_op(struct rte_eth_dev *eth_dev)
 static void bnxt_dev_stop_op(struct rte_eth_dev *eth_dev)
 {
 	struct bnxt *bp = (struct bnxt *)eth_dev->data->dev_private;
+	struct rte_intr_handle *intr_handle
+		= &bp->pdev->intr_handle;
 
 	if (bp->eth_dev->data->dev_started) {
 		/* TBD: STOP HW queues DMA */
 		eth_dev->data->dev_link.link_status = 0;
 	}
-	bnxt_set_hwrm_link_config(bp, false);
+	bnxt_dev_set_link_down_op(eth_dev);
+	/* Wait for link to be reset and the async notification to process. */
+	rte_delay_ms(BNXT_LINK_WAIT_INTERVAL * 2);
+
+	/* Clean queue intr-vector mapping */
+	rte_intr_efd_disable(intr_handle);
+	if (intr_handle->intr_vec != NULL) {
+		rte_free(intr_handle->intr_vec);
+		intr_handle->intr_vec = NULL;
+	}
+
 	bnxt_hwrm_port_clr_stats(bp);
 	bnxt_free_tx_mbufs(bp);
 	bnxt_free_rx_mbufs(bp);
+	/* Process any remaining notifications in default completion queue */
+	bnxt_int_handler(eth_dev);
 	bnxt_shutdown_nic(bp);
 	bp->dev_stopped = 1;
 }
