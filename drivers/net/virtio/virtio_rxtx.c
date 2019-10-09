@@ -538,6 +538,11 @@ virtio_dev_tx_queue_setup(struct rte_eth_dev *dev,
 
 	PMD_INIT_FUNC_TRACE();
 
+	if (tx_conf->tx_deferred_start) {
+		PMD_INIT_LOG(ERR, "Tx deferred start is not supported");
+		return -EINVAL;
+	}
+
 	/* cannot use simple rxtx funcs with multisegs or offloads */
 	if ((tx_conf->txq_flags & VIRTIO_SIMPLE_FLAGS) != VIRTIO_SIMPLE_FLAGS)
 		hw->use_simple_tx = 0;
