@@ -132,7 +132,8 @@ dpaa2_dev_rx_offload(uint64_t hw_annot_addr, struct rte_mbuf *mbuf)
 }
 
 static inline struct rte_mbuf *__attribute__((hot))
-eth_sg_fd_to_mbuf(const struct qbman_fd *fd)
+eth_sg_fd_to_mbuf(const struct qbman_fd *fd,
+		  int port_id)
 {
 	struct qbman_sge *sgt, *sge;
 	dma_addr_t sg_addr;
@@ -159,6 +160,7 @@ eth_sg_fd_to_mbuf(const struct qbman_fd *fd)
 	first_seg->pkt_len = DPAA2_GET_FD_LEN(fd);
 	first_seg->nb_segs = 1;
 	first_seg->next = NULL;
+	first_seg->port = port_id;
 
 	first_seg->packet_type = dpaa2_dev_rx_parse(
 			 (uint64_t)DPAA2_IOVA_TO_VADDR(DPAA2_GET_FD_ADDR(fd))
@@ -192,7 +194,8 @@ eth_sg_fd_to_mbuf(const struct qbman_fd *fd)
 }
 
 static inline struct rte_mbuf *__attribute__((hot))
-eth_fd_to_mbuf(const struct qbman_fd *fd)
+eth_fd_to_mbuf(const struct qbman_fd *fd,
+	       int port_id)
 {
 	struct rte_mbuf *mbuf = DPAA2_INLINE_MBUF_FROM_BUF(
 		DPAA2_IOVA_TO_VADDR(DPAA2_GET_FD_ADDR(fd)),
@@ -206,6 +209,7 @@ eth_fd_to_mbuf(const struct qbman_fd *fd)
 	mbuf->data_off = DPAA2_GET_FD_OFFSET(fd);
 	mbuf->data_len = DPAA2_GET_FD_LEN(fd);
 	mbuf->pkt_len = mbuf->data_len;
+	mbuf->port = port_id;
 
 	/* Parse the packet */
 	/* parse results are after the private - sw annotation area */
@@ -470,10 +474,9 @@ dpaa2_dev_prefetch_rx(void *queue, struct rte_mbuf **bufs, uint16_t nb_pkts)
 				+ DPAA2_FD_PTA_SIZE + 16));
 
 		if (unlikely(DPAA2_FD_GET_FORMAT(fd[num_rx]) == qbman_fd_sg))
-			bufs[num_rx] = eth_sg_fd_to_mbuf(fd[num_rx]);
+			bufs[num_rx] = eth_sg_fd_to_mbuf(fd[num_rx], eth_data->port_id);
 		else
-			bufs[num_rx] = eth_fd_to_mbuf(fd[num_rx]);
-		bufs[num_rx]->port = dev->data->port_id;
+			bufs[num_rx] = eth_fd_to_mbuf(fd[num_rx], eth_data->port_id);
 
 		if (dev->data->dev_conf.rxmode.hw_vlan_strip)
 			rte_vlan_strip(bufs[num_rx]);
@@ -521,7 +524,7 @@ dpaa2_dev_process_parallel_event(struct qbman_swp *swp,
 				 struct dpaa2_queue *rxq,
 				 struct rte_event *ev)
 {
-	ev->mbuf = eth_fd_to_mbuf(fd);
+	ev->mbuf = eth_fd_to_mbuf(fd, rxq->eth_data->port_id);
 
 	ev->flow_id = rxq->ev.flow_id;
 	ev->sub_event_type = rxq->ev.sub_event_type;
