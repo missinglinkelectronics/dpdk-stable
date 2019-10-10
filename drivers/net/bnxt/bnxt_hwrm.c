@@ -53,8 +53,6 @@
 
 #include <rte_io.h>
 
-#define HWRM_CMD_TIMEOUT		10000
-
 struct bnxt_plcmodes_cfg {
 	uint32_t	flags;
 	uint16_t	jumbo_thresh;
@@ -612,6 +610,13 @@ int bnxt_hwrm_ver_get(struct bnxt *bp)
 	fw_version = resp->hwrm_intf_maj << 16;
 	fw_version |= resp->hwrm_intf_min << 8;
 	fw_version |= resp->hwrm_intf_upd;
+
+	/* def_req_timeout value is in milliseconds */
+	bp->hwrm_cmd_timeout = rte_le_to_cpu_16(resp->def_req_timeout);
+	/* convert timeout to usec */
+	bp->hwrm_cmd_timeout *= 1000;
+	if (!bp->hwrm_cmd_timeout)
+		bp->hwrm_cmd_timeout = HWRM_CMD_TIMEOUT;
 
 	if (resp->hwrm_intf_maj != HWRM_VERSION_MAJOR) {
 		RTE_LOG(ERR, PMD, "Unsupported firmware API version\n");
