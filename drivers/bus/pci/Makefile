@@ -50,7 +50,7 @@ CFLAGS += -I$(RTE_SDK)/lib/librte_eal/common
 CFLAGS += -I$(RTE_SDK)/lib/librte_eal/$(SYSTEM)app/eal
 
 LDLIBS += -lrte_eal -lrte_mbuf -lrte_mempool -lrte_ring
-LDLIBS += -lrte_ethdev -lrte_pci
+LDLIBS += -lrte_pci
 
 include $(RTE_SDK)/drivers/bus/pci/$(SYSTEM)/Makefile
 SRCS-$(CONFIG_RTE_LIBRTE_PCI_BUS) := $(addprefix $(SYSTEM)/,$(SRCS))
