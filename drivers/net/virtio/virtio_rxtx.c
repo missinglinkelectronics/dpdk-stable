@@ -388,6 +388,7 @@ virtqueue_enqueue_xmit(struct virtnet_tx *txvq, struct rte_mbuf *cookie,
 		start_dp[idx].addr  = VIRTIO_MBUF_DATA_DMA_ADDR(cookie, vq);
 		start_dp[idx].len   = cookie->data_len;
 		if (prepend_header) {
+			start_dp[idx].addr -= head_size;
 			start_dp[idx].len += head_size;
 			prepend_header = false;
 		}
