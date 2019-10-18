@@ -172,8 +172,8 @@ the Rx/Tx queues. When switch comes up, a LSC event indicating ``LINK_UP`` is
 sent to the app, which can then restart the FM10000 port to resume network
 processing.
 
-CRC striping
-~~~~~~~~~~~~
+CRC stripping
+~~~~~~~~~~~~~
 
 The FM10000 family of NICs strip the CRC for every packets coming into the
 host interface.  So, CRC will be stripped even when the

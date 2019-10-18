@@ -354,8 +354,8 @@ The nicvf thunderx driver will make use of attached secondary VFs automatically 
 Limitations
 -----------
 
-CRC striping
-~~~~~~~~~~~~
+CRC stripping
+~~~~~~~~~~~~~
 
 The ThunderX SoC family NICs strip the CRC for every packets coming into the
 host interface. So, CRC will be stripped even when the
