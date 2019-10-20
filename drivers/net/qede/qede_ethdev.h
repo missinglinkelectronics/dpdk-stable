@@ -185,6 +185,7 @@ struct qede_dev {
 	struct ecore_sb_info *sb_array;
 	struct qede_fastpath *fp_array;
 	uint16_t mtu;
+	uint16_t new_mtu;
 	bool enable_tx_switching;
 	bool rss_enable;
 	struct rte_eth_rss_conf rss_conf;
