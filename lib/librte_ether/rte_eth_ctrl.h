@@ -36,7 +36,7 @@
 
 #include <stdint.h>
 #include <rte_common.h>
-#include "rte_ether.h"
+#include <rte_ether.h>
 
 /**
  * @file
