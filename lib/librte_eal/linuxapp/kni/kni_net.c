@@ -37,7 +37,7 @@
 #include <linux/delay.h>
 
 #include <exec-env/rte_kni_common.h>
-#include <kni_fifo.h>
+#include "kni_fifo.h"
 
 #include "compat.h"
 #include "kni_dev.h"
