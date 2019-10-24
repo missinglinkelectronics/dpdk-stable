@@ -432,6 +432,9 @@ process_outer_cksums(void *outer_l3_hdr, struct testpmd_offload_info *info,
 
 	udp_hdr = (struct udp_hdr *)((char *)outer_l3_hdr + info->outer_l3_len);
 
+	if (tso_enabled)
+		ol_flags |= PKT_TX_TCP_SEG;
+
 	/* outer UDP checksum is done in software as we have no hardware
 	 * supporting it today, and no API for it. In the other side, for
 	 * UDP tunneling, like VXLAN or Geneve, outer UDP checksum can be
