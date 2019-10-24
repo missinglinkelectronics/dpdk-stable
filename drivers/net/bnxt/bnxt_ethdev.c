@@ -125,6 +125,9 @@ static void bnxt_free_mem(struct bnxt *bp)
 	bnxt_free_tx_rings(bp);
 	bnxt_free_rx_rings(bp);
 	bnxt_free_def_cp_ring(bp);
+
+	rte_free(bp->grp_info);
+	bp->grp_info = NULL;
 }
 
 static int bnxt_alloc_mem(struct bnxt *bp)
@@ -3078,10 +3081,6 @@ bnxt_dev_uninit(struct rte_eth_dev *eth_dev) {
 	if (eth_dev->data->mac_addrs != NULL) {
 		rte_free(eth_dev->data->mac_addrs);
 		eth_dev->data->mac_addrs = NULL;
-	}
-	if (bp->grp_info != NULL) {
-		rte_free(bp->grp_info);
-		bp->grp_info = NULL;
 	}
 	rc = bnxt_hwrm_func_driver_unregister(bp, 0);
 	bnxt_free_hwrm_resources(bp);
