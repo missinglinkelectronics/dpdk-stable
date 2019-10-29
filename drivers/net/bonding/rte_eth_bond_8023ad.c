@@ -1321,11 +1321,12 @@ rte_eth_bond_8023ad_agg_selection_set(uint16_t port_id,
 	struct bond_dev_private *internals;
 	struct mode8023ad_private *mode4;
 
+	if (valid_bonded_port_id(port_id) != 0)
+		return -EINVAL;
+
 	bond_dev = &rte_eth_devices[port_id];
 	internals = bond_dev->data->dev_private;
 
-	if (valid_bonded_port_id(port_id) != 0)
-		return -EINVAL;
 	if (internals->mode != 4)
 		return -EINVAL;
 
@@ -1342,11 +1343,12 @@ int rte_eth_bond_8023ad_agg_selection_get(uint16_t port_id)
 	struct bond_dev_private *internals;
 	struct mode8023ad_private *mode4;
 
+	if (valid_bonded_port_id(port_id) != 0)
+		return -EINVAL;
+
 	bond_dev = &rte_eth_devices[port_id];
 	internals = bond_dev->data->dev_private;
 
-	if (valid_bonded_port_id(port_id) != 0)
-		return -EINVAL;
 	if (internals->mode != 4)
 		return -EINVAL;
 	mode4 = &internals->mode4;
@@ -1599,9 +1601,14 @@ int
 rte_eth_bond_8023ad_dedicated_queues_enable(uint16_t port)
 {
 	int retval = 0;
-	struct rte_eth_dev *dev = &rte_eth_devices[port];
-	struct bond_dev_private *internals = (struct bond_dev_private *)
-		dev->data->dev_private;
+	struct rte_eth_dev *dev;
+	struct bond_dev_private *internals;
+
+	if (valid_bonded_port_id(port) != 0)
+		return -EINVAL;
+
+	dev = &rte_eth_devices[port];
+	internals = dev->data->dev_private;
 
 	if (check_for_bonded_ethdev(dev) != 0)
 		return -1;
@@ -1623,9 +1630,14 @@ int
 rte_eth_bond_8023ad_dedicated_queues_disable(uint16_t port)
 {
 	int retval = 0;
-	struct rte_eth_dev *dev = &rte_eth_devices[port];
-	struct bond_dev_private *internals = (struct bond_dev_private *)
-		dev->data->dev_private;
+	struct rte_eth_dev *dev;
+	struct bond_dev_private *internals;
+
+	if (valid_bonded_port_id(port) != 0)
+		return -EINVAL;
+
+	dev = &rte_eth_devices[port];
+	internals = dev->data->dev_private;
 
 	if (check_for_bonded_ethdev(dev) != 0)
 		return -1;
