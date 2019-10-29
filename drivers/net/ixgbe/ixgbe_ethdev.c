@@ -2852,6 +2852,7 @@ ixgbe_dev_set_link_up(struct rte_eth_dev *dev)
 	} else {
 		/* Turn on the laser */
 		ixgbe_enable_tx_laser(hw);
+		ixgbe_dev_link_update(dev, 0);
 	}
 
 	return 0;
@@ -2882,6 +2883,7 @@ ixgbe_dev_set_link_down(struct rte_eth_dev *dev)
 	} else {
 		/* Turn off the laser */
 		ixgbe_disable_tx_laser(hw);
+		ixgbe_dev_link_update(dev, 0);
 	}
 
 	return 0;
@@ -4012,6 +4014,7 @@ ixgbe_dev_link_update_share(struct rte_eth_dev *dev,
 	int link_up;
 	int diag;
 	int wait = 1;
+	u32 esdp_reg;
 
 	link.link_status = ETH_LINK_DOWN;
 	link.link_speed = 0;
@@ -4046,6 +4049,10 @@ ixgbe_dev_link_update_share(struct rte_eth_dev *dev,
 			return -1;
 		return 0;
 	}
+
+	esdp_reg = IXGBE_READ_REG(hw, IXGBE_ESDP);
+	if ((esdp_reg & IXGBE_ESDP_SDP3))
+		link_up = 0;
 
 	if (link_up == 0) {
 		rte_ixgbe_dev_atomic_write_link_status(dev, &link);
