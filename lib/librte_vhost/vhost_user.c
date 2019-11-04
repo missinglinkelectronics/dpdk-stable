@@ -502,6 +502,17 @@ translate_ring_addresses(struct virtio_net *dev, int vq_index)
 	struct vhost_vring_addr *addr = &vq->ring_addrs;
 	uint64_t len;
 
+	if (addr->flags & (1 << VHOST_VRING_F_LOG)) {
+		vq->log_guest_addr =
+			translate_log_addr(dev, vq, addr->log_guest_addr);
+		if (vq->log_guest_addr == 0) {
+			RTE_LOG(DEBUG, VHOST_CONFIG,
+				"(%d) failed to map log_guest_addr.\n",
+				dev->vid);
+			return dev;
+		}
+	}
+
 	/* The addresses are converted from QEMU virtual to Vhost virtual. */
 	if (vq->desc && vq->avail && vq->used)
 		return dev;
@@ -553,14 +564,6 @@ translate_ring_addresses(struct virtio_net *dev, int vq_index)
 		vq->last_avail_idx = vq->used->idx;
 	}
 
-	vq->log_guest_addr =
-		translate_log_addr(dev, vq, addr->log_guest_addr);
-	if (vq->log_guest_addr == 0) {
-		RTE_LOG(DEBUG, VHOST_CONFIG,
-			"(%d) failed to map log_guest_addr .\n",
-			dev->vid);
-		return dev;
-	}
 	vq->access_ok = 1;
 
 	LOG_DEBUG(VHOST_CONFIG, "(%d) mapped address desc: %p\n",
