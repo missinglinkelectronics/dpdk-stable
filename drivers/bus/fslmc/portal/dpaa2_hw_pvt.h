@@ -63,6 +63,8 @@
 #define DPAA2_DQRR_RING_SIZE	16
 	/** <Maximum number of slots available in RX ring*/
 
+#define DPAA2_MAX_TX_RETRY_COUNT	10000
+
 #define MC_PORTAL_INDEX		0
 #define NUM_DPIO_REGIONS	2
 #define NUM_DQS_PER_QUEUE       2

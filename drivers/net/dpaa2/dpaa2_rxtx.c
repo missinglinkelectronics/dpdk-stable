@@ -636,15 +636,28 @@ dpaa2_dev_tx(void *queue, struct rte_mbuf **bufs, uint16_t nb_pkts)
 			}
 			bufs++;
 		}
+
 		loop = 0;
+		retry_count = 0;
 		while (loop < frames_to_send) {
-			loop += qbman_swp_enqueue_multiple(swp, &eqdesc,
+			ret = qbman_swp_enqueue_multiple(swp, &eqdesc,
 					&fd_arr[loop], frames_to_send - loop);
+			if (unlikely(ret < 0)) {
+				retry_count++;
+				if (retry_count > DPAA2_MAX_TX_RETRY_COUNT) {
+					num_tx += loop;
+					nb_pkts -= loop;
+					goto send_n_return;
+				}
+			} else {
+				loop += ret;
+				retry_count = 0;
+			}
 		}
 
-		num_tx += frames_to_send;
-		dpaa2_q->tx_pkts += frames_to_send;
-		nb_pkts -= frames_to_send;
+		num_tx += loop;
+		dpaa2_q->tx_pkts += loop;
+		nb_pkts -= loop;
 	}
 	return num_tx;
 
@@ -653,12 +666,21 @@ send_n_return:
 	if (loop) {
 		unsigned int i = 0;
 
+		retry_count = 0;
 		while (i < loop) {
-			i += qbman_swp_enqueue_multiple(swp, &eqdesc,
+			ret = qbman_swp_enqueue_multiple(swp, &eqdesc,
 							&fd_arr[i], loop - i);
+			if (unlikely(ret < 0)) {
+				retry_count++;
+				if (retry_count > DPAA2_MAX_TX_RETRY_COUNT)
+					break;
+			} else {
+				i += ret;
+				retry_count = 0;
+			}
 		}
-		num_tx += loop;
-		dpaa2_q->tx_pkts += loop;
+		num_tx += i;
+		dpaa2_q->tx_pkts += i;
 	}
 skip_tx:
 	return num_tx;
