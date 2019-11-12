@@ -136,6 +136,11 @@ split_elem(struct malloc_elem *elem, struct malloc_elem *split_pt)
 	next_elem->prev = split_pt;
 	elem->size = old_elem_size;
 	set_trailer(elem);
+	if (elem->pad) {
+		/* Update inner padding inner element size. */
+		elem = RTE_PTR_ADD(elem, elem->pad);
+		elem->size = old_elem_size - elem->pad;
+	}
 }
 
 /*
