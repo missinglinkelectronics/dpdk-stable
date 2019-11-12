@@ -746,3 +746,22 @@ Tested Platforms
      * Ubuntu 16.10
      * Ubuntu 18.04.1
      * Ubuntu 19.04
+
+19.08.1 Release Notes
+---------------------
+
+19.08.1 Fixes
+~~~~~~~~~~~~~
+
+* vhost: fix possible denial of service by leaking FDs
+* vhost: fix possible denial of service on SET_VRING_NUM
+
+19.08.1 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Security patches tested for CVE-2019-14818
+
+19.08.1 Known Issues
+~~~~~~~~~~~~~~~~~~~~
+
+* DPDK 19.08.1 contains security fixes only. Issues identified/fixed in DPDK master branch after DPDK v19.08 may be present in DPDK 19.08.1.
