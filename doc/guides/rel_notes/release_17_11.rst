@@ -1982,3 +1982,20 @@ Fixes skipped and status unresolved
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+
+17.11.8 Release Notes
+---------------------
+
+17.11.8 Fixes
+~~~~~~~~~~~~~
+
+* vhost: add number of fds to vhost-user messages
+* vhost: fix possible denial of service by leaking FDs - CVE-2019-14818
+* vhost: fix possible denial of service on SET_VRING_NUM - CVE-2019-14818
+* vhost: validate virtqueue size
+
+17.11.8 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Tested with two testpmd instances, one with Vhost PMD, the other with Virtio-user
+  PMD. Intialization goes well, and packets flow.
