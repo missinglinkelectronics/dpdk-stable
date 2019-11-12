@@ -1480,3 +1480,20 @@ Fixes in 16.11 LTS Release
 * vhost: remove unneeded null pointer check
 * vhost-user: drop connection on message handling failures
 * vhost-user: fix false negative in handling user messages
+
+16.11.10 Release Notes
+---------------------
+
+16.11.10 Fixes
+~~~~~~~~~~~~~
+
+* vhost: validate virtqueue size
+* vhost: add number of fds to vhost-user messages
+* vhost: fix possible denial of service by leaking FDs - CVE-2019-14818
+* vhost: fix possible denial of service on SET_VRING_NUM - CVE-2019-14818
+
+16.11.10 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Tested with two testpmd instances, one with Vhost PMD, the other with Virtio-user
+  PMD. Intialization goes well, and packets flow.
