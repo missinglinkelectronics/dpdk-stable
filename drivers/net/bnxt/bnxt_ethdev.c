@@ -715,7 +715,7 @@ static int bnxt_mac_addr_add_op(struct rte_eth_dev *eth_dev,
 	/* Attach requested MAC address to the new l2_filter */
 	STAILQ_FOREACH(filter, &vnic->filter, next) {
 		if (filter->mac_index == index) {
-			RTE_LOG(ERR, PMD,
+			RTE_LOG(DEBUG, PMD,
 				"MAC addr already existed for pool %d\n", pool);
 			return 0;
 		}
