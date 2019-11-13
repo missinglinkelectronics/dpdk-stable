@@ -316,6 +316,9 @@ int bnxt_dev_xstats_get_op(struct rte_eth_dev *eth_dev,
 		return 0;
 	}
 
+	if (xstats == NULL)
+		return 0;
+
 	bnxt_hwrm_port_qstats(bp);
 	bnxt_hwrm_func_qstats_tx_drop(bp, 0xffff, &tx_drop_pkts);
 
