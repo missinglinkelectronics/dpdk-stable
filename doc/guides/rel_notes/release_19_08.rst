@@ -765,3 +765,25 @@ Tested Platforms
 ~~~~~~~~~~~~~~~~~~~~
 
 * DPDK 19.08.1 contains security fixes only. Issues identified/fixed in DPDK master branch after DPDK v19.08 may be present in DPDK 19.08.1.
+
+19.08.2 Release Notes
+---------------------
+
+19.08.2 Fixes
+~~~~~~~~~~~~~
+
+* vhost: fix vring requests validation broken if no FD
+
+19.08.2 Validation
+~~~~~~~~~~~~~~~~~~
+
+* The fix was tested by Intel via the virtio/vhost regression tests
+
+   * http://doc.dpdk.org/dts/test_plans/virtio_pvp_regression_test_plan.html
+   * http://doc.dpdk.org/dts/test_plans/vhost_dequeue_zero_copy_test_plan.html
+   * http://doc.dpdk.org/dts/test_plans/vm2vm_virtio_pmd_test_plan.html
+
+19.08.2 Known Issues
+~~~~~~~~~~~~~~~~~~~~
+
+* DPDK 19.08.2 contains fixes up to DPDK v19.08 plus a security fix for CVE-2019-14818. Issues identified/fixed in DPDK master branch after DPDK v19.08 may be present in DPDK 19.08.2
