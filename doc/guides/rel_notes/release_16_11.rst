@@ -1482,10 +1482,10 @@ Fixes in 16.11 LTS Release
 * vhost-user: fix false negative in handling user messages
 
 16.11.10 Release Notes
----------------------
+----------------------
 
 16.11.10 Fixes
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 * vhost: validate virtqueue size
 * vhost: add number of fds to vhost-user messages
@@ -1493,7 +1493,23 @@ Fixes in 16.11 LTS Release
 * vhost: fix possible denial of service on SET_VRING_NUM - CVE-2019-14818
 
 16.11.10 Validation
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 * Tested with two testpmd instances, one with Vhost PMD, the other with Virtio-user
   PMD. Intialization goes well, and packets flow.
+
+16.11.11 Release Notes
+----------------------
+
+16.11.11 Fixes
+~~~~~~~~~~~~~~
+
+* vhost: fix vring requests validation broken if no FD
+
+16.11.11 Validation
+~~~~~~~~~~~~~~~~~~~
+
+* virtio/vhost regression tests by Intel:
+  * http://doc.dpdk.org/dts/test_plans/virtio_pvp_regression_test_plan.html
+  * http://doc.dpdk.org/dts/test_plans/vhost_dequeue_zero_copy_test_plan.html
+  * http://doc.dpdk.org/dts/test_plans/vm2vm_virtio_pmd_test_plan.html
