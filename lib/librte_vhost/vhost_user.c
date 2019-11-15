@@ -1409,6 +1409,7 @@ vhost_user_msg_handler(int vid, int fd)
 	struct VhostUserMsg msg;
 	int ret;
 	int unlock_required = 0;
+	int expected_fds;
 
 	dev = get_device(vid);
 	if (dev == NULL)
@@ -1586,20 +1587,26 @@ vhost_user_msg_handler(int vid, int fd)
 		break;
 
 	case VHOST_USER_SET_VRING_KICK:
-		if (validate_msg_fds(&msg, 1) != 0)
+		expected_fds =
+			(msg.payload.u64 & VHOST_USER_VRING_NOFD_MASK) ? 0 : 1;
+		if (validate_msg_fds(&msg, expected_fds) != 0)
 			return -1;
 
 		vhost_user_set_vring_kick(&dev, &msg);
 		break;
 	case VHOST_USER_SET_VRING_CALL:
-		if (validate_msg_fds(&msg, 1) != 0)
+		expected_fds =
+			(msg.payload.u64 & VHOST_USER_VRING_NOFD_MASK) ? 0 : 1;
+		if (validate_msg_fds(&msg, expected_fds) != 0)
 			return -1;
 
 		vhost_user_set_vring_call(dev, &msg);
 		break;
 
 	case VHOST_USER_SET_VRING_ERR:
-		if (validate_msg_fds(&msg, 1) != 0)
+		expected_fds =
+			(msg.payload.u64 & VHOST_USER_VRING_NOFD_MASK) ? 0 : 1;
+		if (validate_msg_fds(&msg, expected_fds) != 0)
 			return -1;
 
 		if (!(msg.payload.u64 & VHOST_USER_VRING_NOFD_MASK))
