@@ -30,7 +30,7 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Name: dpdk
-Version: 17.11.8
+Version: 17.11.9
 Release: 1
 Packager: packaging@6wind.com
 URL: http://dpdk.org

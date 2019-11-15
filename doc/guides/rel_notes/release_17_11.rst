@@ -1999,3 +1999,19 @@ Fixes skipped and status unresolved
 
 * Tested with two testpmd instances, one with Vhost PMD, the other with Virtio-user
   PMD. Intialization goes well, and packets flow.
+
+17.11.9 Release Notes
+---------------------
+
+17.11.9 Fixes
+~~~~~~~~~~~~~
+
+* vhost: fix vring requests validation broken if no FD
+
+17.11.9 Validation
+~~~~~~~~~~~~~~~~~~
+
+* virtio/vhost regression tests by Intel:
+  * http://doc.dpdk.org/dts/test_plans/virtio_pvp_regression_test_plan.html
+  * http://doc.dpdk.org/dts/test_plans/vhost_dequeue_zero_copy_test_plan.html
+  * http://doc.dpdk.org/dts/test_plans/vm2vm_virtio_pmd_test_plan.html
