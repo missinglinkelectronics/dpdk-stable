@@ -234,7 +234,7 @@ pkt_burst_transmit(struct fwd_stream *fs)
 		pkt->data_len = tx_pkt_seg_lengths[0];
 		pkt_seg = pkt;
 		if (tx_pkt_split == TX_PKT_SPLIT_RND)
-			nb_segs = random() % tx_pkt_nb_segs + 1;
+			nb_segs = rte_rand() % tx_pkt_nb_segs + 1;
 		else
 			nb_segs = tx_pkt_nb_segs;
 		pkt_len = pkt->data_len;
