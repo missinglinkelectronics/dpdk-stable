@@ -40,6 +40,7 @@ struct virtio_user_dev {
 	uint8_t		mac_addr[ETHER_ADDR_LEN];
 	char		path[PATH_MAX];
 	struct vring	vrings[VIRTIO_MAX_VIRTQUEUES];
+	bool		qp_enabled[VIRTIO_MAX_VIRTQUEUE_PAIRS];
 	struct virtio_user_backend_ops *ops;
 	pthread_mutex_t	mutex;
 	bool		started;
