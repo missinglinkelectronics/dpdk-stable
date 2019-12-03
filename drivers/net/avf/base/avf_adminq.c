@@ -851,6 +851,8 @@ enum avf_status_code avf_asq_send_command(struct avf_hw *hw,
 		cmd_completed = true;
 		if ((enum avf_admin_queue_err)retval == AVF_AQ_RC_OK)
 			status = AVF_SUCCESS;
+		else if ((enum avf_admin_queue_err)retval == AVF_AQ_RC_EBUSY)
+			status = AVF_ERR_NOT_READY;
 		else
 			status = AVF_ERR_ADMIN_QUEUE_ERROR;
 		hw->aq.asq_last_status = (enum avf_admin_queue_err)retval;
