@@ -370,6 +370,7 @@ rte_ethtool_net_set_rx_mode(uint16_t port_id)
 	uint16_t num_vfs;
 	struct rte_eth_dev_info dev_info;
 	uint16_t vf;
+	int ret;
 
 	rte_eth_dev_info_get(port_id, &dev_info);
 	num_vfs = dev_info.max_vfs;
@@ -383,7 +384,9 @@ rte_ethtool_net_set_rx_mode(uint16_t port_id)
 	}
 
 	/* Enable Rx vlan filter, VF unspport status is discard */
-	rte_eth_dev_set_vlan_offload(port_id, ETH_VLAN_FILTER_MASK);
+	ret = rte_eth_dev_set_vlan_offload(port_id, ETH_VLAN_FILTER_MASK);
+	if (ret != 0)
+		return ret;
 
 	return 0;
 }
