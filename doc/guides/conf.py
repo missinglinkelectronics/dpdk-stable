@@ -241,7 +241,7 @@ def generate_overview_table(output_filename, table_id, section, table_name, titl
                                                                 ini_filename))
                 continue
 
-            if value is not '':
+            if value:
                 # Get the first letter only.
                 ini_data[ini_filename][name] = value[0]
 
