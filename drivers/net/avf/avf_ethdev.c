@@ -987,7 +987,7 @@ avf_dev_stats_get(struct rte_eth_dev *dev, struct rte_eth_stats *stats)
 	ret = avf_query_stats(adapter, &pstats);
 	if (ret == 0) {
 		stats->ipackets = pstats->rx_unicast + pstats->rx_multicast +
-						pstats->rx_broadcast;
+				pstats->rx_broadcast - pstats->rx_discards;
 		stats->opackets = pstats->tx_broadcast + pstats->tx_multicast +
 						pstats->tx_unicast;
 		stats->imissed = pstats->rx_discards;
