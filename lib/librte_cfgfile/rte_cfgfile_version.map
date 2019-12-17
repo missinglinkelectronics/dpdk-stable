@@ -9,6 +9,7 @@ DPDK_2.0 {
 	rte_cfgfile_num_sections;
 	rte_cfgfile_section_entries;
 	rte_cfgfile_section_num_entries;
+	rte_cfgfile_section_num_entries_by_index;
 	rte_cfgfile_sections;
 
 	local: *;
