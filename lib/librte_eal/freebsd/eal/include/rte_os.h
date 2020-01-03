@@ -28,6 +28,9 @@ typedef cpuset_t rte_cpuset_t;
 	CPU_COPY(&tmp, dst); \
 } while (0)
 #define RTE_CPU_FILL(set) CPU_FILL(set)
+
+/* In FreeBSD 13 CPU_NAND macro is CPU_ANDNOT */
+#ifdef CPU_NAND
 #define RTE_CPU_NOT(dst, src) do \
 { \
 	cpuset_t tmp; \
@@ -35,5 +38,14 @@ typedef cpuset_t rte_cpuset_t;
 	CPU_NAND(&tmp, src); \
 	CPU_COPY(&tmp, dst); \
 } while (0)
+#else
+#define RTE_CPU_NOT(dst, src) do \
+{ \
+	cpuset_t tmp; \
+	CPU_FILL(&tmp); \
+	CPU_ANDNOT(&tmp, src); \
+	CPU_COPY(&tmp, dst); \
+} while (0)
+#endif
 
 #endif /* _RTE_OS_H_ */
