@@ -855,6 +855,7 @@ rte_vhost_driver_register(const char *path, uint64_t flags)
 			"error: failed to init connection mutex\n");
 		goto out_free;
 	}
+	vsocket->vdpa_dev_id = -1;
 	vsocket->dequeue_zero_copy = flags & RTE_VHOST_USER_DEQUEUE_ZERO_COPY;
 
 	if (vsocket->dequeue_zero_copy &&
