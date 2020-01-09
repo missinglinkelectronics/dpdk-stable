@@ -161,7 +161,8 @@ do_data_copy_enqueue(struct virtio_net *dev, struct vhost_virtqueue *vq)
 
 	for (i = 0; i < count; i++) {
 		rte_memcpy(elem[i].dst, elem[i].src, elem[i].len);
-		vhost_log_cache_write(dev, vq, elem[i].log_addr, elem[i].len);
+		vhost_log_cache_write_iova(dev, vq, elem[i].log_addr,
+					   elem[i].len);
 		PRINT_PACKET(dev, (uintptr_t)elem[i].dst, elem[i].len, 0);
 	}
 }
@@ -278,7 +279,7 @@ copy_mbuf_to_desc(struct virtio_net *dev, struct vhost_virtqueue *vq,
 		virtio_enqueue_offload(m,
 				(struct virtio_net_hdr *)(uintptr_t)desc_addr);
 		PRINT_PACKET(dev, (uintptr_t)desc_addr, dev->vhost_hlen, 0);
-		vhost_log_cache_write(dev, vq, desc_gaddr, dev->vhost_hlen);
+		vhost_log_cache_write_iova(dev, vq, desc_gaddr, dev->vhost_hlen);
 	} else {
 		struct virtio_net_hdr vnet_hdr;
 		uint64_t remain = dev->vhost_hlen;
@@ -301,7 +302,7 @@ copy_mbuf_to_desc(struct virtio_net *dev, struct vhost_virtqueue *vq,
 					(void *)(uintptr_t)src, len);
 
 			PRINT_PACKET(dev, (uintptr_t)dst, (uint32_t)len, 0);
-			vhost_log_cache_write(dev, vq, guest_addr, len);
+			vhost_log_cache_write_iova(dev, vq, guest_addr, len);
 			remain -= len;
 			guest_addr += len;
 			dst += len;
@@ -382,8 +383,9 @@ copy_mbuf_to_desc(struct virtio_net *dev, struct vhost_virtqueue *vq,
 							desc_offset)),
 				rte_pktmbuf_mtod_offset(m, void *, mbuf_offset),
 				cpy_len);
-			vhost_log_cache_write(dev, vq, desc_gaddr + desc_offset,
-					cpy_len);
+			vhost_log_cache_write_iova(dev, vq,
+						   desc_gaddr + desc_offset,
+						   cpy_len);
 			PRINT_PACKET(dev, (uintptr_t)(desc_addr + desc_offset),
 				     cpy_len, 0);
 		} else {
@@ -808,7 +810,7 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct vhost_virtqueue *vq,
 
 					PRINT_PACKET(dev, (uintptr_t)dst,
 							(uint32_t)len, 0);
-					vhost_log_cache_write(dev, vq,
+					vhost_log_cache_write_iova(dev, vq,
 							guest_addr, len);
 
 					remain -= len;
@@ -818,7 +820,7 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct vhost_virtqueue *vq,
 			} else {
 				PRINT_PACKET(dev, (uintptr_t)hdr_addr,
 						dev->vhost_hlen, 0);
-				vhost_log_cache_write(dev, vq, hdr_phys_addr,
+				vhost_log_cache_write_iova(dev, vq, hdr_phys_addr,
 						dev->vhost_hlen);
 			}
 
@@ -832,7 +834,7 @@ copy_mbuf_to_desc_mergeable(struct virtio_net *dev, struct vhost_virtqueue *vq,
 							desc_offset)),
 				rte_pktmbuf_mtod_offset(m, void *, mbuf_offset),
 				cpy_len);
-			vhost_log_cache_write(dev, vq, desc_gaddr + desc_offset,
+			vhost_log_cache_write_iova(dev, vq, desc_gaddr + desc_offset,
 					cpy_len);
 			PRINT_PACKET(dev, (uintptr_t)(desc_addr + desc_offset),
 				cpy_len, 0);
