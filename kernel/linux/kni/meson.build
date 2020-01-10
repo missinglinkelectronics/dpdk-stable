@@ -28,7 +28,6 @@ custom_target('rte_kni',
 		' -I' + meson.current_source_dir() + '/ethtool/igb',
 		'modules'],
 	depends: kni_mkfile,
-	console: true,
 	install: true,
 	install_dir: kernel_dir + '/extra/dpdk',
 	build_by_default: get_option('enable_kmods'))
