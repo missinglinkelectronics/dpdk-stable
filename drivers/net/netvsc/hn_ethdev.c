@@ -240,6 +240,9 @@ static void hn_dev_info_get(struct rte_eth_dev *dev,
 	dev_info->max_rx_queues = hv->max_queues;
 	dev_info->max_tx_queues = hv->max_queues;
 
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
+		return;
+
 	hn_rndis_get_offload(hv, dev_info);
 	hn_vf_info_get(hv, dev_info);
 }
@@ -721,15 +724,15 @@ eth_hn_dev_init(struct rte_eth_dev *eth_dev)
 	eth_dev->tx_pkt_burst = &hn_xmit_pkts;
 	eth_dev->rx_pkt_burst = &hn_recv_pkts;
 
+	/* Since Hyper-V only supports one MAC address, just use local data */
+	eth_dev->data->mac_addrs = &hv->mac_addr;
+
 	/*
 	 * for secondary processes, we don't initialize any further as primary
 	 * has already done this work.
 	 */
 	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
 		return 0;
-
-	/* Since Hyper-V only supports one MAC address, just use local data */
-	eth_dev->data->mac_addrs = &hv->mac_addr;
 
 	hv->vmbus = vmbus;
 	hv->rxbuf_res = &vmbus->resource[HV_RECV_BUF_MAP];
