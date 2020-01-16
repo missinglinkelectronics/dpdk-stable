@@ -2909,9 +2909,9 @@ bnxt_get_eeprom_length_op(struct rte_eth_dev *dev)
 	uint32_t dir_entries;
 	uint32_t entry_length;
 
-	PMD_DRV_LOG(INFO, "%04x:%02x:%02x:%02x\n",
-		bp->pdev->addr.domain, bp->pdev->addr.bus,
-		bp->pdev->addr.devid, bp->pdev->addr.function);
+	PMD_DRV_LOG(INFO, PCI_PRI_FMT "\n",
+		    bp->pdev->addr.domain, bp->pdev->addr.bus,
+		    bp->pdev->addr.devid, bp->pdev->addr.function);
 
 	rc = bnxt_hwrm_nvm_get_dir_info(bp, &dir_entries, &entry_length);
 	if (rc != 0)
@@ -2928,10 +2928,10 @@ bnxt_get_eeprom_op(struct rte_eth_dev *dev,
 	uint32_t index;
 	uint32_t offset;
 
-	PMD_DRV_LOG(INFO, "%04x:%02x:%02x:%02x in_eeprom->offset = %d "
-		"len = %d\n", bp->pdev->addr.domain,
-		bp->pdev->addr.bus, bp->pdev->addr.devid,
-		bp->pdev->addr.function, in_eeprom->offset, in_eeprom->length);
+	PMD_DRV_LOG(INFO, PCI_PRI_FMT " in_eeprom->offset = %d len = %d\n",
+		    bp->pdev->addr.domain, bp->pdev->addr.bus,
+		    bp->pdev->addr.devid, bp->pdev->addr.function,
+		    in_eeprom->offset, in_eeprom->length);
 
 	if (in_eeprom->offset == 0) /* special offset value to get directory */
 		return bnxt_get_nvram_directory(bp, in_eeprom->length,
@@ -2999,10 +2999,10 @@ bnxt_set_eeprom_op(struct rte_eth_dev *dev,
 	uint8_t index, dir_op;
 	uint16_t type, ext, ordinal, attr;
 
-	PMD_DRV_LOG(INFO, "%04x:%02x:%02x:%02x in_eeprom->offset = %d "
-		"len = %d\n", bp->pdev->addr.domain,
-		bp->pdev->addr.bus, bp->pdev->addr.devid,
-		bp->pdev->addr.function, in_eeprom->offset, in_eeprom->length);
+	PMD_DRV_LOG(INFO, PCI_PRI_FMT " in_eeprom->offset = %d len = %d\n",
+		    bp->pdev->addr.domain, bp->pdev->addr.bus,
+		    bp->pdev->addr.devid, bp->pdev->addr.function,
+		    in_eeprom->offset, in_eeprom->length);
 
 	if (!BNXT_PF(bp)) {
 		PMD_DRV_LOG(ERR, "NVM write not supported from a VF\n");
