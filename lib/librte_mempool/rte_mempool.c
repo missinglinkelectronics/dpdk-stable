@@ -678,8 +678,10 @@ rte_mempool_populate_anon(struct rte_mempool *mp)
 	}
 
 	ret = mempool_ops_alloc_once(mp);
-	if (ret != 0)
-		return ret;
+	if (ret < 0) {
+		rte_errno = -ret;
+		return 0;
+	}
 
 	size = get_anon_size(mp);
 	if (size < 0) {
@@ -703,8 +705,10 @@ rte_mempool_populate_anon(struct rte_mempool *mp)
 
 	ret = rte_mempool_populate_virt(mp, addr, size, getpagesize(),
 		rte_mempool_memchunk_anon_free, addr);
-	if (ret == 0)
+	if (ret < 0) {
+		rte_errno = -ret;
 		goto fail;
+	}
 
 	return mp->populated_size;
 
