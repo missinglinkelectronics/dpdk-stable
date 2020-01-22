@@ -56,7 +56,6 @@ process_dup(const char *const argv[], int numargs, const char *env_value)
 	int num;
 	char *argv_cpy[numargs + 1];
 	int i, status;
-	char path[32];
 
 	pid_t pid = fork();
 	if (pid < 0)
