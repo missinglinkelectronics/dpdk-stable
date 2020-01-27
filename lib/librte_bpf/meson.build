@@ -12,7 +12,7 @@ if arch_subdir == 'x86' and dpdk_conf.get('RTE_ARCH_64')
 	sources += files('bpf_jit_x86.c')
 endif
 
-install_headers = files('bpf_def.h',
+install_headers('bpf_def.h',
 			'rte_bpf.h',
 			'rte_bpf_ethdev.h')
 
