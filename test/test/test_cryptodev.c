@@ -136,6 +136,11 @@ process_crypto_request(uint8_t dev_id, struct rte_crypto_op *op)
 	while (rte_cryptodev_dequeue_burst(dev_id, 0, &op, 1) == 0)
 		rte_pause();
 
+	if (op->status != RTE_CRYPTO_OP_STATUS_SUCCESS) {
+		RTE_LOG(DEBUG, USER1, "Operation status %d\n", op->status);
+		return NULL;
+	}
+
 	return op;
 }
 
@@ -2899,8 +2904,8 @@ test_snow3g_authentication(const struct snow3g_hash_test_data *tdata)
 
 	ut_params->op = process_crypto_request(ts_params->valid_devs[0],
 				ut_params->op);
-	ut_params->obuf = ut_params->op->sym->m_src;
 	TEST_ASSERT_NOT_NULL(ut_params->op, "failed to retrieve obuf");
+	ut_params->obuf = ut_params->op->sym->m_src;
 	ut_params->digest = rte_pktmbuf_mtod(ut_params->obuf, uint8_t *)
 			+ plaintext_pad_len;
 
@@ -3019,8 +3024,8 @@ test_kasumi_authentication(const struct kasumi_hash_test_data *tdata)
 
 	ut_params->op = process_crypto_request(ts_params->valid_devs[0],
 				ut_params->op);
-	ut_params->obuf = ut_params->op->sym->m_src;
 	TEST_ASSERT_NOT_NULL(ut_params->op, "failed to retrieve obuf");
+	ut_params->obuf = ut_params->op->sym->m_src;
 	ut_params->digest = rte_pktmbuf_mtod(ut_params->obuf, uint8_t *)
 			+ plaintext_pad_len;
 
@@ -4781,8 +4786,8 @@ test_zuc_authentication(const struct wireless_test_data *tdata)
 
 	ut_params->op = process_crypto_request(ts_params->valid_devs[0],
 				ut_params->op);
-	ut_params->obuf = ut_params->op->sym->m_src;
 	TEST_ASSERT_NOT_NULL(ut_params->op, "failed to retrieve obuf");
+	ut_params->obuf = ut_params->op->sym->m_src;
 	ut_params->digest = rte_pktmbuf_mtod(ut_params->obuf, uint8_t *)
 			+ plaintext_pad_len;
 
@@ -8100,13 +8105,7 @@ test_authentication_verify_fail_when_data_corruption(
 
 	ut_params->op = process_crypto_request(ts_params->valid_devs[0],
 			ut_params->op);
-	TEST_ASSERT_NOT_NULL(ut_params->op, "failed crypto process");
-	TEST_ASSERT_EQUAL(ut_params->op->status,
-			RTE_CRYPTO_OP_STATUS_AUTH_FAILED,
-			"authentication not failed");
-
-	ut_params->obuf = ut_params->op->sym->m_src;
-	TEST_ASSERT_NOT_NULL(ut_params->obuf, "failed to retrieve obuf");
+	TEST_ASSERT_NULL(ut_params->op, "authentication not failed");
 
 	return 0;
 }
@@ -8161,13 +8160,7 @@ test_authentication_verify_GMAC_fail_when_corruption(
 
 	ut_params->op = process_crypto_request(ts_params->valid_devs[0],
 			ut_params->op);
-	TEST_ASSERT_NOT_NULL(ut_params->op, "failed crypto process");
-	TEST_ASSERT_EQUAL(ut_params->op->status,
-			RTE_CRYPTO_OP_STATUS_AUTH_FAILED,
-			"authentication not failed");
-
-	ut_params->obuf = ut_params->op->sym->m_src;
-	TEST_ASSERT_NOT_NULL(ut_params->obuf, "failed to retrieve obuf");
+	TEST_ASSERT_NULL(ut_params->op, "authentication not failed");
 
 	return 0;
 }
@@ -8221,14 +8214,7 @@ test_authenticated_decryption_fail_when_corruption(
 
 	ut_params->op = process_crypto_request(ts_params->valid_devs[0],
 			ut_params->op);
-
-	TEST_ASSERT_NOT_NULL(ut_params->op, "failed crypto process");
-	TEST_ASSERT_EQUAL(ut_params->op->status,
-			RTE_CRYPTO_OP_STATUS_AUTH_FAILED,
-			"authentication not failed");
-
-	ut_params->obuf = ut_params->op->sym->m_src;
-	TEST_ASSERT_NOT_NULL(ut_params->obuf, "failed to retrieve obuf");
+	TEST_ASSERT_NULL(ut_params->op, "authentication not failed");
 
 	return 0;
 }
