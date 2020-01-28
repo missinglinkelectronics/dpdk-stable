@@ -734,7 +734,8 @@ static struct rte_eth_dev *
 mlx5_dev_spawn(struct rte_device *dpdk_dev,
 	       struct ibv_device *ibv_dev,
 	       struct mlx5_dev_config config,
-	       const struct mlx5_switch_info *switch_info)
+	       const struct mlx5_switch_info *switch_info,
+	       unsigned int ifindex)
 {
 	struct ibv_context *ctx;
 	struct ibv_device_attr_ex attr;
@@ -1132,6 +1133,12 @@ mlx5_dev_spawn(struct rte_device *dpdk_dev,
 		eth_dev->data->dev_flags |= RTE_ETH_DEV_REPRESENTOR;
 		eth_dev->data->representor_id = priv->representor_id;
 	}
+	/*
+	 * Store associated network device interface index. This index
+	 * is permanent throughout the lifetime of device. So, we may store
+	 * the ifindex here and use the cached value further.
+	 */
+	priv->if_index = ifindex;
 	eth_dev->data->dev_private = priv;
 	priv->dev_data = eth_dev->data;
 	eth_dev->data->mac_addrs = priv->mac;
@@ -1492,7 +1499,7 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 
 		list[i].eth_dev = mlx5_dev_spawn(&pci_dev->device,
 						 list[i].ibv_dev, dev_config,
-						 &list[i].info);
+						 &list[i].info, list[i].ifindex);
 		if (!list[i].eth_dev) {
 			if (rte_errno != EBUSY && rte_errno != EEXIST)
 				break;

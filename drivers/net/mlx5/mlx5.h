@@ -197,6 +197,7 @@ struct mlx5_priv {
 	unsigned int representor:1; /* Device is a port representor. */
 	uint16_t domain_id; /* Switch domain identifier. */
 	int32_t representor_id; /* Port representor identifier. */
+	unsigned int if_index; /* Associated kernel network device index. */
 	/* RX/TX queues. */
 	unsigned int rxqs_n; /* RX queues array size. */
 	unsigned int txqs_n; /* TX queues array size. */
