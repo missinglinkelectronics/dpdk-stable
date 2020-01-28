@@ -26,13 +26,11 @@ struct bnxt_filter_info *bnxt_alloc_filter(struct bnxt *bp)
 {
 	struct bnxt_filter_info *filter;
 
-	/* Find the 1st unused filter from the free_filter_list pool*/
-	filter = STAILQ_FIRST(&bp->free_filter_list);
+	filter = bnxt_get_unused_filter(bp);
 	if (!filter) {
 		PMD_DRV_LOG(ERR, "No more free filter resources\n");
 		return NULL;
 	}
-	STAILQ_REMOVE_HEAD(&bp->free_filter_list, next);
 
 	/* Default to L2 MAC Addr filter */
 	filter->flags = HWRM_CFA_L2_FILTER_ALLOC_INPUT_FLAGS_PATH_RX;
