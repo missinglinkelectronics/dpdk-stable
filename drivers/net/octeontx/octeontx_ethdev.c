@@ -346,6 +346,10 @@ octeontx_dev_close(struct rte_eth_dev *dev)
 		rte_free(txq);
 	}
 
+	/* Free MAC address table */
+	rte_free(dev->data->mac_addrs);
+	dev->data->mac_addrs = NULL;
+
 	dev->tx_pkt_burst = NULL;
 	dev->rx_pkt_burst = NULL;
 }
@@ -1081,7 +1085,7 @@ octeontx_create(struct rte_vdev_device *dev, int port, uint8_t evdev,
 		octeontx_log_err("eth_dev->port_id (%d) is diff to orig (%d)",
 				data->port_id, nic->port_id);
 		res = -EINVAL;
-		goto err;
+		goto free_mac_addrs;
 	}
 
 	/* Update port_id mac to eth_dev */
@@ -1100,6 +1104,8 @@ octeontx_create(struct rte_vdev_device *dev, int port, uint8_t evdev,
 	rte_eth_dev_probing_finish(eth_dev);
 	return data->port_id;
 
+free_mac_addrs:
+	rte_free(data->mac_addrs);
 err:
 	if (nic)
 		octeontx_port_close(nic);
