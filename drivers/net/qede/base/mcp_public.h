@@ -1273,6 +1273,7 @@ struct public_drv_mb {
 /*deprecated don't use*/
 #define DRV_MSG_CODE_INITIATE_FLR_DEPRECATED    0x02000000
 #define DRV_MSG_CODE_INITIATE_PF_FLR            0x02010000
+#define DRV_MSG_CODE_INITIATE_VF_FLR		0x02020000
 #define DRV_MSG_CODE_VF_DISABLED_DONE           0xc0000000
 #define DRV_MSG_CODE_CFG_VF_MSIX                0xc0010000
 #define DRV_MSG_CODE_CFG_PF_VFS_MSIX            0xc0020000
@@ -1704,6 +1705,7 @@ struct public_drv_mb {
 #define FW_MSG_CODE_NIG_DRAIN_DONE              0x30000000
 #define FW_MSG_CODE_VF_DISABLED_DONE            0xb0000000
 #define FW_MSG_CODE_DRV_CFG_VF_MSIX_DONE        0xb0010000
+#define FW_MSG_CODE_INITIATE_VF_FLR_OK		0xb0030000
 #define FW_MSG_CODE_FLR_ACK                     0x02000000
 #define FW_MSG_CODE_FLR_NACK                    0x02100000
 #define FW_MSG_CODE_SET_DRIVER_DONE		0x02200000
