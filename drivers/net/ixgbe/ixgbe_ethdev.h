@@ -505,6 +505,7 @@ struct ixgbe_adapter {
 	 * mailbox status) link status.
 	 */
 	uint8_t pflink_fullchk;
+	uint8_t mac_ctrl_frame_fwd;
 };
 
 struct ixgbe_vf_representor {
