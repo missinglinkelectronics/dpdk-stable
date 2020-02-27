@@ -2015,3 +2015,247 @@ Fixes skipped and status unresolved
   * http://doc.dpdk.org/dts/test_plans/virtio_pvp_regression_test_plan.html
   * http://doc.dpdk.org/dts/test_plans/vhost_dequeue_zero_copy_test_plan.html
   * http://doc.dpdk.org/dts/test_plans/vm2vm_virtio_pmd_test_plan.html
+
+17.11.10 Release Notes
+----------------------
+
+17.11.10 Fixes
+~~~~~~~~~~~~~~
+
+* app/crypto-perf: fix input of AEAD decrypt
+* app/proc_info: fix string copying to use strlcpy
+* app/testpmd: block xstats for hidden ports
+* app/testpmd: fix crash on port reset
+* app/testpmd: fix help for loop topology option
+* app/testpmd: fix Tx checksum when TSO enabled
+* app/testpmd: use better randomness for Tx split
+* bus/pci: align next mapping address on page boundary
+* bus/pci: fix Intel IOMMU sysfs access check
+* bus/pci: remove useless link dependency on ethdev
+* cryptodev: fix checks related to device id
+* cryptodev: fix initialization on multi-process
+* cryptodev: fix missing device id range checking
+* crypto/dpaa2_sec: fix length retrieved from hardware
+* crypto/openssl: use local copy for session contexts
+* crypto/qat: fix digest length in XCBC capability
+* crypto/qat: fix null auth issues when using vfio_pci
+* doc: fix a common typo in NIC guides
+* doc: fix AESNI-GCM limitations in crypto guide
+* doc: fix description of versioning macros
+* doc: fix format in virtio guide
+* doc: fix tap guide
+* doc: fix typo in l2fwd-crypto guide
+* doc/guides: clean repeated words
+* doc: robustify PDF build
+* drivers/crypto: remove some invalid comments
+* eal: remove dead code on NUMA node detection
+* ethdev: fix endian annotation for SPI item
+* ethdev: fix include of ethernet header file
+* ethdev: fix typos for ENOTSUP
+* ethdev: limit maximum number of queues
+* ethdev: remove redundant device info cleanup before get
+* event/dpaa2: fix default queue configuration
+* event/octeontx: fix partial Rx packet handling
+* event/sw: fix xstats reset value
+* examples/ipsec-secgw: fix default configuration
+* examples/ipsec-secgw: fix GCM IV length
+* examples/ipsec-secgw: fix SHA256-HMAC digest length
+* examples/l3fwd-power: fix Rx interrupt disabling
+* examples/multi_process: fix client crash with sparse ports
+* examples/vm_power: fix build without i40e
+* examples/vm_power: fix type of cmdline token in cli
+* kni: fix build with kernel 5.3
+* lib/distributor: fix deadlock on aarch64
+* lib: fix doxygen typos
+* lib: fix log typos
+* maintainers: update for stable branches
+* malloc: fix realloc copy size
+* malloc: fix realloc padded element size
+* malloc: set pad to 0 on free
+* mempool/dpaa2: report error on endless loop in mbuf release
+* mk: remove library search path from binary
+* net/af_packet: fix stale sockets
+* net/af_packet: improve Tx statistics accuracy
+* net/bnxt: cleanup comments
+* net/bnxt: enforce IO barrier for doorbell command
+* net/bnxt: expose some missing counters in port stats
+* net/bnxt: fix async link handling and update
+* net/bnxt: fix coding style
+* net/bnxt: fix crash in secondary process
+* net/bnxt: fix crash in xstats get
+* net/bnxt: fix dereference before null check
+* net/bnxt: fix log message level
+* net/bnxt: fix mbuf free when clearing Tx queue
+* net/bnxt: fix memory leak
+* net/bnxt: fix multicast filter programming
+* net/bnxt: fix Rx queue count
+* net/bnxt: fix setting default MAC address
+* net/bnxt: get default HWRM command timeout from FW
+* net/bnxt: move macro definitions to header file
+* net/bnxt: remove commented out code
+* net/bnxt: remove duplicate barrier
+* net/bnxt: remove redundant header file inclusion
+* net/bnxt: remove unnecessary variable assignment
+* net/bnxt: return error if setting link up fails
+* net/bonding: fix LACP fast queue Rx handler
+* net/bonding: fix link speed update in broadcast mode
+* net/bonding: fix OOB access in other aggregator modes
+* net/bonding: fix port ID check
+* net/bonding: fix selection logic
+* net/bonding: fix slave id types
+* net/bonding: fix unicast packets filtering
+* net/bonding: use non deprecated PCI API
+* net/cxgbe: fix prefetch for non-coalesced Tx packets
+* net/dpaa2: add retry and timeout in packet enqueue API
+* net/dpaa2: fix possible use of uninitialized vars
+* net/dpaa2: set port in mbuf
+* net/e1000: fix link status
+* net/fm10k: fix mbuf free in vector Rx
+* net/fm10k: fix stats crash in multi-process
+* net/i40e: downgrade error log
+* net/i40e: fix address of first segment
+* net/i40e: remove compiler barrier from NEON Rx
+* net/i40e: remove memory barrier from NEON Rx
+* net/igb: fix global variable multiple definitions
+* net/igb: fix PHY status if PHY reset is not blocked
+* net/ixgbe: enable new PF host mbox version
+* net/ixgbe: fix address of first segment
+* net/ixgbe: fix link status
+* net/ixgbe: fix link status
+* net/ixgbe: fix queue interrupt for X552/557
+* net/ixgbe: fix VF RSS offloads configuration
+* net/ixgbe: fix X553 speed capability
+* net/ixgbe: remove memory barrier from NEON Rx
+* net/ixgbe: remove redundant assignment
+* net/ixgbe: support packet type with NEON
+* net/mlx4: fix build on ppc64
+* net/mlx5: fix Rx CQ doorbell synchronization on aarch64
+* net/mlx: fix build with make and recent gcc
+* net/mlx: fix debug build with icc
+* net/qede: fix setting MTU
+* net/qede: fix setting VLAN strip mode
+* net/qede: limit Rx ring index read for debug
+* net/sfc: fix adapter lock usage on rule creation
+* net/tap: fix blocked Rx packets
+* net/vhost: fix redundant queue state event
+* net/virtio: fix descriptor addressed in Tx
+* net/virtio: fix mbuf data and packet length mismatch
+* net/virtio: fix Tx checksum offloads
+* net/virtio: get all pending Rx packets in vectorized paths
+* net/virtio: init MTU in case no control channel
+* net/virtio: reject deferred Rx start
+* net/virtio: reject deferred Tx start
+* net/virtio-user: fix setting filters
+* power: fix socket indicator value
+* power: handle frequency increase with turbo disabled
+* ring: enforce reading tail before slots
+* security: fix doxygen fields
+* service: use log for error messages
+* test/bonding: fix LSC related cases
+* test: fix global variable multiple definitions
+* test/interrupt: account for race with callback
+* test/lpm: fix measured cycles for delete
+* test/mbuf: fix forged mbuf in clone test
+* test: optimise fd closing in forks
+* test/service: fix wait for service core
+* test/test: fix test app defining unused variable
+* usertools: fix pmdinfo with python 3 and pyelftools>=0.24
+* version: 17.11.10-rc1
+* vfio: fix truncated BAR offset for 32-bit
+* vhost: convert buffer addresses to GPA for logging
+* vhost: fix IPv4 checksum
+* vhost: fix slave request fd leak
+* vhost: fix virtqueue not accessible
+* vhost: fix vring address handling during live migration
+* vhost: fix vring memory partially mapped
+* vhost: forbid reallocation when running
+* vhost: prevent zero copy mode if IOMMU is on
+* vhost: protect vring access done by application
+* vhost: translate incoming log address to GPA
+* vhost: un-inline dirty pages logging functions
+
+17.11.10 Validation
+~~~~~~~~~~~~~~~~~~~
+
+* Red Hat(R) Testing
+
+   * RHEL 7.8
+   * Functionality
+
+      * PF assignment
+      * VF assignment
+      * vhost single/multi queues and cross-NUMA
+      * vhostclient reconnect
+      * vhost live migration with single/multi queues and cross-NUMA
+      * OVS PVP
+
+* Intel(R) Testing
+
+   * Basic Intel(R) NIC(ixgbe and i40e) testing
+
+      * PF (i40e)
+      * PF (ixgbe)
+      * VF
+      * Compile Testing
+      * Intel NIC single core/NIC performance
+
+   * Basic cryptodev and virtio testing
+
+      * cryptodev
+      * vhost/virtio basic loopback, PVP and performance test
+
+* Mellanox(R) Testing
+
+   * Basic functionality with testpmd
+
+      * Tx/Rx
+      * xstats
+      * Timestamps
+      * Link status
+      * RTE flow and flow_director
+      * RSS
+      * VLAN stripping and insertion
+      * Checksum/TSO
+      * ptype
+      * Multi-process
+
+   * ConnectX-5
+
+      * RHEL 7.4
+      * Kernel 3.10.0-693.el7.x86_64
+      * Driver MLNX_OFED_LINUX-4.7-3.2.9.0
+      * fw 16.26.4012
+
+   * ConnectX-4 Lx
+
+      * RHEL 7.4
+      * Kernel 3.10.0-693.el7.x86_64
+      * Driver MLNX_OFED_LINUX-4.7-3.2.9.0
+      * fw 14.26.4012
+
+* Intel(R) Testing with Open vSwitch
+
+   * OVS testing with OVS branches 2.10 and 2.19 with VSPERF
+
+   * Tested NICs
+
+      * i40e (X710)
+      * ixgbe (82599ES)
+
+   * Functionality
+
+      * P2P
+      * PVP
+      * Hotplug
+      * Multiqueue
+      * Vhostuserclient reconnect
+      * Vhost cross-NUMA awareness
+      * Jumbo frames
+      * Rate limiting
+      * QoS policer
+
+17.11.10 Known Issues
+~~~~~~~~~~~~~~~~~~~~~
+
+* MLX4/5 and rte_flow: count actions and rules with vlan items are not supported, and MLNX_OFED_LINUX 4.6-1.0.1.1 is not compatible
+* DPDK 17.11.10 contains fixes up to DPDK v19.11. Issues identified/fixed in DPDK master branch after DPDK v19.11 may be present in DPDK 17.11.10
