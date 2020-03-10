@@ -825,7 +825,7 @@ VERSION_SYMBOL(rte_lpm6_add, _v20, 2.0);
  *
  *	Returns:
  *    0 on success
- *    -ENOSPC not enought tbl8 left
+ *    -ENOSPC not enough tbl8 left
  */
 static int
 simulate_add(struct rte_lpm6 *lpm, const uint8_t *masked_ip, uint8_t depth)
@@ -855,7 +855,7 @@ simulate_add(struct rte_lpm6 *lpm, const uint8_t *masked_ip, uint8_t depth)
 	}
 
 	if (tbl8_available(lpm) < total_need_tbl_nb)
-		/* not enought tbl8 to add a rule */
+		/* not enough tbl8 to add a rule */
 		return -ENOSPC;
 
 	return 0;
@@ -1315,7 +1315,7 @@ rule_find_range(struct rte_lpm6 *lpm, const uint8_t *ip, uint8_t depth,
 		/* minus top level */
 		depth -= 24;
 
-		/* interate through levels (tbl8s)
+		/* iterate through levels (tbl8s)
 		 * until we reach the last one
 		 */
 		while (depth > 8) {
