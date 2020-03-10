@@ -2705,7 +2705,7 @@ rte_eth_dev_set_vlan_offload(uint16_t port_id, int offload_mask)
 	/* save original values in case of failure */
 	orig_offloads = dev->data->dev_conf.rxmode.offloads;
 
-	/*check which option changed by application*/
+	/* check which option changed by application */
 	cur = !!(offload_mask & ETH_VLAN_STRIP_OFFLOAD);
 	org = !!(dev->data->dev_conf.rxmode.offloads &
 		 DEV_RX_OFFLOAD_VLAN_STRIP);
@@ -3861,7 +3861,7 @@ rte_eth_add_first_rx_callback(uint16_t port_id, uint16_t queue_id,
 	cb->param = user_param;
 
 	rte_spinlock_lock(&rte_eth_rx_cb_lock);
-	/* Add the callbacks at fisrt position*/
+	/* Add the callbacks at first position */
 	cb->next = rte_eth_devices[port_id].post_rx_burst_cbs[queue_id];
 	rte_smp_wmb();
 	rte_eth_devices[port_id].post_rx_burst_cbs[queue_id] = cb;
