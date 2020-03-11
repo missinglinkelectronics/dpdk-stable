@@ -1,0 +1,18 @@
+DPDK is a set of libraries and drivers for fast packet processing.
+
+The DPDK uses the Open Source BSD-3-Clause license for the core libraries
+and drivers. The kernel components are GPL-2.0 licensed.
+
+Documentation is available at: https://core.dpdk.org/doc/
+
+For questions and usage discussions, subscribe to: users@dpdk.org
+Report bugs and issues to the development mailing list: dev@dpdk.org
+
+This is the default branch of the dpdk-stable repo. It is unused.
+Please switch branch to one of the stable/LTS branches.
+
+Details of currently maintained stable/LTS branches are available at:
+https://core.dpdk.org/roadmap/#stable
+
+Releases from current and previously maintained stable/LTS branches
+are available via git tags or at: https://core.dpdk.org/download/
