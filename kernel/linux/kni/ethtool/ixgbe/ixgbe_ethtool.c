@@ -40,9 +40,11 @@ struct ixgbe_stats {
 	int stat_offset;
 };
 
+#define RTE_SIZEOF_FIELD(type, field) (sizeof(((type *)0)->field))
+
 #define IXGBE_NETDEV_STAT(_net_stat) { \
 	.stat_string = #_net_stat, \
-	.sizeof_stat = FIELD_SIZEOF(struct net_device_stats, _net_stat), \
+	.sizeof_stat = RTE_SIZEOF_FIELD(struct net_device_stats, _net_stat), \
 	.stat_offset = offsetof(struct net_device_stats, _net_stat) \
 }
 static const struct ixgbe_stats ixgbe_gstrings_net_stats[] = {
@@ -69,7 +71,7 @@ static const struct ixgbe_stats ixgbe_gstrings_net_stats[] = {
 
 #define IXGBE_STAT(_name, _stat) { \
 	.stat_string = _name, \
-	.sizeof_stat = FIELD_SIZEOF(struct ixgbe_adapter, _stat), \
+	.sizeof_stat = RTE_SIZEOF_FIELD(struct ixgbe_adapter, _stat), \
 	.stat_offset = offsetof(struct ixgbe_adapter, _stat) \
 }
 static struct ixgbe_stats ixgbe_gstrings_stats[] = {
