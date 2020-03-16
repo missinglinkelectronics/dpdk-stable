@@ -413,8 +413,8 @@ virtqueue_enqueue_xmit_inorder(struct virtnet_tx *txvq,
 		dxp->cookie = (void *)cookies[i];
 		dxp->ndescs = 1;
 
-		hdr = (struct virtio_net_hdr *)
-			rte_pktmbuf_prepend(cookies[i], head_size);
+		hdr = rte_pktmbuf_mtod_offset(cookies[i],
+				struct virtio_net_hdr *, -head_size);
 		cookies[i]->pkt_len -= head_size;
 
 		/* if offload disabled, it is not zeroed below, do it now */
@@ -430,8 +430,9 @@ virtqueue_enqueue_xmit_inorder(struct virtnet_tx *txvq,
 		virtqueue_xmit_offload(hdr, cookies[i],
 				vq->hw->has_tx_offload);
 
-		start_dp[idx].addr  = VIRTIO_MBUF_DATA_DMA_ADDR(cookies[i], vq);
-		start_dp[idx].len   = cookies[i]->data_len;
+		start_dp[idx].addr  =
+			VIRTIO_MBUF_DATA_DMA_ADDR(cookies[i], vq) - head_size;
+		start_dp[idx].len   = cookies[i]->data_len + head_size;
 		start_dp[idx].flags = 0;
 
 		vq_update_avail_ring(vq, idx);
@@ -456,6 +457,7 @@ virtqueue_enqueue_xmit(struct virtnet_tx *txvq, struct rte_mbuf *cookie,
 	uint16_t seg_num = cookie->nb_segs;
 	uint16_t head_idx, idx;
 	uint16_t head_size = vq->hw->vtnet_hdr_size;
+	bool prepend_header = false;
 	struct virtio_net_hdr *hdr;
 
 	head_idx = vq->vq_desc_head_idx;
@@ -471,13 +473,9 @@ virtqueue_enqueue_xmit(struct virtnet_tx *txvq, struct rte_mbuf *cookie,
 
 	if (can_push) {
 		/* prepend cannot fail, checked by caller */
-		hdr = (struct virtio_net_hdr *)
-			rte_pktmbuf_prepend(cookie, head_size);
-		/* rte_pktmbuf_prepend() counts the hdr size to the pkt length,
-		 * which is wrong. Below subtract restores correct pkt size.
-		 */
-		cookie->pkt_len -= head_size;
-
+		hdr = rte_pktmbuf_mtod_offset(cookie, struct virtio_net_hdr *,
+					      -head_size);
+		prepend_header = true;
 		/* if offload disabled, it is not zeroed below, do it now */
 		if (!vq->hw->has_tx_offload) {
 			ASSIGN_UNLESS_EQUAL(hdr->csum_start, 0);
@@ -521,6 +519,11 @@ virtqueue_enqueue_xmit(struct virtnet_tx *txvq, struct rte_mbuf *cookie,
 	do {
 		start_dp[idx].addr  = VIRTIO_MBUF_DATA_DMA_ADDR(cookie, vq);
 		start_dp[idx].len   = cookie->data_len;
+		if (prepend_header) {
+			start_dp[idx].addr -= head_size;
+			start_dp[idx].len += head_size;
+			prepend_header = false;
+		}
 		start_dp[idx].flags = cookie->next ? VRING_DESC_F_NEXT : 0;
 		idx = start_dp[idx].next;
 	} while ((cookie = cookie->next) != NULL);
