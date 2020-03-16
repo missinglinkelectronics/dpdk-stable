@@ -1307,6 +1307,13 @@ flow_dv_translate_item_ipv4(void *matcher, void *key,
 	}
 	MLX5_SET(fte_match_set_lyr_2_4, headers_m, ip_version, 0xf);
 	MLX5_SET(fte_match_set_lyr_2_4, headers_v, ip_version, 4);
+	/*
+	 * On outer header (which must contains L2), or inner header with L2,
+	 * set cvlan_tag mask bit to mark this packet as untagged.
+	 * This should be done even if item->spec is empty.
+	 */
+	if (!inner || item_flags & MLX5_FLOW_LAYER_INNER_L2)
+		MLX5_SET(fte_match_set_lyr_2_4, headers_m, cvlan_tag, 1);
 	if (!ipv4_v)
 		return;
 	if (!ipv4_m)
@@ -1334,12 +1341,6 @@ flow_dv_translate_item_ipv4(void *matcher, void *key,
 		 ipv4_m->hdr.next_proto_id);
 	MLX5_SET(fte_match_set_lyr_2_4, headers_v, ip_protocol,
 		 ipv4_v->hdr.next_proto_id & ipv4_m->hdr.next_proto_id);
-	/*
-	 * On outer header (which must contains L2), or inner header with L2,
-	 * set cvlan_tag mask bit to mark this packet as untagged.
-	 */
-	if (!inner || item_flags & MLX5_FLOW_LAYER_INNER_L2)
-		MLX5_SET(fte_match_set_lyr_2_4, headers_m, cvlan_tag, 1);
 }
 
 /**
@@ -1399,6 +1400,13 @@ flow_dv_translate_item_ipv6(void *matcher, void *key,
 	}
 	MLX5_SET(fte_match_set_lyr_2_4, headers_m, ip_version, 0xf);
 	MLX5_SET(fte_match_set_lyr_2_4, headers_v, ip_version, 6);
+	/*
+	 * On outer header (which must contains L2), or inner header with L2,
+	 * set cvlan_tag mask bit to mark this packet as untagged.
+	 * This should be done even if item->spec is empty.
+	 */
+	if (!inner || item_flags & MLX5_FLOW_LAYER_INNER_L2)
+		MLX5_SET(fte_match_set_lyr_2_4, headers_m, cvlan_tag, 1);
 	if (!ipv6_v)
 		return;
 	if (!ipv6_m)
@@ -1442,12 +1450,6 @@ flow_dv_translate_item_ipv6(void *matcher, void *key,
 		 ipv6_m->hdr.proto);
 	MLX5_SET(fte_match_set_lyr_2_4, headers_v, ip_protocol,
 		 ipv6_v->hdr.proto & ipv6_m->hdr.proto);
-	/*
-	 * On outer header (which must contains L2), or inner header with L2,
-	 * set cvlan_tag mask bit to mark this packet as untagged.
-	 */
-	if (!inner || item_flags & MLX5_FLOW_LAYER_INNER_L2)
-		MLX5_SET(fte_match_set_lyr_2_4, headers_m, cvlan_tag, 1);
 }
 
 /**
