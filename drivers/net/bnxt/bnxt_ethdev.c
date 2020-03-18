@@ -3232,18 +3232,6 @@ static int bnxt_alloc_stats_mem(struct bnxt *bp)
 	}
 	memset(mz->addr, 0, mz->len);
 	mz_phys_addr = mz->iova;
-	if ((unsigned long)mz->addr == mz_phys_addr) {
-		PMD_DRV_LOG(DEBUG,
-			    "Memzone physical address same as virtual.\n");
-		PMD_DRV_LOG(DEBUG,
-			    "Using rte_mem_virt2iova()\n");
-		mz_phys_addr = rte_mem_virt2iova(mz->addr);
-		if (mz_phys_addr == RTE_BAD_IOVA) {
-			PMD_DRV_LOG(ERR,
-				    "Can't map address to physical memory\n");
-			return -ENOMEM;
-		}
-	}
 
 	bp->rx_mem_zone = (const void *)mz;
 	bp->hw_rx_port_stats = mz->addr;
@@ -3271,18 +3259,6 @@ static int bnxt_alloc_stats_mem(struct bnxt *bp)
 	}
 	memset(mz->addr, 0, mz->len);
 	mz_phys_addr = mz->iova;
-	if ((unsigned long)mz->addr == mz_phys_addr) {
-		PMD_DRV_LOG(DEBUG,
-			    "Memzone physical address same as virtual.\n");
-		PMD_DRV_LOG(DEBUG,
-			    "Using rte_mem_virt2iova()\n");
-		mz_phys_addr = rte_mem_virt2iova(mz->addr);
-		if (mz_phys_addr == RTE_BAD_IOVA) {
-			PMD_DRV_LOG(ERR,
-				    "Can't map address to physical memory\n");
-			return -ENOMEM;
-		}
-	}
 
 	bp->tx_mem_zone = (const void *)mz;
 	bp->hw_tx_port_stats = mz->addr;
