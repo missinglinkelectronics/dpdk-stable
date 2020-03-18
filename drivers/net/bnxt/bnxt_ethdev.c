@@ -3334,7 +3334,7 @@ bnxt_dev_init(struct rte_eth_dev *eth_dev)
 			"hwrm resource allocation failure rc: %x\n", rc);
 		goto error_free;
 	}
-	rc = bnxt_hwrm_ver_get(bp);
+	rc = bnxt_hwrm_ver_get(bp, DFLT_HWRM_CMD_TIMEOUT);
 	if (rc)
 		goto error_free;
 	rc = bnxt_hwrm_queue_qportcfg(bp);

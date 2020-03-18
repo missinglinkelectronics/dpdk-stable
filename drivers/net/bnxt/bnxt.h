@@ -374,8 +374,8 @@ struct bnxt {
 	uint16_t			max_req_len;
 	uint16_t			max_resp_len;
 
-	/* default command timeout value of 50ms */
-#define HWRM_CMD_TIMEOUT	50000
+	/* default command timeout value of 500ms */
+#define DFLT_HWRM_CMD_TIMEOUT	500000
 	/* default HWRM request timeout value */
 	uint32_t		hwrm_cmd_timeout;
 
