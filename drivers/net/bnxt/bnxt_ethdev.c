@@ -342,8 +342,11 @@ static int bnxt_init_chip(struct bnxt *bp)
 
 	/* enable uio/vfio intr/eventfd mapping */
 	rc = rte_intr_enable(intr_handle);
+#ifndef RTE_EXEC_ENV_FREEBSD
+	/* In FreeBSD OS, nic_uio driver does not support interrupts */
 	if (rc)
 		goto err_free;
+#endif
 
 	rc = bnxt_get_hwrm_link_config(bp, &new);
 	if (rc) {
