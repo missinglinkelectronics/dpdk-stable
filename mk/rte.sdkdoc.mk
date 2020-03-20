@@ -37,7 +37,7 @@ help:
 all: api-html guides-html guides-pdf
 
 .PHONY: clean
-clean: api-html-clean guides-html-clean guides-pdf-clean guides-man-clean
+clean: api-html-clean guides-html-clean guides-pdf-clean guides-man-clean guide-table-clean
 
 .PHONY: api-html
 api-html: $(API_EXAMPLES)
@@ -56,7 +56,7 @@ api-html: $(API_EXAMPLES)
 .PHONY: api-html-clean
 api-html-clean:
 	$(Q)rm -f $(API_EXAMPLES)
-	$(Q)rm -f $(RTE_OUTPUT)/doc/html/api/*
+	$(Q)rm -rf $(RTE_OUTPUT)/doc/html/api/*
 	$(Q)rmdir -p --ignore-fail-on-non-empty $(RTE_OUTPUT)/doc/html/api 2>&- || true
 
 $(API_EXAMPLES): api-html-clean
@@ -66,6 +66,10 @@ $(API_EXAMPLES): api-html-clean
 guides-pdf-clean: guides-pdf-img-clean
 guides-pdf-img-clean:
 	$(Q)rm -f $(RTE_SDK)/doc/guides/*/img/*.pdf
+
+guide-table-clean: guide-overview_feature_table-clean
+guide-overview_feature_table-clean:
+	$(Q)rm -rf $(shell find $(RTE_SDK)/doc/guides/ -maxdepth 1 -type d '!' -exec test -e "{}/index.rst" ';' -print)
 
 guides-%-clean:
 	$(Q)rm -rf $(RTE_OUTPUT)/doc/$*/guides
