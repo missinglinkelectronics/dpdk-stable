@@ -874,12 +874,12 @@ vhost_driver_setup(struct rte_eth_dev *eth_dev)
 
 	list = rte_zmalloc_socket(name, sizeof(*list), 0, numa_node);
 	if (list == NULL)
-		return -1;
+		goto error;
 
 	vring_state = rte_zmalloc_socket(name, sizeof(*vring_state),
 					 0, numa_node);
 	if (vring_state == NULL)
-		goto free_list;
+		goto error;
 
 	list->eth_dev = eth_dev;
 	pthread_mutex_lock(&internal_list_lock);
@@ -890,31 +890,24 @@ vhost_driver_setup(struct rte_eth_dev *eth_dev)
 	vring_states[eth_dev->data->port_id] = vring_state;
 
 	if (rte_vhost_driver_register(internal->iface_name, internal->flags))
-		goto list_remove;
+		goto error;
 
 	if (rte_vhost_driver_callback_register(internal->iface_name,
 					       &vhost_ops) < 0) {
 		VHOST_LOG(ERR, "Can't register callbacks\n");
-		goto drv_unreg;
+		goto error;
 	}
 
 	if (rte_vhost_driver_start(internal->iface_name) < 0) {
 		VHOST_LOG(ERR, "Failed to start driver for %s\n",
 			  internal->iface_name);
-		goto drv_unreg;
+		goto error;
 	}
 
 	return 0;
 
-drv_unreg:
-	rte_vhost_driver_unregister(internal->iface_name);
-list_remove:
-	vring_states[eth_dev->data->port_id] = NULL;
-	pthread_mutex_lock(&internal_list_lock);
-	TAILQ_REMOVE(&internal_list, list, next);
-	pthread_mutex_unlock(&internal_list_lock);
+error:
 	rte_free(vring_state);
-free_list:
 	rte_free(list);
 
 	return -1;
