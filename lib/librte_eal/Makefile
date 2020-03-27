@@ -4,9 +4,9 @@
 include $(RTE_SDK)/mk/rte.vars.mk
 
 DIRS-y += common
-DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += linuxapp
+DIRS-$(CONFIG_RTE_EXEC_ENV_LINUXAPP) += linuxapp/eal
 DEPDIRS-linuxapp := common
-DIRS-$(CONFIG_RTE_EXEC_ENV_BSDAPP) += bsdapp
+DIRS-$(CONFIG_RTE_EXEC_ENV_BSDAPP) += bsdapp/eal
 DEPDIRS-bsdapp := common
 
 include $(RTE_SDK)/mk/rte.subdir.mk
