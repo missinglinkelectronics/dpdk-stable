@@ -134,8 +134,6 @@ struct hn_data {
 	rte_atomic32_t	rndis_req_id;
 	uint8_t		rndis_resp[256];
 
-	struct ether_addr mac_addr;
-
 	struct rte_eth_dev_owner owner;
 	struct rte_intr_handle vf_intr;
 
