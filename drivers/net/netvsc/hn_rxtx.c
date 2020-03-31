@@ -1016,9 +1016,6 @@ retry:
 
 		if (tx_limit && tx_done >= tx_limit)
 			break;
-
-		if (rxq->rx_ring && rte_ring_full(rxq->rx_ring))
-			break;
 	}
 
 	if (bytes_read > 0)
