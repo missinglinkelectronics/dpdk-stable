@@ -780,7 +780,7 @@ apply:
 	case SIOCSIFMTU:
 		break;
 	default:
-		RTE_LOG(WARNING, PMD, "%s: ioctl() called with wrong arg\n",
+		TAP_LOG(WARNING, "%s: ioctl() called with wrong arg",
 			pmd->name);
 		return -EINVAL;
 	}
@@ -1232,7 +1232,9 @@ tap_gso_ctx_setup(struct rte_gso_ctx *gso_ctx, struct rte_eth_dev *dev)
 			SOCKET_ID_ANY);
 		if (!mp) {
 			struct pmd_internals *pmd = dev->data->dev_private;
-			RTE_LOG(DEBUG, PMD, "%s: failed to create mbuf pool for device %s\n",
+
+			TAP_LOG(ERR,
+				"%s: failed to create mbuf pool for device %s\n",
 				pmd->name, dev->device->name);
 			return -1;
 		}
