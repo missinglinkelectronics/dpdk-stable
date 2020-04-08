@@ -48,6 +48,10 @@
 #include "mlx4_rxtx.h"
 #include "mlx4_utils.h"
 
+#ifdef MLX4_GLUE
+const struct mlx4_glue *mlx4_glue;
+#endif
+
 struct mlx4_dev_list mlx4_mem_event_cb_list =
 	LIST_HEAD_INITIALIZER(mlx4_mem_event_cb_list);
 
