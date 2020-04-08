@@ -262,4 +262,6 @@ extern rte_atomic32_t ena_alloc_cnt;
 #define READ_ONCE(var) (*((volatile typeof(var) *)(&(var))))
 #endif
 
+#define ENA_FFS(x) ffs(x)
+
 #endif /* DPDK_ENA_COM_ENA_PLAT_DPDK_H_ */
