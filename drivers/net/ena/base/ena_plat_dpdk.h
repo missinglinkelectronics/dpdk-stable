@@ -1,35 +1,7 @@
-/*-
-* BSD LICENSE
-*
-* Copyright (c) 2015-2016 Amazon.com, Inc. or its affiliates.
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions
-* are met:
-*
-* * Redistributions of source code must retain the above copyright
-* notice, this list of conditions and the following disclaimer.
-* * Redistributions in binary form must reproduce the above copyright
-* notice, this list of conditions and the following disclaimer in
-* the documentation and/or other materials provided with the
-* distribution.
-* * Neither the name of copyright holder nor the names of its
-* contributors may be used to endorse or promote products derived
-* from this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-* "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-* LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-* A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-* OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-* SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-* LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+/* SPDX-License-Identifier: BSD-3-Clause
+ * Copyright (c) 2015-2020 Amazon.com, Inc. or its affiliates.
+ * All rights reserved.
+ */
 
 #ifndef DPDK_ENA_COM_ENA_PLAT_DPDK_H_
 #define DPDK_ENA_COM_ENA_PLAT_DPDK_H_
@@ -201,7 +173,7 @@ do {                                                                   \
  * Each rte_memzone should have unique name.
  * To satisfy it, count number of allocations and add it to name.
  */
-extern uint32_t ena_alloc_cnt;
+extern rte_atomic32_t ena_alloc_cnt;
 
 #define ENA_MEM_ALLOC_COHERENT(dmadev, size, virt, phys, handle)	\
 	do {								\
@@ -209,7 +181,8 @@ extern uint32_t ena_alloc_cnt;
 		char z_name[RTE_MEMZONE_NAMESIZE];			\
 		ENA_TOUCH(dmadev); ENA_TOUCH(handle);			\
 		snprintf(z_name, sizeof(z_name),			\
-				"ena_alloc_%d", ena_alloc_cnt++);	\
+			 "ena_alloc_%d",				\
+			 rte_atomic32_add_return(&ena_alloc_cnt, 1));	\
 		mz = rte_memzone_reserve(z_name, size, SOCKET_ID_ANY,	\
 				RTE_MEMZONE_IOVA_CONTIG);		\
 		handle = mz;						\
@@ -234,7 +207,8 @@ extern uint32_t ena_alloc_cnt;
 		char z_name[RTE_MEMZONE_NAMESIZE];			\
 		ENA_TOUCH(dmadev); ENA_TOUCH(dev_node);			\
 		snprintf(z_name, sizeof(z_name),			\
-				"ena_alloc_%d", ena_alloc_cnt++);	\
+			 "ena_alloc_%d",				\
+			 rte_atomic32_add_return(&ena_alloc_cnt, 1));	\
 		mz = rte_memzone_reserve(z_name, size, node,		\
 				RTE_MEMZONE_IOVA_CONTIG);		\
 		mem_handle = mz;					\
