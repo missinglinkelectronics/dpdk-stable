@@ -11,7 +11,7 @@
 /**< AES-NI Multi buffer PMD device name */
 
 /** AESNI_MB PMD LOGTYPE DRIVER */
-int aesni_mb_logtype_driver;
+extern int aesni_mb_logtype_driver;
 
 #define AESNI_MB_LOG(level, fmt, ...)  \
 	rte_log(RTE_LOG_ ## level, aesni_mb_logtype_driver,  \
