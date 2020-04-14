@@ -749,7 +749,7 @@ prepare_write_back_data(struct vhost_crypto_data_req *vc_req,
 		}
 
 		wb_data->dst = dst;
-		wb_data->len = desc->len - offset;
+		wb_data->len = RTE_MIN(desc->len - offset, write_back_len);
 		write_back_len -= wb_data->len;
 		src += offset + wb_data->len;
 		offset = 0;
@@ -833,6 +833,17 @@ error_exit:
 	return NULL;
 }
 
+static __rte_always_inline uint8_t
+vhost_crypto_check_cipher_request(struct virtio_crypto_cipher_data_req *req)
+{
+	if (likely((req->para.iv_len <= VHOST_CRYPTO_MAX_IV_LEN) &&
+		(req->para.src_data_len <= RTE_MBUF_DEFAULT_BUF_SIZE) &&
+		(req->para.dst_data_len >= req->para.src_data_len) &&
+		(req->para.dst_data_len <= RTE_MBUF_DEFAULT_BUF_SIZE)))
+		return VIRTIO_CRYPTO_OK;
+	return VIRTIO_CRYPTO_BADMSG;
+}
+
 static uint8_t
 prepare_sym_cipher_op(struct vhost_crypto *vcrypto, struct rte_crypto_op *op,
 		struct vhost_crypto_data_req *vc_req,
@@ -844,7 +855,10 @@ prepare_sym_cipher_op(struct vhost_crypto *vcrypto, struct rte_crypto_op *op,
 	struct vhost_crypto_writeback_data *ewb = NULL;
 	struct rte_mbuf *m_src = op->sym->m_src, *m_dst = op->sym->m_dst;
 	uint8_t *iv_data = rte_crypto_op_ctod_offset(op, uint8_t *, IV_OFFSET);
-	uint8_t ret = 0;
+	uint8_t ret = vhost_crypto_check_cipher_request(cipher);
+
+	if (unlikely(ret != VIRTIO_CRYPTO_OK))
+		goto error_exit;
 
 	/* prepare */
 	/* iv */
@@ -854,10 +868,9 @@ prepare_sym_cipher_op(struct vhost_crypto *vcrypto, struct rte_crypto_op *op,
 		goto error_exit;
 	}
 
-	m_src->data_len = cipher->para.src_data_len;
-
 	switch (vcrypto->option) {
 	case RTE_VHOST_CRYPTO_ZERO_COPY_ENABLE:
+		m_src->data_len = cipher->para.src_data_len;
 		m_src->buf_iova = gpa_to_hpa(vcrypto->dev, desc->addr,
 				cipher->para.src_data_len);
 		m_src->buf_addr = get_data_ptr(vc_req, desc, VHOST_ACCESS_RO);
@@ -879,13 +892,7 @@ prepare_sym_cipher_op(struct vhost_crypto *vcrypto, struct rte_crypto_op *op,
 		break;
 	case RTE_VHOST_CRYPTO_ZERO_COPY_DISABLE:
 		vc_req->wb_pool = vcrypto->wb_pool;
-
-		if (unlikely(cipher->para.src_data_len >
-				RTE_MBUF_DEFAULT_BUF_SIZE)) {
-			VC_LOG_ERR("Not enough space to do data copy");
-			ret = VIRTIO_CRYPTO_ERR;
-			goto error_exit;
-		}
+		m_src->data_len = cipher->para.src_data_len;
 		if (unlikely(copy_data(rte_pktmbuf_mtod(m_src, uint8_t *),
 				vc_req, &desc, cipher->para.src_data_len,
 				nb_descs, vq_size) < 0)) {
@@ -968,6 +975,29 @@ error_exit:
 	return ret;
 }
 
+static __rte_always_inline uint8_t
+vhost_crypto_check_chain_request(struct virtio_crypto_alg_chain_data_req *req)
+{
+	if (likely((req->para.iv_len <= VHOST_CRYPTO_MAX_IV_LEN) &&
+		(req->para.src_data_len <= RTE_MBUF_DEFAULT_DATAROOM) &&
+		(req->para.dst_data_len >= req->para.src_data_len) &&
+		(req->para.dst_data_len <= RTE_MBUF_DEFAULT_DATAROOM) &&
+		(req->para.cipher_start_src_offset <
+			RTE_MBUF_DEFAULT_DATAROOM) &&
+		(req->para.len_to_cipher < RTE_MBUF_DEFAULT_DATAROOM) &&
+		(req->para.hash_start_src_offset <
+			RTE_MBUF_DEFAULT_DATAROOM) &&
+		(req->para.len_to_hash < RTE_MBUF_DEFAULT_DATAROOM) &&
+		(req->para.cipher_start_src_offset + req->para.len_to_cipher <=
+			req->para.src_data_len) &&
+		(req->para.hash_start_src_offset + req->para.len_to_hash <=
+			req->para.src_data_len) &&
+		(req->para.dst_data_len + req->para.hash_result_len <=
+			RTE_MBUF_DEFAULT_DATAROOM)))
+		return VIRTIO_CRYPTO_OK;
+	return VIRTIO_CRYPTO_BADMSG;
+}
+
 static uint8_t
 prepare_sym_chain_op(struct vhost_crypto *vcrypto, struct rte_crypto_op *op,
 		struct vhost_crypto_data_req *vc_req,
@@ -981,7 +1011,10 @@ prepare_sym_chain_op(struct vhost_crypto *vcrypto, struct rte_crypto_op *op,
 	uint8_t *iv_data = rte_crypto_op_ctod_offset(op, uint8_t *, IV_OFFSET);
 	uint32_t digest_offset;
 	void *digest_addr;
-	uint8_t ret = 0;
+	uint8_t ret = vhost_crypto_check_chain_request(chain);
+
+	if (unlikely(ret != VIRTIO_CRYPTO_OK))
+		goto error_exit;
 
 	/* prepare */
 	/* iv */
@@ -991,10 +1024,9 @@ prepare_sym_chain_op(struct vhost_crypto *vcrypto, struct rte_crypto_op *op,
 		goto error_exit;
 	}
 
-	m_src->data_len = chain->para.src_data_len;
-
 	switch (vcrypto->option) {
 	case RTE_VHOST_CRYPTO_ZERO_COPY_ENABLE:
+		m_src->data_len = chain->para.src_data_len;
 		m_dst->data_len = chain->para.dst_data_len;
 
 		m_src->buf_iova = gpa_to_hpa(vcrypto->dev, desc->addr,
@@ -1016,13 +1048,7 @@ prepare_sym_chain_op(struct vhost_crypto *vcrypto, struct rte_crypto_op *op,
 		break;
 	case RTE_VHOST_CRYPTO_ZERO_COPY_DISABLE:
 		vc_req->wb_pool = vcrypto->wb_pool;
-
-		if (unlikely(chain->para.src_data_len >
-				RTE_MBUF_DEFAULT_BUF_SIZE)) {
-			VC_LOG_ERR("Not enough space to do data copy");
-			ret = VIRTIO_CRYPTO_ERR;
-			goto error_exit;
-		}
+		m_src->data_len = chain->para.src_data_len;
 		if (unlikely(copy_data(rte_pktmbuf_mtod(m_src, uint8_t *),
 				vc_req, &desc, chain->para.src_data_len,
 				nb_descs, vq_size) < 0)) {
