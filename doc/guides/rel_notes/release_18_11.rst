@@ -2704,3 +2704,263 @@ Fixes skipped and status unresolved
 * dcfbc594f7  net/iavf: fix queue interrupt for ice
 * 6977f14517  app/testpmd: fix missing GENEVE item in raw encap
 * e6d3c0928   eal/freebsd: fix config creation
+
+18.11.7 Release Notes
+---------------------
+
+18.11.7 Fixes
+~~~~~~~~~~~~~
+
+* acl: fix 32-bit match for range field
+* app/eventdev: fix pipeline test with meson build
+* app/pdump: fix build with clang
+* app/testpmd: call cleanup on exit
+* app/testpmd: fix device mcast list error handling
+* app/testpmd: fix hot-unplug detaching
+* app/testpmd: fix identifier size for port attach
+* app/testpmd: fix initial value when setting PFC
+* app/testpmd: fix uninitialized members of MPLS
+* app/testpmd: fix uninitialized members when setting PFC
+* bpf: fix headers install with meson
+* build: explicitly enable sse4 for meson
+* bus/fslmc: remove conflicting memory barrier macro
+* cfgfile: fix symbols map
+* common/cpt: check cipher and auth keys are set
+* common/cpt: fix component for empty IOV buffer
+* common/cpt: remove redundant code in datapath
+* crypto/armv8: fix clang build
+* crypto/ccp: fix queue alignment
+* doc: fix build with python 3.8
+* doc: fix multi-producer enqueue figure in ring guide
+* doc: fix warning with meson
+* doc: reduce indentation in meson build file
+* doc: reduce whitespace in meson build file
+* doc: remove temporary files and directories
+* drivers/crypto: fix session-less mode
+* eal/linux: fix build error on RHEL 7.6
+* eal/linux: fix uninitialized data valgrind warning
+* ethdev: fix callback unregister with wildcard argument list
+* ethdev: fix secondary process memory overwrite
+* ethdev: fix switching domain allocation
+* event/dsw: avoid credit leak on oversized enqueue bursts
+* event/dsw: flush buffers immediately on zero-sized enqueue
+* examples/ethtool: fix unchecked return value
+* examples/fips_validation: fix AES-GCM cipher length parsing
+* examples/fips_validation: fix cipher length for AES-GCM
+* examples/fips_validation: fix string token for CT length
+* examples/ipsec-secgw: fix crash on unsupported algo
+* examples/l3fwd-power: fix a typo
+* examples/l3fwd-power: fix interrupt disable
+* examples/tep_term: remove redundant info get
+* fix Mellanox copyright and SPDX tag
+* kni: fix build with Linux 5.6
+* kni: fix ethtool build for kernel 5.5
+* kni: fix meson warning about console keyword
+* kni: fix not contiguous FIFO
+* kni: rename variable with namespace prefix
+* latency: fix calculation for multi-thread
+* lib: fix unnecessary double negation
+* maintainers: resign from flow API maintenance
+* maintainers: update for failsafe and PCI library
+* maintainers: update for stable branches
+* mem: fix munmap in error unwind
+* mempool: fix anonymous populate
+* mk: avoid combining -r and -export-dynamic linker options
+* net/bnx2x: fix reset of scan FP flag
+* net/bnx2x: fix to sync fastpath Rx queue access
+* net/bnx2x: fix VLAN stripped flag
+* net/bnxt: do not log error if stats queried before start
+* net/bnxt: fix alloc filter to use a common routine
+* net/bnxt: fix buffer allocation reattempt
+* net/bnxt: fix crash in secondary process
+* net/bnxt: fix default timeout for getting FW version
+* net/bnxt: fix flow creation
+* net/bnxt: fix IOVA mapping
+* net/bnxt: fix link during port toggle
+* net/bnxt: fix probe in FreeBSD
+* net/bnxt: remove redundant if statement
+* net/bnxt: remove unnecessary memset
+* net/bnxt: use macro for PCI log format
+* net/cxgbe: announce Tx multi-segments offload
+* net/dpaa: fix Rx offload flags on jumbo MTU set
+* net/failsafe: fix reported hash key size in device info
+* net/fm10k: fix descriptor VLAN field filling in Tx
+* net/fm10k: fix non-x86 build
+* net/i40e/base: fix buffer address
+* net/i40e/base: fix error message
+* net/i40e/base: fix retrying logic
+* net/i40e/base: fix Tx descriptors number
+* net/i40e: fix Tx when TSO is enabled
+* net/i40e: fix unchecked Tx cleanup error
+* net/iavf: add TSO offload use basic path
+* net/iavf/base: fix adminq return
+* net/iavf/base: fix command buffer memory leak
+* net/iavf: fix Rx total stats
+* net/iavf: fix virtual channel return
+* net/ixgbe: check for illegal Tx packets
+* net/ixgbe: fix flow control mode setting
+* net/ixgbe: fix link status
+* net/ixgbe: fix link up in FreeBSD
+* net/ixgbe: remove dead code
+* net/ixgbe: remove duplicate function declaration
+* net/mlx5: cache associated network device index
+* net/mlx5: fix L3 VXLAN RSS expansion
+* net/mlx5: fix match on ethertype and CVLAN tag
+* net/mlx5: fix VLAN match for DV mode
+* net/mlx5: fix VXLAN-GPE item translation
+* net/netvsc: fix crash in secondary process
+* net/netvsc: initialize link state
+* net/octeontx: fix memory leak of MAC address table
+* net/qede: do not stop vport if not started
+* net/qede: fix VF reload
+* net/sfc: fix log format specifiers
+* net/tap: fix memory leak when unregister intr handler
+* net/vhost: allocate interface name from heap
+* net/vhost: check creation failure
+* net/vhost: delay driver setup
+* net/vhost: fix probing in secondary process
+* net/vhost: fix setup error path
+* net/vhost: prevent multiple setups on reconfiguration
+* net/virtio: cleanup on demand when in-order Tx
+* net/virtio: fix mbuf data and packet length mismatch
+* net/virtio-user: check file descriptor before closing
+* net/virtio-user: check tap offload setting failure
+* net/virtio-user: do not close tap when disabling queue pairs
+* Revert "common/octeontx: add missing public symbol"
+* Revert "net/mlx5: fix VXLAN-GPE item translation"
+* Revert "net/vhost: delay driver setup"
+* Revert "net/vhost: fix setup error path"
+* Revert "net/vhost: prevent multiple setups on reconfiguration"
+* service: avoid false sharing on core state
+* service: don't walk out of bounds when checking services
+* test/compress: replace test vector
+* test/crypto: fix missing operation status check
+* usertools: fix syntax warning in python 3.8
+* usertools: fix telemetry client with python 3
+* version: 18.11.7-rc1
+* vhost: catch overflow causing mmap of size 0
+* vhost: check message header size read
+* vhost/crypto: fix fetch size
+* vhost: do not treat empty socket message as error
+* vhost: fix crash on port deletion
+* vhost: fix deadlock on port deletion
+* vhost: fix packed virtqueue ready condition
+* vhost: fix socket initial value
+* vhost: protect log address translation in IOTLB update
+
+18.11.7 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Red Hat(R) Testing
+
+   * RHEL 8
+   * Functionality
+
+      * PF assignment
+      * VF assignment
+      * vhost single/multi queues and cross-NUMA
+      * vhostclient reconnect
+      * vhost live migration with single/multi queues and cross-NUMA
+      * OVS PVP
+
+   * Tested NICs
+
+      * X540-AT2 NIC(ixgbe, 10G)
+
+* Intel(R) Testing
+
+   * Basic Intel(R) NIC(ixgbe and i40e) testing
+
+      * PF (i40e)
+      * PF (ixgbe)
+      * VF
+      * Compile Testing
+      * Intel NIC single core/NIC performance
+
+   * Basic cryptodev and virtio testing
+
+      * cryptodev
+      * vhost/virtio basic loopback, PVP and performance test
+
+* Mellanox(R) Testing
+
+   * Basic functionality with testpmd
+
+      * Tx/Rx
+      * xstats
+      * Timestamps
+      * Link status
+      * RTE flow and flow_director
+      * RSS
+      * VLAN stripping and insertion
+      * Checksum/TSO
+      * ptype
+      * Multi-process
+
+   * ConnectX-5
+
+      * RHEL 7.4
+      * Kernel 3.10.0-693.el7.x86_64
+      * Driver MLNX_OFED_LINUX-5.0-1.0.0.0
+      * fw 16.27.1016
+
+   * ConnectX-4 Lx
+
+      * RHEL 7.4
+      * Kernel 3.10.0-693.el7.x86_64
+      * Driver MLNX_OFED_LINUX-5.0-1.0.0.0
+      * fw 14.27.1016
+
+* Intel(R) Testing with Open vSwitch
+
+   * OVS testing with OVS branches 2.12 and 2.11 with VSPERF
+
+   * Tested NICs
+
+      * i40e (X710)
+      * ixgbe (82599ES)
+
+   * Functionality
+
+      * P2P
+      * PVP
+      * Hotplug
+      * Multiqueue
+      * Vhostuserclient reconnect
+      * Vhost cross-NUMA awareness
+      * Jumbo frames
+      * Flow Control
+
+18.11.7 Known Issues
+~~~~~~~~~~~~~~~~~~~~
+
+* DPDK 18.11.7 contains fixes up to DPDK v20.02. Issues identified/fixed in DPDK master branch after DPDK v20.02 may be present in DPDK 18.11.7
+
+18.11.7 Fixes skipped and status unresolved
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* dcfbc594f  net/iavf: fix queue interrupt for ice
+* b149a7064  eal/freebsd: add config reattach in secondary process
+* a135e050a  examples/ipsec-secgw: fix packet length
+* 9d10f53e4  test/metrics: fix second run
+* ea81c1b81  net/mlx5: fix NVGRE matching
+* 721c95301  net/mlx5: fix Rx scatter mode validation
+* be048a1aa  net/virtio: fix descriptor addressed in Tx
+* 6080796f6  mem: make base address hint OS specific
+* 6d3f9917f  eal: fix memory config allocation for multi-process
+* 1526dd053  net/virtio: fix Tx checksum offloads
+* f0617163b  mempool/dpaa2: report error on endless loop in mbuf release
+* 05817057f  net/ena: fix indication of bad L4 Rx checksums
+* 9e0d81c1a  net/mlx5: fix selection between encap and decap
+* 7392ad06f  app/testpmd: use better randomness for Tx split
+* e6d3c0928  eal/freebsd: fix config creation
+* dcd05da0a  app/testpmd: fix GENEVE flow item
+* 2e02a2aff  ethdev: fix VLAN offloads set if no driver callback
+* ec8615607  crypto/dpaa_sec: fix IOVA conversions
+* 06387be8e  net/mlx5: fix encap/decap validation
+* 7593cf1d3  net/mlx5: fix legacy multi-packet write session
+* e21492a51  net/mlx: fix overlinking with meson and glue dlopen
+* 150c9ac2d  app/testpmd: update Rx offload after setting MTU
+* 207b1c813  test: fix build without ring PMD
+* 819d0d1d5  net/ixgbe: fix blocking system events
+* 050bfe033  net/mlx5: fix tunnel flow priority
