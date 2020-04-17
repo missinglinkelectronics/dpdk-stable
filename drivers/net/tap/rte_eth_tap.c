@@ -1076,7 +1076,7 @@ tap_rx_queue_release(void *queue)
 	if (!rxq)
 		return;
 	process_private = rte_eth_devices[rxq->in_port].process_private;
-	if (process_private->rxq_fds[rxq->queue_id] > 0) {
+	if (process_private->rxq_fds[rxq->queue_id] != -1) {
 		close(process_private->rxq_fds[rxq->queue_id]);
 		process_private->rxq_fds[rxq->queue_id] = -1;
 		tap_rxq_pool_free(rxq->pool);
@@ -1096,7 +1096,7 @@ tap_tx_queue_release(void *queue)
 		return;
 	process_private = rte_eth_devices[txq->out_port].process_private;
 
-	if (process_private->txq_fds[txq->queue_id] > 0) {
+	if (process_private->txq_fds[txq->queue_id] != -1) {
 		close(process_private->txq_fds[txq->queue_id]);
 		process_private->txq_fds[txq->queue_id] = -1;
 	}
