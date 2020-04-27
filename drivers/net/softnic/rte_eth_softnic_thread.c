@@ -747,8 +747,6 @@ softnic_pipeline_port_in_stats_read(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -796,8 +794,6 @@ softnic_pipeline_port_in_enable(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -843,8 +839,6 @@ softnic_pipeline_port_in_disable(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -898,8 +892,6 @@ softnic_pipeline_port_out_stats_read(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -955,8 +947,6 @@ softnic_pipeline_table_stats_read(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1235,8 +1225,6 @@ softnic_pipeline_table_rule_add(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1319,8 +1307,6 @@ softnic_pipeline_table_rule_add_default(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1477,8 +1463,6 @@ fail:
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1542,8 +1526,6 @@ softnic_pipeline_table_rule_delete(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1592,8 +1574,6 @@ softnic_pipeline_table_rule_delete_default(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1652,8 +1632,6 @@ softnic_pipeline_table_rule_stats_read(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1733,10 +1711,6 @@ softnic_pipeline_table_mtr_profile_add(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL) {
-		free(mp);
-		return -1;
-	}
 
 	/* Read response */
 	status = rsp->status;
@@ -1792,8 +1766,6 @@ softnic_pipeline_table_mtr_profile_delete(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1855,8 +1827,6 @@ softnic_pipeline_table_rule_mtr_read(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1920,8 +1890,6 @@ softnic_pipeline_table_dscp_table_update(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
@@ -1985,8 +1953,6 @@ softnic_pipeline_table_rule_ttl_read(struct pmd_internals *softnic,
 
 	/* Send request and wait for response */
 	rsp = pipeline_msg_send_recv(p, req);
-	if (rsp == NULL)
-		return -1;
 
 	/* Read response */
 	status = rsp->status;
