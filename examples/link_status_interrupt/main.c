@@ -158,6 +158,8 @@ print_stats(void)
 		   total_packets_rx,
 		   total_packets_dropped);
 	printf("\n====================================================\n");
+
+	fflush(stdout);
 }
 
 static void
