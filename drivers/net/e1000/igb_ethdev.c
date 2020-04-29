@@ -923,7 +923,7 @@ eth_igb_dev_uninit(struct rte_eth_dev *eth_dev)
 	PMD_INIT_FUNC_TRACE();
 
 	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
-		return -EPERM;
+		return 0;
 
 	hw = E1000_DEV_PRIVATE_TO_HW(eth_dev->data->dev_private);
 	pci_dev = RTE_ETH_DEV_TO_PCI(eth_dev);
@@ -1083,7 +1083,7 @@ eth_igbvf_dev_uninit(struct rte_eth_dev *eth_dev)
 	PMD_INIT_FUNC_TRACE();
 
 	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
-		return -EPERM;
+		return 0;
 
 	if (adapter->stopped == 0)
 		igbvf_dev_close(eth_dev);
