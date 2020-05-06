@@ -339,8 +339,8 @@ rte_service_runstate_get(uint32_t id)
 }
 
 static inline void
-rte_service_runner_do_callback(struct rte_service_spec_impl *s,
-			       struct core_state *cs, uint32_t service_idx)
+service_runner_do_callback(struct rte_service_spec_impl *s,
+			   struct core_state *cs, uint32_t service_idx)
 {
 	void *userdata = s->spec.callback_userdata;
 
@@ -377,10 +377,10 @@ service_run(uint32_t i, struct core_state *cs, uint64_t service_mask,
 		if (!rte_atomic32_cmpset((uint32_t *)&s->execute_lock, 0, 1))
 			return -EBUSY;
 
-		rte_service_runner_do_callback(s, cs, i);
+		service_runner_do_callback(s, cs, i);
 		rte_atomic32_clear(&s->execute_lock);
 	} else
-		rte_service_runner_do_callback(s, cs, i);
+		service_runner_do_callback(s, cs, i);
 
 	return 0;
 }
@@ -424,14 +424,14 @@ rte_service_run_iter_on_app_lcore(uint32_t id, uint32_t serialize_mt_unsafe)
 }
 
 static int32_t
-rte_service_runner_func(void *arg)
+service_runner_func(void *arg)
 {
 	RTE_SET_USED(arg);
 	uint32_t i;
 	const int lcore = rte_lcore_id();
 	struct core_state *cs = &lcore_states[lcore];
 
-	while (lcore_states[lcore].runstate == RUNSTATE_RUNNING) {
+	while (cs->runstate == RUNSTATE_RUNNING) {
 		const uint64_t service_mask = cs->service_mask;
 
 		for (i = 0; i < RTE_SERVICE_NUM_MAX; i++) {
@@ -692,9 +692,9 @@ rte_service_lcore_start(uint32_t lcore)
 	/* set core to run state first, and then launch otherwise it will
 	 * return immediately as runstate keeps it in the service poll loop
 	 */
-	lcore_states[lcore].runstate = RUNSTATE_RUNNING;
+	cs->runstate = RUNSTATE_RUNNING;
 
-	int ret = rte_eal_remote_launch(rte_service_runner_func, 0, lcore);
+	int ret = rte_eal_remote_launch(service_runner_func, 0, lcore);
 	/* returns -EBUSY if the core is already launched, 0 on success */
 	return ret;
 }
@@ -773,13 +773,9 @@ rte_service_lcore_attr_get(uint32_t lcore, uint32_t attr_id,
 }
 
 static void
-rte_service_dump_one(FILE *f, struct rte_service_spec_impl *s,
-		     uint64_t all_cycles, uint32_t reset)
+service_dump_one(FILE *f, struct rte_service_spec_impl *s, uint32_t reset)
 {
 	/* avoid divide by zero */
-	if (all_cycles == 0)
-		all_cycles = 1;
-
 	int calls = 1;
 	if (s->calls != 0)
 		calls = s->calls;
@@ -806,7 +802,7 @@ rte_service_attr_reset_all(uint32_t id)
 	SERVICE_VALID_GET_OR_ERR_RET(id, s, -EINVAL);
 
 	int reset = 1;
-	rte_service_dump_one(NULL, s, 0, reset);
+	service_dump_one(NULL, s, reset);
 	return 0;
 }
 
@@ -850,21 +846,13 @@ rte_service_dump(FILE *f, uint32_t id)
 	uint32_t i;
 	int print_one = (id != UINT32_MAX);
 
-	uint64_t total_cycles = 0;
-
-	for (i = 0; i < RTE_SERVICE_NUM_MAX; i++) {
-		if (!service_valid(i))
-			continue;
-		total_cycles += rte_services[i].cycles_spent;
-	}
-
 	/* print only the specified service */
 	if (print_one) {
 		struct rte_service_spec_impl *s;
 		SERVICE_VALID_GET_OR_ERR_RET(id, s, -EINVAL);
 		fprintf(f, "Service %s Summary\n", s->spec.name);
 		uint32_t reset = 0;
-		rte_service_dump_one(f, s, total_cycles, reset);
+		service_dump_one(f, s, reset);
 		return 0;
 	}
 
@@ -874,7 +862,7 @@ rte_service_dump(FILE *f, uint32_t id)
 		if (!service_valid(i))
 			continue;
 		uint32_t reset = 0;
-		rte_service_dump_one(f, &rte_services[i], total_cycles, reset);
+		service_dump_one(f, &rte_services[i], reset);
 	}
 
 	fprintf(f, "Service Cores Summary\n");
