@@ -283,7 +283,7 @@ rte_is_aligned(void *ptr, unsigned align)
  *    The combined value.
  */
 static inline uint32_t
-rte_combine32ms1b(register uint32_t x)
+rte_combine32ms1b(uint32_t x)
 {
 	x |= x >> 1;
 	x |= x >> 2;
@@ -305,7 +305,7 @@ rte_combine32ms1b(register uint32_t x)
  *    The combined value.
  */
 static inline uint64_t
-rte_combine64ms1b(register uint64_t v)
+rte_combine64ms1b(uint64_t v)
 {
 	v |= v >> 1;
 	v |= v >> 2;
