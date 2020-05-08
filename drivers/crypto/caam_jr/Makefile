@@ -16,6 +16,13 @@ CFLAGS += -D _GNU_SOURCE
 CFLAGS += -O3
 CFLAGS += $(WERROR_FLAGS)
 
+# FIXME: temporary solution for Bugzilla 469
+ifeq ($(CONFIG_RTE_TOOLCHAIN_GCC),y)
+ifeq ($(shell test $(GCC_VERSION) -ge 100 && echo 1), 1)
+CFLAGS += -fcommon
+endif
+endif
+
 CFLAGS += -I$(RTE_SDK)/drivers/bus/dpaa/include
 CFLAGS += -I$(RTE_SDK)/drivers/crypto/caam_jr
 #sharing the hw flib headers from dpaa2_sec pmd
