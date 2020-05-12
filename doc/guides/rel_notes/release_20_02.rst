@@ -577,3 +577,66 @@ Tested Platforms
     * Ubuntu 16.10
     * Ubuntu 18.04.1
     * Ubuntu 19.04
+
+20.02.1 Release Notes
+---------------------
+
+20.02.1 Fixes
+~~~~~~~~~~~~~
+
+* 0545a19f5b vhost: check log mmap offset and size overflow (CVE-2020-10722)
+* 47791d99af vhost: fix translated address not checked (CVE-2020-10723)
+* 64a4d90c67 vhost/crypto: validate keys lengths (CVE-2020-10724)
+* 74b0c5db0f vhost: fix potential memory space leak (CVE-2020-10725)
+* a827e27d81 vhost: fix potential fd leak (CVE-2020-10726)
+* dca5d97491 vhost: fix vring index check (CVE-2020-10726)
+
+20.02.1 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Red Hat(R) Testing
+
+   * Platform
+
+      * RHEL 8.3
+      * Kernel 4.18
+      * Qemu 4.2
+      * X540-AT2 NIC(ixgbe, 10G)
+
+   * Functionality
+
+      * PVP (host dpdk testpmd as vswitch) 1Q: throughput testing
+      * PVP vhost-user 2Q throughput testing
+      * PVP vhost-user 1Q - cross numa node  throughput testing
+      * PVP 1Q live migration testing
+      * PVP 1Q cross numa node live migration testing
+
+* Intel(R) Testing
+
+   * Virtio features
+
+      * vhost/virtio loopback test with virtio user as server mode
+      * loopback multi queues
+      * loopback multi paths port restart
+      * vhost/virtio pvp multi-paths performance
+      * pvp multi-queues and port restart
+      * vhost dequeue zero copy
+      * pvp share lib
+      * pvp vhost user reconnect
+      * pvp test with 4k pages
+      * pvp test with 2M hugepages
+      * pvp virtio bonding
+      * pvp test with diff qemu version
+      * vhost enqueue interrupt
+      * vhost event idx interrupt
+      * vhost virtio pmd interrupt
+      * vhost virtio user interrupt
+      * virtio event idx interrupt
+      * virtio user for container networking
+      * virtio user as exceptional path
+      * vhost xstats
+      * virtio-pmd multi-process
+      * vm2vm virtio pmd
+      * vm2vm virtio-net iperf
+      * vm2vm virtio-user
+      * vhost user live migration
