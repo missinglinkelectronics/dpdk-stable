@@ -12,3 +12,5 @@ sources = files('dpaa2_hw_mempool.c')
 
 # depends on fslmc bus which uses experimental API
 allow_experimental_apis = true
+
+install_headers('rte_dpaa2_mempool.h')
