@@ -141,8 +141,9 @@ static int bnxt_hwrm_send_message(struct bnxt *bp, void *msg,
 	}
 
 	if (i >= timeout) {
-		PMD_DRV_LOG(ERR, "Error(timeout) sending msg 0x%04x\n",
-			    req->req_type);
+		PMD_DRV_LOG(ERR,
+			    "Error(timeout) sending msg 0x%04x, seq_id %d\n",
+			    req->req_type, req->seq_id);
 		return -ETIMEDOUT;
 	}
 	return 0;
