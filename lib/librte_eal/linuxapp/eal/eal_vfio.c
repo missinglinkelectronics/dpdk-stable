@@ -862,9 +862,6 @@ rte_vfio_release_device(const char *sysfs_base, const char *dev_addr,
 {
 	struct rte_mem_config *mcfg = rte_eal_get_configuration()->mem_config;
 	rte_rwlock_t *mem_lock = &mcfg->memory_hotplug_lock;
-	struct vfio_group_status group_status = {
-			.argsz = sizeof(group_status)
-	};
 	struct vfio_config *vfio_cfg;
 	int vfio_group_fd;
 	int iommu_group_num;
