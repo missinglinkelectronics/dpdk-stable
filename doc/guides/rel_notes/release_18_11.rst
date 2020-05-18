@@ -2964,3 +2964,96 @@ Fixes skipped and status unresolved
 * 207b1c813  test: fix build without ring PMD
 * 819d0d1d5  net/ixgbe: fix blocking system events
 * 050bfe033  net/mlx5: fix tunnel flow priority
+
+18.11.8 Release Notes
+---------------------
+
+18.11.8 Fixes
+~~~~~~~~~~~~~
+
+* vhost: check log mmap offset and size overflow
+* vhost/crypto: validate keys lengths
+* vhost: fix vring index check
+
+18.11.8 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Red Hat(R) Testing
+
+   * RHEL 8
+   * Functionality
+
+      * PF assignment
+      * VF assignment
+      * vhost single/multi queues and cross-NUMA
+      * vhostclient reconnect
+      * vhost live migration with single/multi queues and cross-NUMA
+      * OVS PVP
+
+   * Tested NICs
+
+      * X540-AT2 NIC(ixgbe, 10G)
+
+* Intel(R) Testing
+
+   * Virtio features
+
+      * vhost/virtio loopback test with virtio user as server mode
+      * loopback multi queues
+      * loopback multi paths port restart
+      * vhost/virtio pvp multi-paths performance
+      * pvp multi-queues and port restart
+      * vhost dequeue zero copy
+      * pvp share lib
+      * pvp vhost user reconnect
+      * pvp test with 4k pages
+      * pvp test with 2M hugepages
+      * pvp virtio bonding
+      * pvp test with diff qemu version
+      * vhost enqueue interrupt
+      * vhost event idx interrupt
+      * vhost virtio pmd interrupt
+      * vhost virtio user interrupt
+      * virtio event idx interrupt
+      * virtio user for container networking
+      * virtio user as exceptional path
+      * vhost xstats
+      * virtio-pmd multi-process
+      * vm2vm virtio pmd
+      * vm2vm virtio-net iperf
+      * vm2vm virtio-user
+      * vhost user live migration
+
+18.11.8 Known Issues
+~~~~~~~~~~~~~~~~~~~~
+
+* DPDK 18.11.8 contains fixes up to DPDK v20.02 and fixes for CVE-2020-10722, CVE-2020-10723 and CVE-2020-10724
+* Issues identified/fixed in DPDK master branch after DPDK v20.02 may be present in DPDK 18.11.8
+
+18.11.8 Fixes skipped and status unresolved
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* dcfbc594f  net/iavf: fix queue interrupt for ice
+* b149a7064  eal/freebsd: add config reattach in secondary process
+* a135e050a  examples/ipsec-secgw: fix packet length
+* 9d10f53e4  test/metrics: fix second run
+* ea81c1b81  net/mlx5: fix NVGRE matching
+* 721c95301  net/mlx5: fix Rx scatter mode validation
+* be048a1aa  net/virtio: fix descriptor addressed in Tx
+* 6080796f6  mem: make base address hint OS specific
+* 6d3f9917f  eal: fix memory config allocation for multi-process
+* 1526dd053  net/virtio: fix Tx checksum offloads
+* f0617163b  mempool/dpaa2: report error on endless loop in mbuf release
+* 05817057f  net/ena: fix indication of bad L4 Rx checksums
+* 9e0d81c1a  net/mlx5: fix selection between encap and decap
+* 7392ad06f  app/testpmd: use better randomness for Tx split
+* dcd05da0a  app/testpmd: fix GENEVE flow item
+* 2e02a2aff  ethdev: fix VLAN offloads set if no driver callback
+* ec8615607  crypto/dpaa_sec: fix IOVA conversions
+* 06387be8e  net/mlx5: fix encap/decap validation
+* 7593cf1d3  net/mlx5: fix legacy multi-packet write session
+* e21492a51  net/mlx: fix overlinking with meson and glue dlopen
+* 150c9ac2d  app/testpmd: update Rx offload after setting MTU
+* 207b1c813  test: fix build without ring PMD
+* 819d0d1d5  net/ixgbe: fix blocking system events
+* 050bfe033  net/mlx5: fix tunnel flow priority
