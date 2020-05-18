@@ -738,7 +738,6 @@ i40evf_stop_queues(struct rte_eth_dev *dev)
 	for (i = 0; i < dev->data->nb_tx_queues; i++) {
 		if (i40evf_dev_tx_queue_stop(dev, i) != 0) {
 			PMD_DRV_LOG(ERR, "Fail to stop queue %u", i);
-			return -1;
 		}
 	}
 
@@ -746,7 +745,6 @@ i40evf_stop_queues(struct rte_eth_dev *dev)
 	for (i = 0; i < dev->data->nb_rx_queues; i++) {
 		if (i40evf_dev_rx_queue_stop(dev, i) != 0) {
 			PMD_DRV_LOG(ERR, "Fail to stop queue %u", i);
-			return -1;
 		}
 	}
 
