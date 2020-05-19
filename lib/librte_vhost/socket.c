@@ -890,7 +890,7 @@ rte_vhost_driver_register(const char *path, uint64_t flags)
 	 * not compatible with postcopy.
 	 */
 	if (vsocket->dequeue_zero_copy) {
-		if (!vsocket->is_server) {
+		if ((flags & RTE_VHOST_USER_CLIENT) != 0) {
 			RTE_LOG(ERR, VHOST_CONFIG,
 			"error: zero copy is incompatible with vhost client mode\n");
 			ret = -1;
