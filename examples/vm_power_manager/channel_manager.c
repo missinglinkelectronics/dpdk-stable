@@ -36,6 +36,8 @@
 		for (i = 0; mask_u64b; mask_u64b &= ~(1ULL << i++)) \
 		if ((mask_u64b >> i) & 1) \
 
+struct libvirt_vm_info lvm_info[MAX_CLIENTS];
+
 /* Global pointer to libvirt connection */
 static virConnectPtr global_vir_conn_ptr;
 
