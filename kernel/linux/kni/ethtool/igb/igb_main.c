@@ -36,6 +36,7 @@
 #endif /* CONFIG_PM_RUNTIME */
 
 #include <linux/if_bridge.h>
+#include "compat.h"
 #include "igb.h"
 #include "igb_vmdq.h"
 
@@ -154,7 +155,11 @@ static int igb_poll(struct napi_struct *, int);
 static bool igb_clean_tx_irq(struct igb_q_vector *);
 static bool igb_clean_rx_irq(struct igb_q_vector *, int);
 static int igb_ioctl(struct net_device *, struct ifreq *, int cmd);
+#ifdef HAVE_TX_TIMEOUT_TXQUEUE
+static void igb_tx_timeout(struct net_device *, unsigned int);
+#else
 static void igb_tx_timeout(struct net_device *);
+#endif /* HAVE_TX_TIMEOUT_TXQUEUE */
 static void igb_reset_task(struct work_struct *);
 #ifdef HAVE_VLAN_RX_REGISTER
 static void igb_vlan_mode(struct net_device *, struct vlan_group *);
@@ -5623,7 +5628,11 @@ static netdev_tx_t igb_xmit_frame(struct sk_buff *skb,
  * igb_tx_timeout - Respond to a Tx Hang
  * @netdev: network interface device structure
  **/
+#ifdef HAVE_TX_TIMEOUT_TXQUEUE
+static void igb_tx_timeout(struct net_device *netdev, unsigned int txqueue)
+#else
 static void igb_tx_timeout(struct net_device *netdev)
+#endif
 {
 	struct igb_adapter *adapter = netdev_priv(netdev);
 	struct e1000_hw *hw = &adapter->hw;
