@@ -3131,9 +3131,11 @@ static inline int __kc_pci_vfs_assigned(struct pci_dev *dev)
 #define SET_ETHTOOL_OPS(netdev, ops) ((netdev)->ethtool_ops = (ops))
 #endif /* >= 3.16.0 */
 
-#if ( LINUX_VERSION_CODE >= KERNEL_VERSION(5,0,0) )
+#if ((LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)) \
+	|| (defined(RHEL_RELEASE_CODE) \
+	   && (RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(8, 1))))
 #define dev_open(x) dev_open(x, NULL)
-#endif /* >= 5.0.0 */
+#endif /* >= 5.0.0 or >= RHEL/CentOS 8.1 */
 
 /*
  * vlan_tx_tag_* macros renamed to skb_vlan_tag_* (Linux commit: df8a39defad4)

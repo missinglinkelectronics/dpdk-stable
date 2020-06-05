@@ -3947,10 +3947,12 @@ skb_set_hash(struct sk_buff *skb, __u32 hash, __always_unused int type)
 #define HAVE_PCI_ENABLE_MSIX
 #endif
 
-#if ( LINUX_VERSION_CODE >= KERNEL_VERSION(5,0,0) )
+#if ((LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)) \
+	|| (defined(RHEL_RELEASE_CODE) \
+	   && (RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(8, 1))))
 #define dev_open(x) dev_open(x, NULL)
 #define HAVE_NDO_BRIDGE_SETLINK_EXTACK
-#endif /* >= 5.0.0 */
+#endif /* >= 5.0.0 or >= RHEL/CentOS 8.1 */
 
 #if ( LINUX_VERSION_CODE >= KERNEL_VERSION(5,1,0) )
 #define HAVE_NDO_FDB_ADD_EXTACK
