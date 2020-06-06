@@ -231,12 +231,14 @@ nic_stats_clear(portid_t port_id)
 	ret = rte_eth_stats_reset(port_id);
 	if (ret != 0) {
 		printf("%s: Error: failed to reset stats (port %u): %s",
-		       __func__, port_id, strerror(ret));
+		       __func__, port_id, strerror(-ret));
 		return;
 	}
 
 	ret = rte_eth_stats_get(port_id, &ports[port_id].stats);
 	if (ret != 0) {
+		if (ret < 0)
+			ret = -ret;
 		printf("%s: Error: failed to get stats (port %u): %s",
 		       __func__, port_id, strerror(ret));
 		return;
@@ -316,10 +318,11 @@ nic_xstats_clear(portid_t port_id)
 		print_valid_ports();
 		return;
 	}
-	rte_eth_xstats_reset(port_id);
 
 	ret = rte_eth_stats_get(port_id, &ports[port_id].stats);
 	if (ret != 0) {
+		if (ret < 0)
+			ret = -ret;
 		printf("%s: Error: failed to get stats (port %u): %s",
 		       __func__, port_id, strerror(ret));
 		return;
