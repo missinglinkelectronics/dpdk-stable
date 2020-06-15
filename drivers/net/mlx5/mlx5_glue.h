@@ -166,6 +166,6 @@ struct mlx5_glue {
 		 enum mlx5dv_flow_table_type ft_type);
 };
 
-const struct mlx5_glue *mlx5_glue;
+extern const struct mlx5_glue *mlx5_glue;
 
 #endif /* MLX5_GLUE_H_ */

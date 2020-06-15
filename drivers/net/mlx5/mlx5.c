@@ -131,6 +131,10 @@ static rte_spinlock_t mlx5_shared_data_lock = RTE_SPINLOCK_INITIALIZER;
 /** Driver-specific log messages type. */
 int mlx5_logtype;
 
+#ifdef MLX5_GLUE
+const struct mlx5_glue *mlx5_glue;
+#endif
+
 /**
  * Prepare shared data between primary and secondary process.
  */
