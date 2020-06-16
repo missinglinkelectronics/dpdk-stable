@@ -45,6 +45,6 @@
  * cpt_logtype will be used for common logging. This field would be initialized
  * by otx_* driver routines during PCI probe.
  */
-int cpt_logtype;
+extern int cpt_logtype;
 
 #endif /* _CPT_PMD_LOGS_H_ */
