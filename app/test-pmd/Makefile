@@ -15,6 +15,12 @@ CFLAGS += -O3
 CFLAGS += $(WERROR_FLAGS)
 CFLAGS += -Wno-deprecated-declarations
 
+ifeq ($(CONFIG_RTE_TOOLCHAIN_GCC),y)
+ifeq ($(shell test $(GCC_VERSION) -ge 100 && echo 1), 1)
+CFLAGS += -fcommon
+endif
+endif
+
 #
 # all source are stored in SRCS-y
 #

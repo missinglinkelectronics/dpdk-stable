@@ -5,6 +5,11 @@
 name = 'testpmd'
 allow_experimental_apis = true
 cflags += '-Wno-deprecated-declarations'
+
+if (toolchain == 'gcc' and cc.version().version_compare('>=10.0.0'))
+       cflags += '-fcommon'
+endif
+
 sources = files('cmdline.c',
 	'cmdline_flow.c',
 	'cmdline_mtr.c',
