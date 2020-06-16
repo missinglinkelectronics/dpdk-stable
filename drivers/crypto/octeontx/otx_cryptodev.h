@@ -15,6 +15,6 @@
 /*
  * Crypto device driver ID
  */
-uint8_t otx_cryptodev_driver_id;
+extern uint8_t otx_cryptodev_driver_id;
 
 #endif /* _OTX_CRYPTODEV_H_ */

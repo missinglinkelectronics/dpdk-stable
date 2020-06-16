@@ -17,6 +17,8 @@
 
 static int otx_cryptodev_logtype;
 
+uint8_t otx_cryptodev_driver_id;
+
 static struct rte_pci_id pci_id_cpt_table[] = {
 	{
 		RTE_PCI_DEVICE(PCI_VENDOR_ID_CAVIUM, CPT_81XX_PCI_VF_DEVICE_ID),
