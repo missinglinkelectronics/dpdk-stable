@@ -30,6 +30,7 @@
 #ifdef RTE_LIBRTE_I40E_PMD
 #include <rte_pmd_i40e.h>
 #endif
+#include <rte_string_fns.h>
 
 #include <libvirt/libvirt.h>
 #include "channel_monitor.h"
