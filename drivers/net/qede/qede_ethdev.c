@@ -535,17 +535,16 @@ qed_configure_filter_rx_mode(struct rte_eth_dev *eth_dev,
 		ECORE_ACCEPT_BCAST;
 
 	if (type == QED_FILTER_RX_MODE_TYPE_PROMISC) {
-		flags.rx_accept_filter |= ECORE_ACCEPT_UCAST_UNMATCHED;
+		flags.rx_accept_filter |= (ECORE_ACCEPT_UCAST_UNMATCHED |
+					   ECORE_ACCEPT_MCAST_UNMATCHED);
 		if (IS_VF(edev)) {
-			flags.tx_accept_filter |= ECORE_ACCEPT_UCAST_UNMATCHED;
-			DP_INFO(edev, "Enabling Tx unmatched flag for VF\n");
+			flags.tx_accept_filter |=
+						(ECORE_ACCEPT_UCAST_UNMATCHED |
+						 ECORE_ACCEPT_MCAST_UNMATCHED);
+			DP_INFO(edev, "Enabling Tx unmatched flags for VF\n");
 		}
 	} else if (type == QED_FILTER_RX_MODE_TYPE_MULTI_PROMISC) {
 		flags.rx_accept_filter |= ECORE_ACCEPT_MCAST_UNMATCHED;
-	} else if (type == (QED_FILTER_RX_MODE_TYPE_MULTI_PROMISC |
-				QED_FILTER_RX_MODE_TYPE_PROMISC)) {
-		flags.rx_accept_filter |= ECORE_ACCEPT_UCAST_UNMATCHED |
-			ECORE_ACCEPT_MCAST_UNMATCHED;
 	}
 
 	return ecore_filter_accept_cmd(edev, 0, flags, false, false,
@@ -1396,14 +1395,11 @@ qede_link_update(struct rte_eth_dev *eth_dev, __rte_unused int wait_to_complete)
 
 static void qede_promiscuous_enable(struct rte_eth_dev *eth_dev)
 {
-	struct qede_dev *qdev = eth_dev->data->dev_private;
-	struct ecore_dev *edev = &qdev->edev;
+	struct qede_dev *qdev = QEDE_INIT_QDEV(eth_dev);
+	struct ecore_dev *edev = QEDE_INIT_EDEV(qdev);
 	enum qed_filter_rx_mode_type type = QED_FILTER_RX_MODE_TYPE_PROMISC;
 
 	PMD_INIT_FUNC_TRACE(edev);
-
-	if (rte_eth_allmulticast_get(eth_dev->data->port_id) == 1)
-		type |= QED_FILTER_RX_MODE_TYPE_MULTI_PROMISC;
 
 	qed_configure_filter_rx_mode(eth_dev, type);
 }
@@ -1767,9 +1763,6 @@ static void qede_allmulticast_enable(struct rte_eth_dev *eth_dev)
 {
 	enum qed_filter_rx_mode_type type =
 	    QED_FILTER_RX_MODE_TYPE_MULTI_PROMISC;
-
-	if (rte_eth_promiscuous_get(eth_dev->data->port_id) == 1)
-		type |= QED_FILTER_RX_MODE_TYPE_PROMISC;
 
 	qed_configure_filter_rx_mode(eth_dev, type);
 }
