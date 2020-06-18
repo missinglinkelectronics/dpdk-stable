@@ -31,6 +31,23 @@ extern "C" {
 #define RTE_VHOST_USER_IOMMU_SUPPORT	(1ULL << 3)
 #define RTE_VHOST_USER_POSTCOPY_SUPPORT		(1ULL << 4)
 
+/* Features. */
+#ifndef VIRTIO_NET_F_GUEST_ANNOUNCE
+ #define VIRTIO_NET_F_GUEST_ANNOUNCE 21
+#endif
+
+#ifndef VIRTIO_NET_F_MQ
+ #define VIRTIO_NET_F_MQ		22
+#endif
+
+#ifndef VIRTIO_NET_F_MTU
+ #define VIRTIO_NET_F_MTU 3
+#endif
+
+#ifndef VIRTIO_F_ANY_LAYOUT
+ #define VIRTIO_F_ANY_LAYOUT		27
+#endif
+
 /** Protocol features. */
 #ifndef VHOST_USER_PROTOCOL_F_MQ
 #define VHOST_USER_PROTOCOL_F_MQ	0
