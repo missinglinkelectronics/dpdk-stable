@@ -287,7 +287,8 @@ if get_option('tests')
 		link_whole: link_libs,
 		dependencies: test_dep_objs,
 		c_args: [cflags, '-DALLOW_EXPERIMENTAL_API'],
-		install_rpath: driver_install_path,
+		install_rpath: join_paths(get_option('prefix'),
+		                 driver_install_path),
 		install: true)
 
 	# some perf tests (eg: memcpy perf autotest)take very long
