@@ -54,10 +54,22 @@ enum {
 	PCI_DEVICE_ID_MELLANOX_CONNECTX5BFVF = 0xa2d3,
 };
 
+/* Recognized Infiniband device physical port name types. */
+enum mlx5_nl_phys_port_name_type {
+	MLX5_PHYS_PORT_NAME_TYPE_NOTSET = 0, /* Not set. */
+	MLX5_PHYS_PORT_NAME_TYPE_LEGACY, /* before kernel ver < 5.0 */
+	MLX5_PHYS_PORT_NAME_TYPE_UPLINK, /* p0, kernel ver >= 5.0 */
+	MLX5_PHYS_PORT_NAME_TYPE_PFVF, /* pf0vf0, kernel ver >= 5.0 */
+	MLX5_PHYS_PORT_NAME_TYPE_UNKNOWN, /* Unrecognized. */
+};
+
+
 /** Switch information returned by mlx5_nl_switch_info(). */
 struct mlx5_switch_info {
 	uint32_t master:1; /**< Master device. */
 	uint32_t representor:1; /**< Representor device. */
+	enum mlx5_nl_phys_port_name_type name_type; /** < Port name type. */
+	int32_t pf_num; /**< PF number (valid for pfxvfx format only). */
 	int32_t port_name; /**< Representor port name. */
 	uint64_t switch_id; /**< Switch identifier. */
 };
@@ -290,6 +302,8 @@ unsigned int mlx5_dev_to_port_id(const struct rte_device *dev,
 				 unsigned int port_list_n);
 int mlx5_sysfs_switch_info(unsigned int ifindex,
 			   struct mlx5_switch_info *info);
+void mlx5_translate_port_name(const char *port_name_in,
+			      struct mlx5_switch_info *port_info_out);
 
 /* mlx5_mac.c */
 

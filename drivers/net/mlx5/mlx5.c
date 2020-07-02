@@ -1501,6 +1501,8 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 	for (i = 0; i != n; ++i) {
 		uint32_t restore;
 
+		if (!list[i].ifindex)
+			continue;
 		list[i].eth_dev = mlx5_dev_spawn(&pci_dev->device,
 						 list[i].ibv_dev, dev_config,
 						 &list[i].info, list[i].ifindex);

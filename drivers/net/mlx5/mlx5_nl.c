@@ -84,6 +84,7 @@ struct mlx5_nl_ifindex_data {
 	const char *name; /**< IB device name (in). */
 	uint32_t ibindex; /**< IB device index (out). */
 	uint32_t ifindex; /**< Network interface index (out). */
+	uint32_t ibfound; /**< Found IB index for matching device. */
 };
 
 /**
@@ -695,7 +696,7 @@ mlx5_nl_ifindex_cb(struct nlmsghdr *nh, void *arg)
 	size_t off = NLMSG_HDRLEN;
 	uint32_t ibindex = 0;
 	uint32_t ifindex = 0;
-	int found = 0;
+	uint32_t found = 0, ibfound = 0;
 
 	if (nh->nlmsg_type !=
 	    RDMA_NL_GET_TYPE(RDMA_NL_NLDEV, RDMA_NLDEV_CMD_GET) &&
@@ -711,6 +712,7 @@ mlx5_nl_ifindex_cb(struct nlmsghdr *nh, void *arg)
 		switch (na->nla_type) {
 		case RDMA_NLDEV_ATTR_DEV_INDEX:
 			ibindex = *(uint32_t *)payload;
+			ibfound = 1;
 			break;
 		case RDMA_NLDEV_ATTR_DEV_NAME:
 			if (!strcmp(payload, data->name))
@@ -727,6 +729,7 @@ mlx5_nl_ifindex_cb(struct nlmsghdr *nh, void *arg)
 	if (found) {
 		data->ibindex = ibindex;
 		data->ifindex = ifindex;
+		data->ibfound = ibfound;
 	}
 	return 0;
 error:
@@ -759,6 +762,7 @@ mlx5_nl_ifindex(int nl, const char *name)
 		.name = name,
 		.ibindex = 0, /* Determined during first pass. */
 		.ifindex = 0, /* Determined during second pass. */
+		.ibfound = 0,
 	};
 	union {
 		struct nlmsghdr nh;
@@ -782,7 +786,7 @@ mlx5_nl_ifindex(int nl, const char *name)
 	ret = mlx5_nl_recv(nl, seq, mlx5_nl_ifindex_cb, &data);
 	if (ret < 0)
 		return 0;
-	if (!data.ibindex)
+	if (!data.ibfound)
 		goto error;
 	++seq;
 	req.nh.nlmsg_type = RDMA_NL_GET_TYPE(RDMA_NL_NLDEV,
@@ -814,6 +818,55 @@ error:
 }
 
 /**
+ * Analyze gathered port parameters via Netlink to recognize master
+ * and representor devices for E-Switch configuration.
+ *
+ * @param[in] num_vf_set
+ *   flag of presence of number of VFs port attribute.
+ * @param[inout] switch_info
+ *   Port information, including port name as a number and port name
+ *   type if recognized
+ *
+ * @return
+ *   master and representor flags are set in switch_info according to
+ *   recognized parameters (if any).
+ */
+static void
+mlx5_nl_check_switch_info(bool num_vf_set,
+			  struct mlx5_switch_info *switch_info)
+{
+	switch (switch_info->name_type) {
+	case MLX5_PHYS_PORT_NAME_TYPE_UNKNOWN:
+		/*
+		 * Name is not recognized, assume the master,
+		 * check the number of VFs key presence.
+		 */
+		switch_info->master = num_vf_set;
+		break;
+	case MLX5_PHYS_PORT_NAME_TYPE_NOTSET:
+		/*
+		 * Name is not set, this assumes the legacy naming
+		 * schema for master, just check if there is a
+		 * number of VFs key.
+		 */
+		switch_info->master = num_vf_set;
+		break;
+	case MLX5_PHYS_PORT_NAME_TYPE_UPLINK:
+		/* New uplink naming schema recognized. */
+		switch_info->master = 1;
+		break;
+	case MLX5_PHYS_PORT_NAME_TYPE_LEGACY:
+		/* Legacy representors naming schema. */
+		switch_info->representor = !num_vf_set;
+		break;
+	case MLX5_PHYS_PORT_NAME_TYPE_PFVF:
+		/* New representors naming schema. */
+		switch_info->representor = 1;
+		break;
+	}
+}
+
+/**
  * Process switch information from Netlink message.
  *
  * @param nh
@@ -830,31 +883,29 @@ mlx5_nl_switch_info_cb(struct nlmsghdr *nh, void *arg)
 	struct mlx5_switch_info info = {
 		.master = 0,
 		.representor = 0,
+		.name_type = MLX5_PHYS_PORT_NAME_TYPE_NOTSET,
 		.port_name = 0,
 		.switch_id = 0,
 	};
 	size_t off = NLMSG_LENGTH(sizeof(struct ifinfomsg));
-	bool port_name_set = false;
 	bool switch_id_set = false;
+	bool num_vf_set = false;
 
 	if (nh->nlmsg_type != RTM_NEWLINK)
 		goto error;
 	while (off < nh->nlmsg_len) {
 		struct rtattr *ra = (void *)((uintptr_t)nh + off);
 		void *payload = RTA_DATA(ra);
-		char *end;
 		unsigned int i;
 
 		if (ra->rta_len > nh->nlmsg_len - off)
 			goto error;
 		switch (ra->rta_type) {
+		case IFLA_NUM_VF:
+			num_vf_set = true;
+			break;
 		case IFLA_PHYS_PORT_NAME:
-			errno = 0;
-			info.port_name = strtol(payload, &end, 0);
-			if (errno ||
-			    (size_t)(end - (char *)payload) != strlen(payload))
-				goto error;
-			port_name_set = true;
+			mlx5_translate_port_name((char *)payload, &info);
 			break;
 		case IFLA_PHYS_SWITCH_ID:
 			info.switch_id = 0;
@@ -867,8 +918,11 @@ mlx5_nl_switch_info_cb(struct nlmsghdr *nh, void *arg)
 		}
 		off += RTA_ALIGN(ra->rta_len);
 	}
-	info.master = switch_id_set && !port_name_set;
-	info.representor = switch_id_set && port_name_set;
+	if (switch_id_set) {
+		/* We have some E-Switch configuration. */
+		mlx5_nl_check_switch_info(num_vf_set, &info);
+	}
+	assert(!(info.master && info.representor));
 	memcpy(arg, &info, sizeof(info));
 	return 0;
 error:
@@ -890,15 +944,19 @@ error:
  *   0 on success, a negative errno value otherwise and rte_errno is set.
  */
 int
-mlx5_nl_switch_info(int nl, unsigned int ifindex, struct mlx5_switch_info *info)
+mlx5_nl_switch_info(int nl, unsigned int ifindex,
+		    struct mlx5_switch_info *info)
 {
-	uint32_t seq = random();
 	struct {
 		struct nlmsghdr nh;
 		struct ifinfomsg info;
+		struct rtattr rta;
+		uint32_t extmask;
 	} req = {
 		.nh = {
-			.nlmsg_len = NLMSG_LENGTH(sizeof(req.info)),
+			.nlmsg_len = NLMSG_LENGTH
+					(sizeof(req.info) +
+					 RTA_LENGTH(sizeof(uint32_t))),
 			.nlmsg_type = RTM_GETLINK,
 			.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
 		},
@@ -906,11 +964,23 @@ mlx5_nl_switch_info(int nl, unsigned int ifindex, struct mlx5_switch_info *info)
 			.ifi_family = AF_UNSPEC,
 			.ifi_index = ifindex,
 		},
+		.rta = {
+			.rta_type = IFLA_EXT_MASK,
+			.rta_len = RTA_LENGTH(sizeof(int32_t)),
+		},
+		.extmask = RTE_LE32(1),
 	};
+	uint32_t sn = random();
 	int ret;
 
-	ret = mlx5_nl_send(nl, &req.nh, seq);
+	ret = mlx5_nl_send(nl, &req.nh, sn);
 	if (ret >= 0)
-		ret = mlx5_nl_recv(nl, seq, mlx5_nl_switch_info_cb, info);
+		ret = mlx5_nl_recv(nl, sn, mlx5_nl_switch_info_cb, info);
+	if (info->master && info->representor) {
+		DRV_LOG(ERR, "ifindex %u device is recognized as master"
+			     " and as representor", ifindex);
+		rte_errno = ENODEV;
+		ret = -rte_errno;
+	}
 	return ret;
 }
