@@ -2288,7 +2288,7 @@ skip_to_reply:
 		return -1;
 	}
 
-	if (!(dev->flags & VIRTIO_DEV_RUNNING) && virtio_is_ready(dev)) {
+	if (!(dev->flags & VIRTIO_DEV_READY) && virtio_is_ready(dev)) {
 		dev->flags |= VIRTIO_DEV_READY;
 
 		if (!(dev->flags & VIRTIO_DEV_RUNNING)) {
