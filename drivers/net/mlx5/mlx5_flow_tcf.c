@@ -31,6 +31,7 @@
 #include <rte_cycles.h>
 
 #include "mlx5.h"
+#include "mlx5_prm.h"
 #include "mlx5_flow.h"
 #include "mlx5_autoconf.h"
 
