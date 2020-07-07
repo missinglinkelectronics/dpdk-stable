@@ -243,6 +243,53 @@ mlx5_free_verbs_buf(void *ptr, void *data __rte_unused)
 }
 
 /**
+ * Initialize process private data structure.
+ *
+ * @param dev
+ *   Pointer to Ethernet device structure.
+ *
+ * @return
+ *   0 on success, a negative errno value otherwise and rte_errno is set.
+ */
+int
+mlx5_proc_priv_init(struct rte_eth_dev *dev)
+{
+	struct mlx5_proc_priv *ppriv;
+	size_t ppriv_size;
+
+	/*
+	 * UAR register table follows the process private structure. BlueFlame
+	 * registers for Tx queues are stored in the table.
+	 */
+	ppriv_size = sizeof(struct mlx5_proc_priv) +
+		     RTE_MAX_QUEUES_PER_PORT * sizeof(void *);
+	ppriv = rte_malloc_socket("mlx5_proc_priv", ppriv_size,
+				  RTE_CACHE_LINE_SIZE, dev->device->numa_node);
+	if (!ppriv) {
+		rte_errno = ENOMEM;
+		return -rte_errno;
+	}
+	ppriv->uar_table_sz = ppriv_size;
+	dev->process_private = ppriv;
+	return 0;
+}
+
+/**
+ * Un-initialize process private data structure.
+ *
+ * @param dev
+ *   Pointer to Ethernet device structure.
+ */
+static void
+mlx5_proc_priv_uninit(struct rte_eth_dev *dev)
+{
+	if (!dev->process_private)
+		return;
+	rte_free(dev->process_private);
+	dev->process_private = NULL;
+}
+
+/**
  * DPDK callback to close the device.
  *
  * Destroy all queues and objects, free memory.
@@ -283,6 +330,7 @@ mlx5_dev_close(struct rte_eth_dev *dev)
 		priv->txqs_n = 0;
 		priv->txqs = NULL;
 	}
+	mlx5_proc_priv_uninit(dev);
 	mlx5_mprq_free_mp(dev);
 	mlx5_mr_release(dev);
 	if (priv->pd != NULL) {
@@ -600,121 +648,6 @@ mlx5_args(struct mlx5_dev_config *config, struct rte_devargs *devargs)
 
 static struct rte_pci_driver mlx5_driver;
 
-/*
- * Reserved UAR address space for TXQ UAR(hw doorbell) mapping, process
- * local resource used by both primary and secondary to avoid duplicate
- * reservation.
- * The space has to be available on both primary and secondary process,
- * TXQ UAR maps to this area using fixed mmap w/o double check.
- */
-static void *uar_base;
-
-static int
-find_lower_va_bound(const struct rte_memseg_list *msl,
-		const struct rte_memseg *ms, void *arg)
-{
-	void **addr = arg;
-
-	if (msl->external)
-		return 0;
-	if (*addr == NULL)
-		*addr = ms->addr;
-	else
-		*addr = RTE_MIN(*addr, ms->addr);
-
-	return 0;
-}
-
-/**
- * Reserve UAR address space for primary process.
- *
- * @param[in] dev
- *   Pointer to Ethernet device.
- *
- * @return
- *   0 on success, a negative errno value otherwise and rte_errno is set.
- */
-static int
-mlx5_uar_init_primary(struct rte_eth_dev *dev)
-{
-	struct mlx5_priv *priv = dev->data->dev_private;
-	void *addr = (void *)0;
-
-	if (uar_base) { /* UAR address space mapped. */
-		priv->uar_base = uar_base;
-		return 0;
-	}
-	/* find out lower bound of hugepage segments */
-	rte_memseg_walk(find_lower_va_bound, &addr);
-
-	/* keep distance to hugepages to minimize potential conflicts. */
-	addr = RTE_PTR_SUB(addr, (uintptr_t)(MLX5_UAR_OFFSET + MLX5_UAR_SIZE));
-	/* anonymous mmap, no real memory consumption. */
-	addr = mmap(addr, MLX5_UAR_SIZE,
-		    PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (addr == MAP_FAILED) {
-		DRV_LOG(ERR,
-			"port %u failed to reserve UAR address space, please"
-			" adjust MLX5_UAR_SIZE or try --base-virtaddr",
-			dev->data->port_id);
-		rte_errno = ENOMEM;
-		return -rte_errno;
-	}
-	/* Accept either same addr or a new addr returned from mmap if target
-	 * range occupied.
-	 */
-	DRV_LOG(INFO, "port %u reserved UAR address space: %p",
-		dev->data->port_id, addr);
-	priv->uar_base = addr; /* for primary and secondary UAR re-mmap. */
-	uar_base = addr; /* process local, don't reserve again. */
-	return 0;
-}
-
-/**
- * Reserve UAR address space for secondary process, align with
- * primary process.
- *
- * @param[in] dev
- *   Pointer to Ethernet device.
- *
- * @return
- *   0 on success, a negative errno value otherwise and rte_errno is set.
- */
-static int
-mlx5_uar_init_secondary(struct rte_eth_dev *dev)
-{
-	struct mlx5_priv *priv = dev->data->dev_private;
-	void *addr;
-
-	assert(priv->uar_base);
-	if (uar_base) { /* already reserved. */
-		assert(uar_base == priv->uar_base);
-		return 0;
-	}
-	/* anonymous mmap, no real memory consumption. */
-	addr = mmap(priv->uar_base, MLX5_UAR_SIZE,
-		    PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (addr == MAP_FAILED) {
-		DRV_LOG(ERR, "port %u UAR mmap failed: %p size: %llu",
-			dev->data->port_id, priv->uar_base, MLX5_UAR_SIZE);
-		rte_errno = ENXIO;
-		return -rte_errno;
-	}
-	if (priv->uar_base != addr) {
-		DRV_LOG(ERR,
-			"port %u UAR address %p size %llu occupied, please"
-			" adjust MLX5_UAR_OFFSET or try EAL parameter"
-			" --base-virtaddr",
-			dev->data->port_id, priv->uar_base, MLX5_UAR_SIZE);
-		rte_errno = ENXIO;
-		return -rte_errno;
-	}
-	uar_base = addr; /* process local, don't reserve again */
-	DRV_LOG(INFO, "port %u reserved UAR address space: %p",
-		dev->data->port_id, addr);
-	return 0;
-}
-
 /**
  * Spawn an Ethernet device from Verbs information.
  *
@@ -920,7 +853,7 @@ mlx5_dev_spawn(struct rte_device *dpdk_dev,
 		}
 		eth_dev->device = dpdk_dev;
 		eth_dev->dev_ops = &mlx5_dev_sec_ops;
-		err = mlx5_uar_init_secondary(eth_dev);
+		err = mlx5_proc_priv_init(eth_dev);
 		if (err) {
 			err = rte_errno;
 			goto error;
@@ -932,7 +865,7 @@ mlx5_dev_spawn(struct rte_device *dpdk_dev,
 			goto error;
 		}
 		/* Remap UAR for Tx queues. */
-		err = mlx5_tx_uar_remap(eth_dev, err);
+		err = mlx5_tx_uar_init_secondary(eth_dev, err);
 		if (err) {
 			err = rte_errno;
 			goto error;
@@ -1147,11 +1080,6 @@ mlx5_dev_spawn(struct rte_device *dpdk_dev,
 	priv->dev_data = eth_dev->data;
 	eth_dev->data->mac_addrs = priv->mac;
 	eth_dev->device = dpdk_dev;
-	err = mlx5_uar_init_primary(eth_dev);
-	if (err) {
-		err = rte_errno;
-		goto error;
-	}
 	/* Configure the first MAC address by default. */
 	if (mlx5_get_mac(eth_dev, &mac.addr_bytes)) {
 		DRV_LOG(ERR,
@@ -1282,12 +1210,11 @@ error:
 		if (own_domain_id)
 			claim_zero(rte_eth_switch_domain_free(priv->domain_id));
 		rte_free(priv);
-		if (eth_dev != NULL)
-			eth_dev->data->dev_private = NULL;
 	}
 	if (pd)
 		claim_zero(mlx5_glue->dealloc_pd(pd));
 	if (eth_dev != NULL) {
+		mlx5_proc_priv_uninit(eth_dev);
 		/* mac_addrs must not be freed alone because part of dev_private */
 		eth_dev->data->mac_addrs = NULL;
 		rte_eth_dev_release_port(eth_dev);

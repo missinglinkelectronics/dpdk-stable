@@ -188,6 +188,17 @@ struct mlx5_drop {
 
 struct mlx5_flow_tcf_context;
 
+/* Per-process private structure. */
+struct mlx5_proc_priv {
+	size_t uar_table_sz;
+	/* Size of UAR register table. */
+	void *uar_table[];
+	/* Table of UAR registers for each process. */
+};
+
+#define MLX5_PROC_PRIV(port_id) \
+	((struct mlx5_proc_priv *)rte_eth_devices[port_id].process_private)
+
 struct mlx5_priv {
 	LIST_ENTRY(mlx5_priv) mem_event_cb;
 	/**< Called by memory event callback. */
@@ -266,6 +277,7 @@ struct mlx5_priv {
 /* mlx5.c */
 
 int mlx5_getenv_int(const char *);
+int mlx5_proc_priv_init(struct rte_eth_dev *dev);
 
 /* mlx5_ethdev.c */
 

@@ -49,7 +49,7 @@ txq_alloc_elts(struct mlx5_txq_ctrl *txq_ctrl)
 	for (i = 0; (i != elts_n); ++i)
 		(*txq_ctrl->txq.elts)[i] = NULL;
 	DRV_LOG(DEBUG, "port %u Tx queue %u allocated and configured %u WRs",
-		PORT_ID(txq_ctrl->priv), txq_ctrl->idx, elts_n);
+		PORT_ID(txq_ctrl->priv), txq_ctrl->txq.idx, elts_n);
 	txq_ctrl->txq.elts_head = 0;
 	txq_ctrl->txq.elts_tail = 0;
 	txq_ctrl->txq.elts_comp = 0;
@@ -71,7 +71,7 @@ txq_free_elts(struct mlx5_txq_ctrl *txq_ctrl)
 	struct rte_mbuf *(*elts)[elts_n] = txq_ctrl->txq.elts;
 
 	DRV_LOG(DEBUG, "port %u Tx queue %u freeing WRs",
-		PORT_ID(txq_ctrl->priv), txq_ctrl->idx);
+		PORT_ID(txq_ctrl->priv), txq_ctrl->txq.idx);
 	txq_ctrl->txq.elts_head = 0;
 	txq_ctrl->txq.elts_tail = 0;
 	txq_ctrl->txq.elts_comp = 0;
@@ -224,19 +224,106 @@ mlx5_tx_queue_release(void *dpdk_txq)
 	for (i = 0; (i != priv->txqs_n); ++i)
 		if ((*priv->txqs)[i] == txq) {
 			DRV_LOG(DEBUG, "port %u removing Tx queue %u from list",
-				PORT_ID(priv), txq_ctrl->idx);
+				PORT_ID(priv), txq_ctrl->txq.idx);
 			mlx5_txq_release(ETH_DEV(priv), i);
 			break;
 		}
 }
 
+/**
+ * Initialize Tx UAR registers for primary process.
+ *
+ * @param txq_ctrl
+ *   Pointer to Tx queue control structure.
+ */
+static void
+txq_uar_init(struct mlx5_txq_ctrl *txq_ctrl)
+{
+	struct mlx5_priv *priv = txq_ctrl->priv;
+	struct mlx5_proc_priv *ppriv = MLX5_PROC_PRIV(PORT_ID(priv));
+#ifndef RTE_ARCH_64
+	unsigned int lock_idx;
+	const size_t page_size = sysconf(_SC_PAGESIZE);
+#endif
+
+	assert(rte_eal_process_type() == RTE_PROC_PRIMARY);
+	assert(ppriv);
+	ppriv->uar_table[txq_ctrl->txq.idx] = txq_ctrl->bf_reg;
+#ifndef RTE_ARCH_64
+	/* Assign an UAR lock according to UAR page number */
+	lock_idx = (txq_ctrl->uar_mmap_offset / page_size) &
+		   MLX5_UAR_PAGE_NUM_MASK;
+	txq_ctrl->txq.uar_lock = &priv->uar_lock[lock_idx];
+#endif
+}
 
 /**
- * Mmap TX UAR(HW doorbell) pages into reserved UAR address space.
- * Both primary and secondary process do mmap to make UAR address
- * aligned.
+ * Remap UAR register of a Tx queue for secondary process.
  *
- * @param[in] dev
+ * Remapped address is stored at the table in the process private structure of
+ * the device, indexed by queue index.
+ *
+ * @param txq_ctrl
+ *   Pointer to Tx queue control structure.
+ * @param fd
+ *   Verbs file descriptor to map UAR pages.
+ *
+ * @return
+ *   0 on success, a negative errno value otherwise and rte_errno is set.
+ */
+static int
+txq_uar_init_secondary(struct mlx5_txq_ctrl *txq_ctrl, int fd)
+{
+	struct mlx5_priv *priv = txq_ctrl->priv;
+	struct mlx5_proc_priv *ppriv = MLX5_PROC_PRIV(PORT_ID(priv));
+	struct mlx5_txq_data *txq = &txq_ctrl->txq;
+	void *addr;
+	uintptr_t uar_va;
+	uintptr_t offset;
+	const size_t page_size = sysconf(_SC_PAGESIZE);
+
+	assert(ppriv);
+	/*
+	 * As rdma-core, UARs are mapped in size of OS page
+	 * size. Ref to libmlx5 function: mlx5_init_context()
+	 */
+	uar_va = (uintptr_t)txq_ctrl->bf_reg;
+	offset = uar_va & (page_size - 1); /* Offset in page. */
+	addr = mmap(NULL, page_size, PROT_WRITE, MAP_SHARED, fd,
+			txq_ctrl->uar_mmap_offset);
+	if (addr == MAP_FAILED) {
+		DRV_LOG(ERR,
+			"port %u mmap failed for BF reg of txq %u",
+			txq->port_id, txq->idx);
+		rte_errno = ENXIO;
+		return -rte_errno;
+	}
+	addr = RTE_PTR_ADD(addr, offset);
+	ppriv->uar_table[txq->idx] = addr;
+	return 0;
+}
+
+/**
+ * Unmap UAR register of a Tx queue for secondary process.
+ *
+ * @param txq_ctrl
+ *   Pointer to Tx queue control structure.
+ */
+static void
+txq_uar_uninit_secondary(struct mlx5_txq_ctrl *txq_ctrl)
+{
+	struct mlx5_proc_priv *ppriv = MLX5_PROC_PRIV(PORT_ID(txq_ctrl->priv));
+	const size_t page_size = sysconf(_SC_PAGESIZE);
+	void *addr;
+
+	addr = ppriv->uar_table[txq_ctrl->txq.idx];
+	munmap(RTE_PTR_ALIGN_FLOOR(addr, page_size), page_size);
+}
+
+/**
+ * Initialize Tx UAR registers for secondary process.
+ *
+ * @param dev
  *   Pointer to Ethernet device.
  * @param fd
  *   Verbs file descriptor to map UAR pages.
@@ -245,81 +332,36 @@ mlx5_tx_queue_release(void *dpdk_txq)
  *   0 on success, a negative errno value otherwise and rte_errno is set.
  */
 int
-mlx5_tx_uar_remap(struct rte_eth_dev *dev, int fd)
+mlx5_tx_uar_init_secondary(struct rte_eth_dev *dev, int fd)
 {
 	struct mlx5_priv *priv = dev->data->dev_private;
-	unsigned int i, j;
-	uintptr_t pages[priv->txqs_n];
-	unsigned int pages_n = 0;
-	uintptr_t uar_va;
-	uintptr_t off;
-	void *addr;
-	void *ret;
 	struct mlx5_txq_data *txq;
 	struct mlx5_txq_ctrl *txq_ctrl;
-	int already_mapped;
-	size_t page_size = sysconf(_SC_PAGESIZE);
-#ifndef RTE_ARCH_64
-	unsigned int lock_idx;
-#endif
+	unsigned int i;
+	int ret;
 
-	memset(pages, 0, priv->txqs_n * sizeof(uintptr_t));
-	/*
-	 * As rdma-core, UARs are mapped in size of OS page size.
-	 * Use aligned address to avoid duplicate mmap.
-	 * Ref to libmlx5 function: mlx5_init_context()
-	 */
+	assert(rte_eal_process_type() == RTE_PROC_SECONDARY);
 	for (i = 0; i != priv->txqs_n; ++i) {
 		if (!(*priv->txqs)[i])
 			continue;
 		txq = (*priv->txqs)[i];
 		txq_ctrl = container_of(txq, struct mlx5_txq_ctrl, txq);
-		assert(txq_ctrl->idx == (uint16_t)i);
-		/* UAR addr form verbs used to find dup and offset in page. */
-		uar_va = (uintptr_t)txq_ctrl->bf_reg_orig;
-		off = uar_va & (page_size - 1); /* offset in page. */
-		uar_va = RTE_ALIGN_FLOOR(uar_va, page_size); /* page addr. */
-		already_mapped = 0;
-		for (j = 0; j != pages_n; ++j) {
-			if (pages[j] == uar_va) {
-				already_mapped = 1;
-				break;
-			}
-		}
-		/* new address in reserved UAR address space. */
-		addr = RTE_PTR_ADD(priv->uar_base,
-				   uar_va & (uintptr_t)(MLX5_UAR_SIZE - 1));
-		if (!already_mapped) {
-			pages[pages_n++] = uar_va;
-			/* fixed mmap to specified address in reserved
-			 * address space.
-			 */
-			ret = mmap(addr, page_size,
-				   PROT_WRITE, MAP_FIXED | MAP_SHARED, fd,
-				   txq_ctrl->uar_mmap_offset);
-			if (ret != addr) {
-				/* fixed mmap have to return same address */
-				DRV_LOG(ERR,
-					"port %u call to mmap failed on UAR"
-					" for txq %u",
-					dev->data->port_id, txq_ctrl->idx);
-				rte_errno = ENXIO;
-				return -rte_errno;
-			}
-		}
-		if (rte_eal_process_type() == RTE_PROC_PRIMARY) /* save once */
-			txq_ctrl->txq.bf_reg = RTE_PTR_ADD((void *)addr, off);
-		else
-			assert(txq_ctrl->txq.bf_reg ==
-			       RTE_PTR_ADD((void *)addr, off));
-#ifndef RTE_ARCH_64
-		/* Assign a UAR lock according to UAR page number */
-		lock_idx = (txq_ctrl->uar_mmap_offset / page_size) &
-			   MLX5_UAR_PAGE_NUM_MASK;
-		txq->uar_lock = &priv->uar_lock[lock_idx];
-#endif
+		assert(txq->idx == (uint16_t)i);
+		ret = txq_uar_init_secondary(txq_ctrl, fd);
+		if (ret)
+			goto error;
 	}
 	return 0;
+error:
+	/* Rollback. */
+	do {
+		if (!(*priv->txqs)[i])
+			continue;
+		txq = (*priv->txqs)[i];
+		txq_ctrl = container_of(txq, struct mlx5_txq_ctrl, txq);
+		txq_uar_uninit_secondary(txq_ctrl);
+	} while (i--);
+	return -rte_errno;
 }
 
 /**
@@ -507,7 +549,6 @@ mlx5_txq_ibv_new(struct rte_eth_dev *dev, uint16_t idx)
 	txq_data->wqes = qp.sq.buf;
 	txq_data->wqe_n = log2above(qp.sq.wqe_cnt);
 	txq_data->qp_db = &qp.dbrec[MLX5_SND_DBR];
-	txq_ctrl->bf_reg_orig = qp.bf.reg;
 	txq_data->cq_db = cq_info.dbrec;
 	txq_data->cqes =
 		(volatile struct mlx5_cqe (*)[])
@@ -521,6 +562,8 @@ mlx5_txq_ibv_new(struct rte_eth_dev *dev, uint16_t idx)
 	txq_ibv->qp = tmpl.qp;
 	txq_ibv->cq = tmpl.cq;
 	rte_atomic32_inc(&txq_ibv->refcnt);
+	txq_ctrl->bf_reg = qp.bf.reg;
+	txq_uar_init(txq_ctrl);
 	if (qp.comp_mask & MLX5DV_QP_MASK_UAR_MMAP_OFFSET) {
 		txq_ctrl->uar_mmap_offset = qp.uar_mmap_offset;
 		DRV_LOG(DEBUG, "port %u: uar_mmap_offset 0x%"PRIx64,
@@ -631,7 +674,7 @@ mlx5_txq_ibv_verify(struct rte_eth_dev *dev)
 
 	LIST_FOREACH(txq_ibv, &priv->txqsibv, next) {
 		DRV_LOG(DEBUG, "port %u Verbs Tx queue %u still referenced",
-			dev->data->port_id, txq_ibv->txq_ctrl->idx);
+			dev->data->port_id, txq_ibv->txq_ctrl->txq.idx);
 		++ret;
 	}
 	return ret;
@@ -801,7 +844,8 @@ mlx5_txq_new(struct rte_eth_dev *dev, uint16_t idx, uint16_t desc,
 	tmpl->priv = priv;
 	tmpl->socket = socket;
 	tmpl->txq.elts_n = log2above(desc);
-	tmpl->idx = idx;
+	tmpl->txq.port_id = dev->data->port_id;
+	tmpl->txq.idx = idx;
 	txq_set_params(tmpl);
 	if (txq_calc_wqebb_cnt(tmpl) >
 	    priv->device_attr.orig_attr.max_qp_wr) {
@@ -866,16 +910,12 @@ mlx5_txq_release(struct rte_eth_dev *dev, uint16_t idx)
 {
 	struct mlx5_priv *priv = dev->data->dev_private;
 	struct mlx5_txq_ctrl *txq;
-	size_t page_size = sysconf(_SC_PAGESIZE);
 
 	if (!(*priv->txqs)[idx])
 		return 0;
 	txq = container_of((*priv->txqs)[idx], struct mlx5_txq_ctrl, txq);
 	if (txq->ibv && !mlx5_txq_ibv_release(txq->ibv))
 		txq->ibv = NULL;
-	if (priv->uar_base)
-		munmap((void *)RTE_ALIGN_FLOOR((uintptr_t)txq->txq.bf_reg,
-		       page_size), page_size);
 	if (rte_atomic32_dec_and_test(&txq->refcnt)) {
 		txq_free_elts(txq);
 		mlx5_mr_btree_free(&txq->txq.mr_ctrl.cache_bh);
@@ -928,7 +968,7 @@ mlx5_txq_verify(struct rte_eth_dev *dev)
 
 	LIST_FOREACH(txq, &priv->txqsctrl, next) {
 		DRV_LOG(DEBUG, "port %u Tx queue %u still referenced",
-			dev->data->port_id, txq->idx);
+			dev->data->port_id, txq->txq.idx);
 		++ret;
 	}
 	return ret;
