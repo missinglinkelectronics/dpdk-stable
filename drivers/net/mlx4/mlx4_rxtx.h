@@ -97,6 +97,7 @@ struct mlx4_txq_stats {
 struct txq {
 	struct mlx4_sq msq; /**< Info for directly manipulating the SQ. */
 	struct mlx4_cq mcq; /**< Info for directly manipulating the CQ. */
+	uint16_t port_id; /**< Port ID of device. */
 	unsigned int elts_head; /**< Current index in (*elts)[]. */
 	unsigned int elts_tail; /**< First element awaiting completion. */
 	int elts_comp_cd; /**< Countdown for next completion. */
@@ -117,6 +118,9 @@ struct txq {
 	struct ibv_qp *qp; /**< Queue pair. */
 	uint8_t data[]; /**< Remaining queue resources. */
 };
+
+#define MLX4_TX_BFREG(txq) \
+		(MLX4_PROC_PRIV((txq)->port_id)->uar_table[(txq)->stats.idx])
 
 /* mlx4_rxq.c */
 

@@ -75,6 +75,17 @@ struct rte_flow;
 LIST_HEAD(mlx4_dev_list, mlx4_priv);
 LIST_HEAD(mlx4_mr_list, mlx4_mr);
 
+/* Per-process private structure. */
+struct mlx4_proc_priv {
+	size_t uar_table_sz;
+	/* Size of UAR register table. */
+	void *uar_table[];
+	/* Table of UAR registers for each process. */
+};
+
+#define MLX4_PROC_PRIV(port_id) \
+	((struct mlx4_proc_priv *)rte_eth_devices[port_id].process_private)
+
 /** Private data structure. */
 struct mlx4_priv {
 	LIST_ENTRY(mlx4_priv) mem_event_cb;

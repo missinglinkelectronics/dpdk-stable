@@ -38,6 +38,23 @@
 #include "mlx4_utils.h"
 
 /**
+ * Initialize Tx UAR registers for primary process.
+ *
+ * @param txq
+ *   Pointer to Tx queue structure.
+ */
+static void
+txq_uar_init(struct txq *txq)
+{
+	struct mlx4_priv *priv = txq->priv;
+	struct mlx4_proc_priv *ppriv = MLX4_PROC_PRIV(PORT_ID(priv));
+
+	assert(rte_eal_process_type() == RTE_PROC_PRIMARY);
+	assert(ppriv);
+	ppriv->uar_table[txq->stats.idx] = txq->msq.db;
+}
+
+/**
  * Free Tx queue elements.
  *
  * @param txq
@@ -89,6 +106,7 @@ mlx4_txq_fill_dv_obj_info(struct txq *txq, struct mlx4dv_obj *mlxdv)
 	sq->owner_opcode = MLX4_OPCODE_SEND | (0u << MLX4_SQ_OWNER_BIT);
 	sq->stamp = rte_cpu_to_be_32(MLX4_SQ_STAMP_VAL |
 				     (0u << MLX4_SQ_OWNER_BIT));
+	sq->uar_mmap_offset = -1; /* Make mmap() fail. */
 	sq->db = dqp->sdb;
 	sq->doorbell_qpn = dqp->doorbell_qpn;
 	cq->buf = dcq->buf.buf;
@@ -214,6 +232,7 @@ mlx4_tx_queue_setup(struct rte_eth_dev *dev, uint16_t idx, uint16_t desc,
 	}
 	*txq = (struct txq){
 		.priv = priv,
+		.port_id = dev->data->port_id,
 		.stats = {
 			.idx = idx,
 		},
@@ -319,6 +338,7 @@ mlx4_tx_queue_setup(struct rte_eth_dev *dev, uint16_t idx, uint16_t desc,
 		goto error;
 	}
 	mlx4_txq_fill_dv_obj_info(txq, &mlxdv);
+	txq_uar_init(txq);
 	/* Save first wqe pointer in the first element. */
 	(&(*txq->elts)[0])->wqe =
 		(volatile struct mlx4_wqe_ctrl_seg *)txq->msq.buf;

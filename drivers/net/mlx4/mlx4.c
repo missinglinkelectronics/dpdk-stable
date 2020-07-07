@@ -74,6 +74,53 @@ const char *pmd_mlx4_init_params[] = {
 static void mlx4_dev_stop(struct rte_eth_dev *dev);
 
 /**
+ * Initialize process private data structure.
+ *
+ * @param dev
+ *   Pointer to Ethernet device structure.
+ *
+ * @return
+ *   0 on success, a negative errno value otherwise and rte_errno is set.
+ */
+static int
+mlx4_proc_priv_init(struct rte_eth_dev *dev)
+{
+	struct mlx4_proc_priv *ppriv;
+	size_t ppriv_size;
+
+	/*
+	 * UAR register table follows the process private structure. BlueFlame
+	 * registers for Tx queues are stored in the table.
+	 */
+	ppriv_size = sizeof(struct mlx4_proc_priv) +
+		     RTE_MAX_QUEUES_PER_PORT * sizeof(void *);
+	ppriv = rte_malloc_socket("mlx4_proc_priv", ppriv_size,
+				  RTE_CACHE_LINE_SIZE, dev->device->numa_node);
+	if (!ppriv) {
+		rte_errno = ENOMEM;
+		return -rte_errno;
+	}
+	ppriv->uar_table_sz = ppriv_size;
+	dev->process_private = ppriv;
+	return 0;
+}
+
+/**
+ * Un-initialize process private data structure.
+ *
+ * @param dev
+ *   Pointer to Ethernet device structure.
+ */
+static void
+mlx4_proc_priv_uninit(struct rte_eth_dev *dev)
+{
+	if (!dev->process_private)
+		return;
+	rte_free(dev->process_private);
+	dev->process_private = NULL;
+}
+
+/**
  * DPDK callback for Ethernet device configuration.
  *
  * @param dev
@@ -99,9 +146,17 @@ mlx4_dev_configure(struct rte_eth_dev *dev)
 		goto exit;
 	}
 	ret = mlx4_intr_install(priv);
-	if (ret)
+	if (ret) {
 		ERROR("%p: interrupt handler installation failed",
 		      (void *)dev);
+		goto exit;
+	}
+	ret = mlx4_proc_priv_init(dev);
+	if (ret) {
+		ERROR("%p: process private data allocation failed",
+		      (void *)dev);
+		goto exit;
+	}
 exit:
 	return ret;
 }
@@ -213,6 +268,7 @@ mlx4_dev_close(struct rte_eth_dev *dev)
 		mlx4_rx_queue_release(dev->data->rx_queues[i]);
 	for (i = 0; i != dev->data->nb_tx_queues; ++i)
 		mlx4_tx_queue_release(dev->data->tx_queues[i]);
+	mlx4_proc_priv_uninit(dev);
 	mlx4_mr_release(dev);
 	if (priv->pd != NULL) {
 		assert(priv->ctx != NULL);
