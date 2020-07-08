@@ -446,8 +446,6 @@ service_runner_func(void *arg)
 		rte_smp_rmb();
 	}
 
-	lcore_config[lcore].state = WAIT;
-
 	return 0;
 }
 
