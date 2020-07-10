@@ -3057,3 +3057,364 @@ Fixes skipped and status unresolved
 * 207b1c813  test: fix build without ring PMD
 * 819d0d1d5  net/ixgbe: fix blocking system events
 * 050bfe033  net/mlx5: fix tunnel flow priority
+
+18.11.9 Release Notes
+---------------------
+
+18.11.9 Fixes
+~~~~~~~~~~~~~
+
+* app/crypto-perf: fix display of sample test vector
+* app/eventdev: check Tx adapter service ID
+* app: fix usage help of options separated by dashes
+* app/pipeline: fix build with gcc 10
+* app: remove extra new line after link duplex
+* app/testpmd: add parsing for QinQ VLAN headers
+* app/testpmd: disable gcc 10 -fno-common build errors
+* app/testpmd: fix DCB set
+* app/testpmd: fix memory failure handling for i40e DDP
+* app/testpmd: fix statistics after reset
+* bbdev: fix doxygen comments
+* build: disable gcc 10 zero-length-bounds warning
+* bus/fslmc: fix dereferencing null pointer
+* bus/fslmc: fix size of qman fq descriptor
+* bus/pci: fix devargs on probing again
+* bus/pci: fix UIO resource access from secondary process
+* bus/pci: fix VF memory access
+* bus/vmbus: fix comment spelling
+* contigmem: cleanup properly when load fails
+* crypto/caam_jr: fix check of file descriptors
+* crypto/caam_jr: fix IRQ functions return type
+* crypto/ccp: fix fd leak on probe failure
+* cryptodev: fix SHA-1 digest enum comment
+* crypto/kasumi: fix extern declaration
+* crypto/octeontx: fix build with gcc 10
+* crypto/octeontx: fix gcc 10 -fno-common build errors
+* crypto/openssl: fix out-of-place encryption
+* crypto/qat: fix cipher descriptor for ZUC and SNOW
+* devtools: fix symbol map change check
+* doc: add i40e limitation for flow director
+* doc: add NASM installation steps
+* doc: fix API index
+* doc: fix build with doxygen 1.8.18
+* doc: fix log level example in Linux guide
+* doc: fix matrix CSS for recent sphinx
+* doc: fix multicast filter feature announcement
+* doc: fix number of failsafe sub-devices
+* doc: fix sphinx compatibility
+* doc: fix typo in contributors guide
+* doc: fix typo in contributors guide
+* doc: prefer https when pointing to dpdk.org
+* drivers: add crypto as dependency for event drivers
+* drivers/crypto: disable gcc 10 fno-common errors
+* drivers/crypto: fix log type variables for -fno-common
+* drivers: fix log type variables for -fno-common
+* eal/arm64: fix precise TSC
+* eal: fix C++17 compilation
+* eal: fix comments spelling
+* eal: fix log message print for regex
+* eal: fix typo in endian conversion macros
+* eal/ppc: fix build with gcc 9.3
+* eal/x86: ignore gcc 10 stringop-overflow warnings
+* ethdev: fix build when vtune profiling is on
+* ethdev: fix spelling
+* eventdev: fix probe and remove for secondary process
+* event/dsw: avoid reusing previously recorded events
+* event/dsw: fix enqueue burst return value
+* event/dsw: remove redundant control ring poll
+* event/dsw: remove unnecessary read barrier
+* examples/eventdev: fix build with gcc 10
+* examples/eventdev: fix crash on exit
+* examples/ip_pipeline: remove check of null response
+* examples/kni: fix crash during MTU set
+* examples/kni: fix MTU change to setup Tx queue
+* examples/l2fwd-keepalive: fix mbuf pool size
+* examples: remove extra new line after link duplex
+* examples/vmdq: fix output of pools/queues
+* examples/vmdq: fix RSS configuration
+* examples/vm_power: drop Unix path limit redefinition
+* examples/vm_power: fix build because of missing include
+* examples/vm_power: fix build with -fno-common
+* fix same typo in multiple places
+* fix various typos found by Lintian
+* kni: fix ethtool build with kernel 5.6
+* kni: fix ethtool dev_open build error
+* kni: fix ethtool maybe-uninitialized warnings
+* kni: fix ethtool pointer type build error
+* kni: fix gcc 10 ethtool build error
+* kvargs: fix buffer overflow when parsing list
+* kvargs: fix invalid token parsing on FreeBSD
+* kvargs: fix strcmp helper documentation
+* log: fix level picked with globbing on type register
+* lpm6: fix comments spelling
+* lpm6: fix size of tbl8 group
+* mem: fix overflow on allocation
+* mem: mark pages as not accessed when freeing memory
+* mem: mark pages as not accessed when reserving VA
+* mempool/dpaa2: install missing header with meson
+* mlx5: fix build with -fno-common
+* net/avp: fix gcc 10 maybe-uninitialized warning
+* net/bnxt: do not use PMD log type
+* net/bnxt: fix error log for command timeout
+* net/bnxt: fix FW version query
+* net/bnxt: fix using RSS config struct
+* net/bnxt: fix VLAN add when port is stopped
+* net/dpaa2: fix 10G port negotiation
+* net/dpaa: use dynamic log type
+* net/e1000: fix port hotplug for multi-process
+* net/ena/base: fix documentation of functions
+* net/ena/base: fix indentation in CQ polling
+* net/ena/base: fix indentation of multiple defines
+* net/ena/base: fix testing for supported hash function
+* net/ena/base: make allocation macros thread-safe
+* net/ena/base: prevent allocation of zero sized memory
+* net/ena: set IO ring size to valid value
+* net/failsafe: fix fd leak
+* net/i40e/base: update copyright
+* net/i40e: fix flow director for ARP packets
+* net/i40e: fix flush of flow director filter
+* net/i40e: fix queue related exception handling
+* net/i40e: fix setting L2TAG
+* net/i40e: fix wild pointer
+* net/i40e: fix X722 performance
+* net/i40e: relax barrier in Tx for NEON
+* net/iavf: fix setting L2TAG
+* net/iavf: fix stats query error code
+* net/ixgbe/base: update copyright
+* net/ixgbe: check driver type in MACsec API
+* net/ixgbe: fix link status synchronization on BSD
+* net/ixgbe: fix statistics in flow control mode
+* net/mlx4: fix build with -fno-common
+* net/mlx4: fix drop queue error handling
+* net/mlx4: remove device register remap
+* net/mlx5: fix CVLAN tag set in IP item translation
+* net/mlx5: fix mask used for IPv6 item validation
+* net/mlx5: fix matching for UDP tunnels with Verbs
+* net/mlx5: fix mlx5 devices port naming
+* net/mlx5: fix recursive inclusion of header file
+* net/mlx5: fix RSS enablement
+* net/mlx5: fix Tx queue release debug log timing
+* net/mlx5: fix validation of VXLAN/VXLAN-GPE specs
+* net/mlx5: remove device register remap
+* net/mvneta: do not use PMD log type
+* net/mvpp2: fix build with gcc 10
+* net/netvsc: avoid possible live lock
+* net/netvsc: fix comment spelling
+* net/netvsc: fix memory free on device close
+* net/netvsc: handle Rx packets during multi-channel setup
+* net/netvsc: handle Tx completions based on burst size
+* net/netvsc: propagate descriptor limits from VF
+* net/netvsc: remove process event optimization
+* net/netvsc: split send buffers from Tx descriptors
+* net/null: fix secondary burst function selection
+* net/null: remove redundant check
+* net/octeontx: fix dangling pointer on init failure
+* net/octeontx: fix meson build for disabled drivers
+* net/qede: fix link state configuration
+* net/qede: fix port reconfiguration
+* net/ring: fix device pointer on allocation
+* net/sfc/base: fix manual filter delete in EF10
+* net/sfc/base: handle manual and auto filter clashes in EF10
+* net/sfc/base: reduce filter priorities to implemented only
+* net/sfc/base: refactor filter lookup loop in EF10
+* net/sfc/base: reject automatic filter creation by users
+* net/sfc: fix initialization error path
+* net/sfc: fix reported promiscuous/multicast mode
+* net/sfc: fix Rx queue start failure path
+* net/softnic: fix memory leak for thread
+* net/softnic: fix resource leak for pipeline
+* net/tap: do not use PMD log type
+* net/tap: fix check for mbuf number of segment
+* net/tap: fix crash in flow destroy
+* net/tap: fix fd leak on creation failure
+* net/tap: fix file close on remove
+* net/tap: fix mbuf and mem leak during queue release
+* net/tap: fix mbuf double free when writev fails
+* net/tap: fix queues fd check before close
+* net/tap: fix unexpected link handler
+* net/tap: remove unused assert
+* net/thunderx: use dynamic log type
+* net/vhost: fix potential memory leak on close
+* net/virtio: do not use PMD log type
+* net/virtio: fix outdated comment
+* net/virtio-user: fix devargs parsing
+* net/vmxnet3: handle bad host framing
+* pci: accept 32-bit domain numbers
+* pci: fix build on ppc
+* pci: reject negative values in PCI id
+* remove references to private PCI probe function
+* security: fix crash at accessing non-implemented ops
+* security: fix return types in documentation
+* security: fix session counter
+* security: fix verification of parameters
+* service: fix crash on exit
+* service: fix identification of service running on other lcore
+* service: fix race condition for MT unsafe service
+* service: remove rte prefix from static functions
+* test/crypto: fix flag check
+* test/flow_classify: enable multi-sockets system
+* test/kvargs: fix invalid cases check
+* test/kvargs: fix to consider empty elements as valid
+* test: remove redundant macro
+* test: skip some subtests in no-huge mode
+* usertools: check for pci.ids in /usr/share/misc
+* version: 18.11.9-rc1
+* version: 18.11.9-rc2
+* vfio: fix race condition with sysfs
+* vfio: fix use after free with multiprocess
+* vhost/crypto: add missing user protocol flag
+* vhost: fix peer close check
+* vhost: fix zero-copy server mode
+* vhost: make IOTLB cache name unique among processes
+* vhost: prevent zero-copy with incompatible client mode
+* vhost: remove unused variable
+* vhost: remove zero-copy and client mode restriction
+
+18.11.9 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Intel(R) Testing
+
+   * Basic Intel(R) NIC(ixgbe and i40e) testing
+
+      * PF (i40e)
+      * PF (ixgbe)
+      * VF (i40e)
+      * Compile Testing
+      * Intel NIC single core/NIC performance
+
+   * Basic cryptodev and virtio testing
+
+      * vhost/virtio basic loopback, PVP and performance test
+      * cryptodev function
+      * cryptodev performance
+
+* Red Hat(R) Testing
+
+   * RHEL 8
+   * QEMU 5.0
+   * Functionality
+
+      * PF assignment
+      * VF assignment
+      * vhost single/multi queues and cross-NUMA
+      * vhostclient reconnect
+      * vhost live migration with single/multi queues and cross-NUMA
+      * OVS PVP
+
+   * Tested NICs
+
+      * X540-AT2 NIC(ixgbe, 10G)
+
+* Mellanox(R) Testing
+
+   * Basic functionality with testpmd
+
+      * Tx/Rx
+      * xstats
+      * Timestamps
+      * Link status
+      * RTE flow and flow_director
+      * RSS
+      * VLAN stripping and insertion
+      * Checksum/TSO
+      * ptype
+
+   * l3fwd-power example app tests
+   * Multi-process
+
+   * ConnectX-4 Lx
+
+      * RHEL 7.4
+      * Driver MLNX_OFED_LINUX-5.0-2.1.8.0
+      * fw 14.27.1016
+
+   * ConnectX-5
+
+      * RHEL 7.4
+      * Driver MLNX_OFED_LINUX-5.0-1.0.0.0
+      * fw 16.27.2008
+
+* Intel(R) Testing with Open vSwitch
+
+   * OVS testing with OVS branches 2.12 and 2.11 with VSPERF
+
+   * Tested NICs
+
+      * i40e (X710)
+      * ixgbe (82599ES)
+
+   * Functionality
+
+      * P2P throughput
+      * P2P multiqueue
+      * PVP RSS
+      * Vhostuserclient reconnect
+      * Flow Control
+
+18.11.9 Known Issues
+~~~~~~~~~~~~~~~~~~~~
+
+* DPDK 18.11.9 contains fixes up to DPDK 20.05
+* Issues identified/fixed in DPDK master branch after DPDK 20.05 may be present in DPDK 18.11.9
+
+18.11.9 Fixes skipped and status unresolved
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* dcfbc594f  net/iavf: fix queue interrupt for ice
+* b149a7064  eal/freebsd: add config reattach in secondary process
+* a135e050a  examples/ipsec-secgw: fix packet length
+* 9d10f53e4  test/metrics: fix second run 
+* ea81c1b81  net/mlx5: fix NVGRE matching
+* 721c95301  net/mlx5: fix Rx scatter mode validation
+* be048a1aa  net/virtio: fix descriptor addressed in Tx
+* 6080796f6  mem: make base address hint OS specific
+* 6d3f9917f  eal: fix memory config allocation for multi-process
+* 1526dd053  net/virtio: fix Tx checksum offloads
+* f0617163b  mempool/dpaa2: report error on endless loop in mbuf release
+* 05817057f  net/ena: fix indication of bad L4 Rx checksums
+* 9e0d81c1a  net/mlx5: fix selection between encap and decap
+* 7392ad06f  app/testpmd: use better randomness for Tx split
+* dcd05da0a  app/testpmd: fix GENEVE flow item
+* 2e02a2aff  (Xavier)  ethdev: fix VLAN offloads set if no driver callback
+* ec8615607  crypto/dpaa_sec: fix IOVA conversions
+* 06387be8e  net/mlx5: fix encap/decap validation
+* 7593cf1d3  net/mlx5: fix legacy multi-packet write session
+* e21492a51  net/mlx: fix overlinking with meson and glue dlopen
+* 150c9ac2d  (Xavier)  app/testpmd: update Rx offload after setting MTU
+* 207b1c813  test: fix build without ring PMD
+* 819d0d1d5  net/ixgbe: fix blocking system events
+* 050bfe033  net/mlx5: fix tunnel flow priority
+* bade47a75  net/i40e: relax barrier in Tx
+* 48f9faddc  net/bnxt: fix MAC address setting when port is stopped
+* f6752f660  net/sfc: set priority of created filters to manual
+* 27fb5dd28  test: skip some subtests in no-huge mode
+* 4236694f0  mem: preallocate VA space in no-huge mode
+* 4448a202b  eal: remove useless makefiles
+* efa8c72f1  net/ixgbe: fix link status inconsistencies
+* 9c4971e52  net/mlx5: update VLAN and encap actions validation
+* 00437823c  net/mlx5: use open/read/close for ib stats query
+* 24cb500c1  net/tap: fix mbuf double free when writev fails
+* ae08c73e6  net/i40e: fix flow director initialisation
+* d68ab7a9f  net/ixgbe: fix resource leak after thread exits normally
+* 036d82365  mempool: remove inline functions from export list
+* d256c73c1  net/bnxt: fix memory leak during queue restart
+* bc75bdb60  net/bnxt: fix VNIC Rx queue count on VNIC free
+* 90ecace4f  examples/fips_validation: fix parsing of algorithms
+* d70a869db  net/ixgbe: fix link state timing on fiber ports
+* 92818d839  net/mlx5: fix match on empty VLAN item in DV mode
+* 29fdc5bf4  test/crypto: fix statistics case
+* 3ae4beb07  vhost: check log mmap offset and size overflow
+* ff55182ce  net/mlx5: fix VLAN flow action with wildcard VLAN item
+* a60704d1a  net/qede: fix assignment of Rx/Tx handlers
+* 205b74295  net/bnxt: fix allocation of LED config info
+* 96477b5dd  net/bnxt: fix allocation of COS queue info
+* 986fa3ba8  net/bnxt: fix allocation of link info struct
+* e8fe0e067  net/bnxt: fix allocation of PF info struct
+* 86421846c  net/bnxt: fix storing MAC address twice
+* da7018ec2  net/i40e: fix queue region in RSS flow
+* 3acf10719  common/mlx5: fix netlink buffer allocation from stack
+* 20cb28a0e  net/bnxt: fix Rx ring producer index
+* 24cb500c1  net/tap: fix mbuf double free when writev fails
+* be4ef2e0d  net/i40e: fix flow director enabling
+* f6e63e59e  app/testpmd: fix global variable multiple definitions
