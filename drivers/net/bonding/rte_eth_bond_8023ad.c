@@ -789,7 +789,8 @@ rx_machine_update(struct bond_dev_private *internals, uint16_t slave_id,
 		RTE_ASSERT(lacp->lacpdu.subtype == SLOW_SUBTYPE_LACP);
 
 		partner = &lacp->lacpdu.partner;
-		if (is_same_ether_addr(&partner->port_params.system,
+		if (is_zero_ether_addr(&partner->port_params.system) ||
+			is_same_ether_addr(&partner->port_params.system,
 			&internals->mode4.mac_addr)) {
 			/* This LACP frame is sending to the bonding port
 			 * so pass it to rx_machine.
