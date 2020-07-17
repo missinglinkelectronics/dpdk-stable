@@ -2045,7 +2045,7 @@ i40e_vsi_queues_bind_intr(struct i40e_vsi *vsi, uint16_t itr_idx)
 	}
 }
 
-static void
+void
 i40e_vsi_enable_queues_intr(struct i40e_vsi *vsi)
 {
 	struct rte_eth_dev *dev = vsi->adapter->eth_dev;
@@ -2072,7 +2072,7 @@ i40e_vsi_enable_queues_intr(struct i40e_vsi *vsi)
 	I40E_WRITE_FLUSH(hw);
 }
 
-static void
+void
 i40e_vsi_disable_queues_intr(struct i40e_vsi *vsi)
 {
 	struct rte_eth_dev *dev = vsi->adapter->eth_dev;
@@ -2297,13 +2297,6 @@ i40e_dev_start(struct rte_eth_dev *dev)
 		i40e_vsi_enable_queues_intr(pf->vmdq[i].vsi);
 	}
 
-	/* enable FDIR MSIX interrupt */
-	if (pf->fdir.fdir_vsi) {
-		i40e_vsi_queues_bind_intr(pf->fdir.fdir_vsi,
-					  I40E_ITR_INDEX_NONE);
-		i40e_vsi_enable_queues_intr(pf->fdir.fdir_vsi);
-	}
-
 	/* Enable all queues which have been configured */
 	for (nb_rxq = 0; nb_rxq < dev->data->nb_rx_queues; nb_rxq++) {
 		ret = i40e_dev_rx_queue_start(dev, nb_rxq);
@@ -2439,10 +2432,6 @@ i40e_dev_stop(struct rte_eth_dev *dev)
 		i40e_vsi_queues_unbind_intr(pf->vmdq[i].vsi);
 	}
 
-	if (pf->fdir.fdir_vsi) {
-		i40e_vsi_queues_unbind_intr(pf->fdir.fdir_vsi);
-		i40e_vsi_disable_queues_intr(pf->fdir.fdir_vsi);
-	}
 	/* Clear all queues and release memory */
 	i40e_dev_clear_queues(dev);
 
