@@ -3964,4 +3964,9 @@ skb_set_hash(struct sk_buff *skb, __u32 hash, __always_unused int type)
 #define HAVE_TIMER_SETUP
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0))
+#define pci_cleanup_aer_uncorrect_error_status \
+	pci_aer_clear_nonfatal_status
+#endif
+
 #endif /* _KCOMPAT_H_ */
