@@ -6508,9 +6508,7 @@ test_stats(void)
 	dev->dev_ops->stats_get = temp_pfn;
 
 	/* Test expected values */
-	ut_setup();
 	test_AES_CBC_HMAC_SHA1_encrypt_digest();
-	ut_teardown();
 	TEST_ASSERT_SUCCESS(rte_cryptodev_stats_get(ts_params->valid_devs[0],
 			&stats),
 		"rte_cryptodev_stats_get failed");
