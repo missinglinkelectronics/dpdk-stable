@@ -222,7 +222,7 @@ avf_handle_virtchnl_msg(struct rte_eth_dev *dev)
 			}
 			break;
 		default:
-			PMD_DRV_LOG(ERR, "Request %u is not supported yet",
+			PMD_DRV_LOG(DEBUG, "Request %u is not supported yet",
 				    aq_opc);
 			break;
 		}
