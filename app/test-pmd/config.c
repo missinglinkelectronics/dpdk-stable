@@ -318,6 +318,7 @@ nic_xstats_clear(portid_t port_id)
 		print_valid_ports();
 		return;
 	}
+	rte_eth_xstats_reset(port_id);
 
 	ret = rte_eth_stats_get(port_id, &ports[port_id].stats);
 	if (ret != 0) {
