@@ -271,6 +271,9 @@ enum i40e_flxpld_layer_idx {
 #define I40E_ETH_OVERHEAD \
 	(ETHER_HDR_LEN + ETHER_CRC_LEN + I40E_VLAN_TAG_SIZE * 2)
 
+#define I40E_RXTX_BYTES_H_16_BIT(bytes) ((bytes) & ~I40E_48_BIT_MASK)
+#define I40E_RXTX_BYTES_L_48_BIT(bytes) ((bytes) & I40E_48_BIT_MASK)
+
 struct i40e_adapter;
 
 /**
@@ -387,6 +390,8 @@ struct i40e_vsi {
 	uint8_t vlan_anti_spoof_on; /* The VLAN anti-spoofing enabled */
 	uint8_t vlan_filter_on; /* The VLAN filter enabled */
 	struct i40e_bw_info bw_info; /* VSI bandwidth information */
+	uint64_t prev_rx_bytes;
+	uint64_t prev_tx_bytes;
 };
 
 struct pool_entry {
@@ -975,6 +980,10 @@ struct i40e_pf {
 	struct i40e_customized_pctype customized_pctype[I40E_CUSTOMIZED_MAX];
 	/* Switch Domain Id */
 	uint16_t switch_domain_id;
+	uint64_t prev_rx_bytes;
+	uint64_t prev_tx_bytes;
+	uint64_t internal_prev_rx_bytes;
+	uint64_t internal_prev_tx_bytes;
 };
 
 enum pending_msg {
