@@ -8260,7 +8260,8 @@ static void igb_pull_tail(struct igb_ring *rx_ring,
 
 		/* update pointers to remove timestamp header */
 		skb_frag_size_sub(frag, IGB_TS_HDR_LEN);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5,4,0)
+#if ((LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)) \
+	&& !(SLE_VERSION_CODE && SLE_VERSION_CODE >= SLE_VERSION(15, 2, 0)))
 		frag->page_offset += IGB_TS_HDR_LEN;
 #else
 		frag->bv_offset += pull_len;
@@ -8284,7 +8285,8 @@ static void igb_pull_tail(struct igb_ring *rx_ring,
 
 	/* update all of the pointers */
 	skb_frag_size_sub(frag, pull_len);
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5,4,0)
+#if ((LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0)) \
+	&& !(SLE_VERSION_CODE && SLE_VERSION_CODE >= SLE_VERSION(15, 2, 0)))
 	frag->page_offset += pull_len;
 #else
 	frag->bv_offset += pull_len;
