@@ -684,7 +684,10 @@ struct _kc_ethtool_pauseparam {
 #define SLE_VERSION(a,b,c) KERNEL_VERSION(a,b,c)
 #endif
 #ifdef CONFIG_SUSE_KERNEL
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 57))
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 18))
+/* SLES15 SP2 is 5.3.18 based */
+#define SLE_VERSION_CODE SLE_VERSION(15, 2, 0)
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 57))
 /* SLES12SP3 is at least 4.4.57+ based */
 #define SLE_VERSION_CODE SLE_VERSION(12, 3, 0)
 #elif ( LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,28) )
@@ -3964,7 +3967,8 @@ skb_set_hash(struct sk_buff *skb, __u32 hash, __always_unused int type)
 #define HAVE_TIMER_SETUP
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0))
+#if ((LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 0)) \
+	|| (SLE_VERSION_CODE && SLE_VERSION_CODE >= SLE_VERSION(15, 2, 0)))
 #define pci_cleanup_aer_uncorrect_error_status \
 	pci_aer_clear_nonfatal_status
 #endif
