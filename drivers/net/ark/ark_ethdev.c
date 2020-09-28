@@ -690,6 +690,9 @@ eth_ark_dev_close(struct rte_eth_dev *dev)
 	struct ark_adapter *ark = dev->data->dev_private;
 	uint16_t i;
 
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
+		return;
+
 	if (ark->user_ext.dev_close)
 		ark->user_ext.dev_close(dev,
 		 ark->user_data[dev->data->port_id]);

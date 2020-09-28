@@ -392,6 +392,9 @@ pfe_eth_exit(struct rte_eth_dev *dev, struct pfe *pfe)
 {
 	PMD_INIT_FUNC_TRACE();
 
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
+		return;
+
 	pfe_eth_stop(dev);
 	/* Close the device file for link status */
 	pfe_eth_close_cdev(dev->data->dev_private);

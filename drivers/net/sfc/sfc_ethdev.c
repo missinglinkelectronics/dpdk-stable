@@ -319,11 +319,27 @@ sfc_dev_set_link_down(struct rte_eth_dev *dev)
 }
 
 static void
+sfc_eth_dev_secondary_clear_ops(struct rte_eth_dev *dev)
+{
+	free(dev->process_private);
+	dev->process_private = NULL;
+	dev->dev_ops = NULL;
+	dev->tx_pkt_prepare = NULL;
+	dev->tx_pkt_burst = NULL;
+	dev->rx_pkt_burst = NULL;
+}
+
+static void
 sfc_dev_close(struct rte_eth_dev *dev)
 {
 	struct sfc_adapter *sa = sfc_adapter_by_eth_dev(dev);
 
 	sfc_log_init(sa, "entry");
+
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY) {
+		sfc_eth_dev_secondary_clear_ops(dev);
+		return;
+	}
 
 	sfc_adapter_lock(sa);
 	switch (sa->state) {
@@ -2118,17 +2134,6 @@ fail_alloc_priv:
 }
 
 static void
-sfc_eth_dev_secondary_clear_ops(struct rte_eth_dev *dev)
-{
-	free(dev->process_private);
-	dev->process_private = NULL;
-	dev->dev_ops = NULL;
-	dev->tx_pkt_prepare = NULL;
-	dev->tx_pkt_burst = NULL;
-	dev->rx_pkt_burst = NULL;
-}
-
-static void
 sfc_register_dp(void)
 {
 	/* Register once */
@@ -2263,11 +2268,6 @@ fail_alloc_sa:
 static int
 sfc_eth_dev_uninit(struct rte_eth_dev *dev)
 {
-	if (rte_eal_process_type() != RTE_PROC_PRIMARY) {
-		sfc_eth_dev_secondary_clear_ops(dev);
-		return 0;
-	}
-
 	sfc_dev_close(dev);
 
 	return 0;

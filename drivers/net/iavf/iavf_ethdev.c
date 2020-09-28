@@ -1423,6 +1423,9 @@ iavf_dev_close(struct rte_eth_dev *dev)
 	struct rte_pci_device *pci_dev = RTE_ETH_DEV_TO_PCI(dev);
 	struct rte_intr_handle *intr_handle = &pci_dev->intr_handle;
 
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
+		return;
+
 	iavf_dev_stop(dev);
 	iavf_shutdown_adminq(hw);
 	/* disable uio intr before callback unregister */

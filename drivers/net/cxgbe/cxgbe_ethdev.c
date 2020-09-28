@@ -329,6 +329,9 @@ void cxgbe_dev_close(struct rte_eth_dev *eth_dev)
 
 	CXGBE_FUNC_TRACE();
 
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
+		return;
+
 	if (!(adapter->flags & FULL_INIT_DONE))
 		return;
 

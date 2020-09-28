@@ -2552,6 +2552,8 @@ i40e_dev_close(struct rte_eth_dev *dev)
 	int retries = 0;
 
 	PMD_INIT_FUNC_TRACE();
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
+		return;
 
 	ret = rte_eth_switch_domain_free(pf->switch_domain_id);
 	if (ret)
