@@ -705,6 +705,7 @@ rte_efd_create(const char *name, uint32_t max_num_rules, uint32_t key_len,
 
 error_unlock_exit:
 	rte_rwlock_write_unlock(RTE_EAL_TAILQ_RWLOCK);
+	rte_free(te);
 	rte_efd_free(table);
 
 	return NULL;
