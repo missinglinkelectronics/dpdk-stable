@@ -3824,12 +3824,20 @@ rte_eth_add_rx_callback(uint16_t port_id, uint16_t queue_id,
 		rte_eth_devices[port_id].post_rx_burst_cbs[queue_id];
 
 	if (!tail) {
-		rte_eth_devices[port_id].post_rx_burst_cbs[queue_id] = cb;
+		/* Stores to cb->fn and cb->param should complete before
+		 * cb is visible to data plane.
+		 */
+		__atomic_store_n(
+			&rte_eth_devices[port_id].post_rx_burst_cbs[queue_id],
+			cb, __ATOMIC_RELEASE);
 
 	} else {
 		while (tail->next)
 			tail = tail->next;
-		tail->next = cb;
+		/* Stores to cb->fn and cb->param should complete before
+		 * cb is visible to data plane.
+		 */
+		__atomic_store_n(&tail->next, cb, __ATOMIC_RELEASE);
 	}
 	rte_spinlock_unlock(&rte_eth_rx_cb_lock);
 
@@ -3902,12 +3910,20 @@ rte_eth_add_tx_callback(uint16_t port_id, uint16_t queue_id,
 		rte_eth_devices[port_id].pre_tx_burst_cbs[queue_id];
 
 	if (!tail) {
-		rte_eth_devices[port_id].pre_tx_burst_cbs[queue_id] = cb;
+		/* Stores to cb->fn and cb->param should complete before
+		 * cb is visible to data plane.
+		 */
+		__atomic_store_n(
+			&rte_eth_devices[port_id].pre_tx_burst_cbs[queue_id],
+			cb, __ATOMIC_RELEASE);
 
 	} else {
 		while (tail->next)
 			tail = tail->next;
-		tail->next = cb;
+		/* Stores to cb->fn and cb->param should complete before
+		 * cb is visible to data plane.
+		 */
+		__atomic_store_n(&tail->next, cb, __ATOMIC_RELEASE);
 	}
 	rte_spinlock_unlock(&rte_eth_tx_cb_lock);
 
@@ -3938,7 +3954,7 @@ rte_eth_remove_rx_callback(uint16_t port_id, uint16_t queue_id,
 		cb = *prev_cb;
 		if (cb == user_cb) {
 			/* Remove the user cb from the callback list. */
-			*prev_cb = cb->next;
+			__atomic_store_n(prev_cb, cb->next, __ATOMIC_RELAXED);
 			ret = 0;
 			break;
 		}
@@ -3972,7 +3988,7 @@ rte_eth_remove_tx_callback(uint16_t port_id, uint16_t queue_id,
 		cb = *prev_cb;
 		if (cb == user_cb) {
 			/* Remove the user cb from the callback list. */
-			*prev_cb = cb->next;
+			__atomic_store_n(prev_cb, cb->next, __ATOMIC_RELAXED);
 			ret = 0;
 			break;
 		}
