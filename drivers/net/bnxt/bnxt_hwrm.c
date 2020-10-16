@@ -1929,23 +1929,11 @@ void bnxt_free_hwrm_rx_ring(struct bnxt *bp, int queue_index)
 				    HWRM_RING_FREE_INPUT_RING_TYPE_RX);
 		ring->fw_ring_id = INVALID_HW_RING_ID;
 		bp->grp_info[queue_index].rx_fw_ring_id = INVALID_HW_RING_ID;
-		memset(rxr->rx_desc_ring, 0,
-		       rxr->rx_ring_struct->ring_size *
-		       sizeof(*rxr->rx_desc_ring));
-		memset(rxr->rx_buf_ring, 0,
-		       rxr->rx_ring_struct->ring_size *
-		       sizeof(*rxr->rx_buf_ring));
-		rxr->rx_prod = 0;
 	}
 	ring = rxr->ag_ring_struct;
 	if (ring->fw_ring_id != INVALID_HW_RING_ID) {
 		bnxt_hwrm_ring_free(bp, ring,
 				    HWRM_RING_FREE_INPUT_RING_TYPE_RX);
-		ring->fw_ring_id = INVALID_HW_RING_ID;
-		memset(rxr->ag_buf_ring, 0,
-		       rxr->ag_ring_struct->ring_size *
-		       sizeof(*rxr->ag_buf_ring));
-		rxr->ag_prod = 0;
 		bp->grp_info[queue_index].ag_fw_ring_id = INVALID_HW_RING_ID;
 	}
 	if (cpr->cp_ring_struct->fw_ring_id != INVALID_HW_RING_ID)
