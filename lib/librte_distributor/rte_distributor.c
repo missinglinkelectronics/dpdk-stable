@@ -482,6 +482,7 @@ rte_distributor_process_v1705(struct rte_distributor *d,
 			/* Sync with worker on GET_BUF flag. */
 			if (__atomic_load_n(&(d->bufs[wid].bufptr64[0]),
 				__ATOMIC_ACQUIRE) & RTE_DISTRIB_GET_BUF) {
+				d->bufs[wid].count = 0;
 				release(d, wid);
 				handle_returns(d, wid);
 			}
@@ -495,11 +496,6 @@ rte_distributor_process_v1705(struct rte_distributor *d,
 	while (next_idx < num_mbufs) {
 		uint16_t matches[RTE_DIST_BURST_SIZE];
 		unsigned int pkts;
-
-		/* Sync with worker on GET_BUF flag. */
-		if (__atomic_load_n(&(d->bufs[wkr].bufptr64[0]),
-			__ATOMIC_ACQUIRE) & RTE_DISTRIB_GET_BUF)
-			d->bufs[wkr].count = 0;
 
 		if ((num_mbufs - next_idx) < RTE_DIST_BURST_SIZE)
 			pkts = num_mbufs - next_idx;
@@ -620,8 +616,10 @@ rte_distributor_process_v1705(struct rte_distributor *d,
 	for (wid = 0 ; wid < d->num_workers; wid++)
 		/* Sync with worker on GET_BUF flag. */
 		if ((__atomic_load_n(&(d->bufs[wid].bufptr64[0]),
-			__ATOMIC_ACQUIRE) & RTE_DISTRIB_GET_BUF))
+			__ATOMIC_ACQUIRE) & RTE_DISTRIB_GET_BUF)) {
+			d->bufs[wid].count = 0;
 			release(d, wid);
+		}
 
 	return num_mbufs;
 }
@@ -672,7 +670,7 @@ total_outstanding(const struct rte_distributor *d)
 	unsigned int wkr, total_outstanding = 0;
 
 	for (wkr = 0; wkr < d->num_workers; wkr++)
-		total_outstanding += d->backlog[wkr].count;
+		total_outstanding += d->backlog[wkr].count + d->bufs[wkr].count;
 
 	return total_outstanding;
 }
