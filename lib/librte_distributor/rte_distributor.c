@@ -730,6 +730,8 @@ rte_distributor_clear_returns_v1705(struct rte_distributor *d)
 		/* Sync with worker. Release retptrs. */
 		__atomic_store_n(&(d->bufs[wkr].retptr64[0]), 0,
 				__ATOMIC_RELEASE);
+
+	d->returns.start = d->returns.count = 0;
 }
 BIND_DEFAULT_SYMBOL(rte_distributor_clear_returns, _v1705, 17.05);
 MAP_STATIC_SYMBOL(void rte_distributor_clear_returns(struct rte_distributor *d),
