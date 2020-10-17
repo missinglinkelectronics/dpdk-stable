@@ -43,7 +43,7 @@ rte_distributor_request_pkt_v1705(struct rte_distributor *d,
 
 	if (unlikely(d->alg_type == RTE_DIST_ALG_SINGLE)) {
 		rte_distributor_request_pkt_v20(d->d_v20,
-			worker_id, oldpkt[0]);
+			worker_id, count ? oldpkt[0] : NULL);
 		return;
 	}
 
@@ -143,7 +143,7 @@ rte_distributor_get_pkt_v1705(struct rte_distributor *d,
 	if (unlikely(d->alg_type == RTE_DIST_ALG_SINGLE)) {
 		if (return_count <= 1) {
 			pkts[0] = rte_distributor_get_pkt_v20(d->d_v20,
-				worker_id, oldpkt[0]);
+				worker_id, return_count ? oldpkt[0] : NULL);
 			return (pkts[0]) ? 1 : 0;
 		} else
 			return -EINVAL;
