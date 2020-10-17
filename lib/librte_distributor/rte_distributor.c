@@ -181,6 +181,9 @@ rte_distributor_return_pkt_v1705(struct rte_distributor *d,
 		if (num == 1)
 			return rte_distributor_return_pkt_v20(d->d_v20,
 				worker_id, oldpkt[0]);
+		else if (num == 0)
+			return rte_distributor_return_pkt_v20(d->d_v20,
+				worker_id, NULL);
 		else
 			return -EINVAL;
 	}
