@@ -77,6 +77,10 @@ rte_distributor_return_pkt_v20(struct rte_distributor_v20 *d,
 	union rte_distributor_buffer_v20 *buf = &d->bufs[worker_id];
 	uint64_t req = (((int64_t)(uintptr_t)oldpkt) << RTE_DISTRIB_FLAG_BITS)
 			| RTE_DISTRIB_RETURN_BUF;
+	while (unlikely(__atomic_load_n(&buf->bufptr64, __ATOMIC_RELAXED)
+			& RTE_DISTRIB_FLAGS_MASK))
+		rte_pause();
+
 	/* Sync with distributor on RETURN_BUF flag. */
 	__atomic_store_n(&(buf->bufptr64), req, __ATOMIC_RELEASE);
 	return 0;
