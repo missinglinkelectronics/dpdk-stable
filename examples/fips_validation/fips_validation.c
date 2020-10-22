@@ -105,7 +105,7 @@ fips_test_parse_header(void)
 	if (ret < 0)
 		return ret;
 
-	for (i = 0; i < info.nb_vec_lines; i++) {
+	for (i = 1; i < info.nb_vec_lines; i++) {
 		if (strstr(info.vec[i], "AESVS")) {
 			info.algo = FIPS_TEST_ALGO_AES;
 			ret = parse_test_aes_init();
