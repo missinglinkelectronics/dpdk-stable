@@ -68,18 +68,6 @@ typedef uint64_t dma_addr_t;
 #define ENA_GET_SYSTEM_USECS()						\
 	(rte_get_timer_cycles() * US_PER_S / rte_get_timer_hz())
 
-#if RTE_LOG_DP_LEVEL >= RTE_LOG_DEBUG
-#define ENA_ASSERT(cond, format, arg...)				\
-	do {								\
-		if (unlikely(!(cond))) {				\
-			RTE_LOG(ERR, PMD, format, ##arg);		\
-			rte_panic("line %d\tassert \"" #cond "\""	\
-					"failed\n", __LINE__);		\
-		}							\
-	} while (0)
-#else
-#define ENA_ASSERT(cond, format, arg...) do {} while (0)
-#endif
 
 #define ENA_MAX_T(type, x, y) RTE_MAX((type)(x), (type)(y))
 #define ENA_MAX32(x, y) ENA_MAX_T(uint32_t, (x), (y))
