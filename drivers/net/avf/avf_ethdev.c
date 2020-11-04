@@ -253,7 +253,7 @@ avf_init_rxq(struct rte_eth_dev *dev, struct avf_rx_queue *rxq)
 
 	rxq->max_pkt_len = max_pkt_len;
 	if ((dev_data->dev_conf.rxmode.offloads & DEV_RX_OFFLOAD_SCATTER) ||
-	    (rxq->max_pkt_len + 2 * AVF_VLAN_TAG_SIZE) > buf_size) {
+	    rxq->max_pkt_len > buf_size) {
 		dev_data->scattered_rx = 1;
 	}
 	AVF_PCI_REG_WRITE(rxq->qrx_tail, rxq->nb_rx_desc - 1);
