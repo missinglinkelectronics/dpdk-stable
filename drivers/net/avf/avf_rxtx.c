@@ -169,6 +169,7 @@ reset_rx_queue(struct avf_rx_queue *rxq)
 	rxq->nb_rx_hold = 0;
 	rxq->pkt_first_seg = NULL;
 	rxq->pkt_last_seg = NULL;
+	rxq->rxrearm_nb = 0;
 }
 
 static inline void
