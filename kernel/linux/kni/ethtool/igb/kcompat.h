@@ -3973,4 +3973,8 @@ skb_set_hash(struct sk_buff *skb, __u32 hash, __always_unused int type)
 	pci_aer_clear_nonfatal_status
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+#define read_barrier_depends() rmb()
+#endif
+
 #endif /* _KCOMPAT_H_ */
