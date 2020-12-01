@@ -2113,11 +2113,10 @@ void bnxt_free_tunnel_ports(struct bnxt *bp)
 	if (bp->vxlan_port_cnt)
 		bnxt_hwrm_tunnel_dst_port_free(bp, bp->vxlan_fw_dst_port_id,
 			HWRM_TUNNEL_DST_PORT_FREE_INPUT_TUNNEL_TYPE_VXLAN);
-	bp->vxlan_port = 0;
+
 	if (bp->geneve_port_cnt)
 		bnxt_hwrm_tunnel_dst_port_free(bp, bp->geneve_fw_dst_port_id,
 			HWRM_TUNNEL_DST_PORT_FREE_INPUT_TUNNEL_TYPE_GENEVE);
-	bp->geneve_port = 0;
 }
 
 void bnxt_free_all_hwrm_resources(struct bnxt *bp)
@@ -2909,6 +2908,18 @@ int bnxt_hwrm_tunnel_dst_port_free(struct bnxt *bp, uint16_t port,
 
 	HWRM_CHECK_RESULT();
 	HWRM_UNLOCK();
+
+	if (tunnel_type ==
+	    HWRM_TUNNEL_DST_PORT_FREE_INPUT_TUNNEL_TYPE_VXLAN) {
+		bp->vxlan_port = 0;
+		bp->vxlan_port_cnt = 0;
+	}
+
+	if (tunnel_type ==
+	    HWRM_TUNNEL_DST_PORT_FREE_INPUT_TUNNEL_TYPE_GENEVE) {
+		bp->geneve_port = 0;
+		bp->geneve_port_cnt = 0;
+	}
 
 	return rc;
 }
