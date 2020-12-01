@@ -79,6 +79,7 @@ int bnxt_init_tx_ring_struct(struct bnxt_tx_queue *txq, unsigned int socket_id)
 	ring->bd_dma = txr->tx_desc_mapping;
 	ring->vmem_size = ring->ring_size * sizeof(struct bnxt_sw_tx_bd);
 	ring->vmem = (void **)&txr->tx_buf_ring;
+	ring->fw_ring_id = INVALID_HW_RING_ID;
 
 	cpr = rte_zmalloc_socket("bnxt_tx_ring",
 				 sizeof(struct bnxt_cp_ring_info),
@@ -99,6 +100,7 @@ int bnxt_init_tx_ring_struct(struct bnxt_tx_queue *txq, unsigned int socket_id)
 	ring->bd_dma = cpr->cp_desc_mapping;
 	ring->vmem_size = 0;
 	ring->vmem = NULL;
+	ring->fw_ring_id = INVALID_HW_RING_ID;
 
 	return 0;
 }
