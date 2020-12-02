@@ -65,14 +65,14 @@ get_printable_mac_addr(uint16_t port)
 
 	if (unlikely(port >= RTE_MAX_ETHPORTS)) {
 		if (err_address[0] == '\0')
-			rte_ether_format_addr(err_address,
+			ether_format_addr(err_address,
 					sizeof(err_address), &null_mac);
 		return err_address;
 	}
 	if (unlikely(addresses[port][0]=='\0')){
 		struct ether_addr mac;
 		rte_eth_macaddr_get(port, &mac);
-		rte_ether_format_addr(addresses[port],
+		ether_format_addr(addresses[port],
 				sizeof(addresses[port]), &mac);
 	}
 	return addresses[port];
