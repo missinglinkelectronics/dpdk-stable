@@ -255,7 +255,11 @@ fips_test_init(const char *req_file_path, const char *rsp_file_path,
 		return -ENOMEM;
 	}
 
-	strlcpy(info.device_name, device_name, sizeof(info.device_name));
+	if (rte_strscpy(info.device_name, device_name,
+				sizeof(info.device_name)) < 0) {
+		RTE_LOG(ERR, USER1, "Device name %s too long\n", device_name);
+		return -EINVAL;
+	}
 
 	if (fips_test_parse_header() < 0) {
 		RTE_LOG(ERR, USER1, "Failed parsing header\n");
