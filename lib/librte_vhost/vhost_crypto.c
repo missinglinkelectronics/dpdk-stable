@@ -35,13 +35,12 @@
 #define VC_LOG_DBG(fmt, args...)
 #endif
 
-#define VIRTIO_CRYPTO_FEATURES ((1 << VIRTIO_F_NOTIFY_ON_EMPTY) |	\
-		(1 << VIRTIO_RING_F_INDIRECT_DESC) |			\
-		(1 << VIRTIO_RING_F_EVENT_IDX) |			\
-		(1 << VIRTIO_CRYPTO_SERVICE_CIPHER) |			\
-		(1 << VIRTIO_CRYPTO_SERVICE_MAC) |			\
-		(1 << VIRTIO_NET_F_CTRL_VQ) |				\
-		(1 << VHOST_USER_PROTOCOL_F_CONFIG))
+#define VIRTIO_CRYPTO_FEATURES ((1ULL << VIRTIO_F_NOTIFY_ON_EMPTY) |   \
+               (1ULL << VIRTIO_RING_F_INDIRECT_DESC) |                 \
+               (1ULL << VIRTIO_RING_F_EVENT_IDX) |                     \
+               (1ULL << VIRTIO_NET_F_CTRL_VQ) |                        \
+               (1ULL << VIRTIO_F_VERSION_1) |                          \
+               (1ULL << VHOST_USER_F_PROTOCOL_FEATURES))
 
 #define IOVA_TO_VVA(t, r, a, l, p)					\
 	((t)(uintptr_t)vhost_iova_to_vva(r->dev, r->vq, a, l, p))
