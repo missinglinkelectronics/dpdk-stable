@@ -1137,8 +1137,6 @@ avf_init_vf(struct rte_eth_dev *dev)
 		}
 	}
 
-	vf->vf_reset = false;
-
 	return 0;
 err_rss:
 	rte_free(vf->rss_key);
@@ -1269,6 +1267,7 @@ avf_dev_init(struct rte_eth_dev *eth_dev)
 static void
 avf_dev_close(struct rte_eth_dev *dev)
 {
+	struct avf_info *vf = AVF_DEV_PRIVATE_TO_VF(dev->data->dev_private);
 	struct avf_hw *hw = AVF_DEV_PRIVATE_TO_HW(dev->data->dev_private);
 	struct rte_pci_device *pci_dev = RTE_ETH_DEV_TO_PCI(dev);
 	struct rte_intr_handle *intr_handle = &pci_dev->intr_handle;
@@ -1282,6 +1281,8 @@ avf_dev_close(struct rte_eth_dev *dev)
 	rte_intr_callback_unregister(intr_handle,
 				     avf_dev_interrupt_handler, dev);
 	avf_disable_irq0(hw);
+
+	vf->vf_reset = false;
 }
 
 static int

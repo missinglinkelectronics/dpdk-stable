@@ -73,11 +73,11 @@ avf_execute_vf_cmd(struct avf_adapter *adapter, struct avf_cmd_info *args)
 	int err = 0;
 	int i = 0;
 
-	if (_atomic_set_cmd(vf, args->ops))
-		return -1;
-
 	if (vf->vf_reset)
 		return -EIO;
+
+	if (_atomic_set_cmd(vf, args->ops))
+		return -1;
 
 	ret = avf_aq_send_msg_to_pf(hw, args->ops, AVF_SUCCESS,
 				    args->in_args, args->in_args_size, NULL);
@@ -150,6 +150,7 @@ avf_handle_pf_event_msg(struct rte_eth_dev *dev, uint8_t *msg,
 	switch (pf_msg->event) {
 	case VIRTCHNL_EVENT_RESET_IMPENDING:
 		PMD_DRV_LOG(DEBUG, "VIRTCHNL_EVENT_RESET_IMPENDING event");
+		vf->vf_reset = true;
 		_rte_eth_dev_callback_process(dev, RTE_ETH_EVENT_INTR_RESET,
 					      NULL);
 		break;
