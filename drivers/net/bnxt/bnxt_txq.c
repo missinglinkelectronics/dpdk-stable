@@ -28,7 +28,7 @@ static void bnxt_tx_queue_release_mbufs(struct bnxt_tx_queue *txq)
 	struct bnxt_sw_tx_bd *sw_ring;
 	uint16_t i;
 
-	if (!txq)
+	if (!txq || !txq->tx_ring)
 		return;
 
 	sw_ring = txq->tx_ring->tx_buf_ring;
@@ -60,10 +60,18 @@ void bnxt_tx_queue_release_op(void *tx_queue)
 	if (txq) {
 		/* Free TX ring hardware descriptors */
 		bnxt_tx_queue_release_mbufs(txq);
-		bnxt_free_ring(txq->tx_ring->tx_ring_struct);
+		if (txq->tx_ring) {
+			bnxt_free_ring(txq->tx_ring->tx_ring_struct);
+			rte_free(txq->tx_ring->tx_ring_struct);
+			rte_free(txq->tx_ring);
+		}
 
 		/* Free TX completion ring hardware descriptors */
-		bnxt_free_ring(txq->cp_ring->cp_ring_struct);
+		if (txq->cp_ring) {
+			bnxt_free_ring(txq->cp_ring->cp_ring_struct);
+			rte_free(txq->cp_ring->cp_ring_struct);
+			rte_free(txq->cp_ring);
+		}
 
 		bnxt_free_txq_stats(txq);
 		rte_memzone_free(txq->mz);
@@ -92,8 +100,7 @@ int bnxt_tx_queue_setup_op(struct rte_eth_dev *eth_dev,
 
 	if (!nb_desc || nb_desc > MAX_TX_DESC_CNT) {
 		PMD_DRV_LOG(ERR, "nb_desc %d is invalid", nb_desc);
-		rc = -EINVAL;
-		goto out;
+		return -EINVAL;
 	}
 
 	if (eth_dev->data->tx_queues) {
@@ -107,8 +114,7 @@ int bnxt_tx_queue_setup_op(struct rte_eth_dev *eth_dev,
 				 RTE_CACHE_LINE_SIZE, socket_id);
 	if (!txq) {
 		PMD_DRV_LOG(ERR, "bnxt_tx_queue allocation failed!");
-		rc = -ENOMEM;
-		goto out;
+		return -ENOMEM;
 	}
 	txq->bp = bp;
 	txq->nb_tx_desc = nb_desc;
@@ -117,7 +123,7 @@ int bnxt_tx_queue_setup_op(struct rte_eth_dev *eth_dev,
 
 	rc = bnxt_init_tx_ring_struct(txq, socket_id);
 	if (rc)
-		goto out;
+		goto err;
 
 	txq->queue_id = queue_idx;
 	txq->port_id = eth_dev->data->port_id;
@@ -126,16 +132,14 @@ int bnxt_tx_queue_setup_op(struct rte_eth_dev *eth_dev,
 	if (bnxt_alloc_rings(bp, queue_idx, txq, NULL, txq->cp_ring,
 			"txr")) {
 		PMD_DRV_LOG(ERR, "ring_dma_zone_reserve for tx_ring failed!");
-		bnxt_tx_queue_release_op(txq);
 		rc = -ENOMEM;
-		goto out;
+		goto err;
 	}
 
 	if (bnxt_init_one_tx_ring(txq)) {
 		PMD_DRV_LOG(ERR, "bnxt_init_one_tx_ring failed!");
-		bnxt_tx_queue_release_op(txq);
 		rc = -ENOMEM;
-		goto out;
+		goto err;
 	}
 
 	eth_dev->data->tx_queues[queue_idx] = txq;
@@ -145,6 +149,8 @@ int bnxt_tx_queue_setup_op(struct rte_eth_dev *eth_dev,
 	else
 		txq->tx_started = true;
 
-out:
+	return 0;
+err:
+	bnxt_tx_queue_release_op(txq);
 	return rc;
 }
