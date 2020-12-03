@@ -98,7 +98,7 @@ struct avf_info {
 	enum virtchnl_link_speed link_speed;
 
 	struct avf_vsi vsi;
-	bool vf_reset;
+	bool vf_reset;	/* true for VF reset pending, false for no VF reset */
 	uint64_t flags;
 
 	uint8_t *rss_lut;
