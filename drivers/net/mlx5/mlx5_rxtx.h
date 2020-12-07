@@ -311,6 +311,7 @@ struct mlx5_txq_ibv *mlx5_txq_ibv_get(struct rte_eth_dev *dev, uint16_t idx);
 int mlx5_txq_ibv_release(struct mlx5_txq_ibv *txq_ibv);
 int mlx5_txq_ibv_releasable(struct mlx5_txq_ibv *txq_ibv);
 int mlx5_txq_ibv_verify(struct rte_eth_dev *dev);
+void mlx5_tx_uar_uninit_secondary(struct rte_eth_dev *dev);
 struct mlx5_txq_ctrl *mlx5_txq_new(struct rte_eth_dev *dev, uint16_t idx,
 				   uint16_t desc, unsigned int socket,
 				   const struct rte_eth_txconf *conf);

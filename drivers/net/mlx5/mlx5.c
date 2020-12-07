@@ -304,6 +304,15 @@ mlx5_dev_close(struct rte_eth_dev *dev)
 	unsigned int i;
 	int ret;
 
+	if (rte_eal_process_type() == RTE_PROC_SECONDARY) {
+		/* Check if process_private released. */
+		if (!dev->process_private)
+			return;
+		mlx5_tx_uar_uninit_secondary(dev);
+		mlx5_proc_priv_uninit(dev);
+		rte_eth_dev_release_port(dev);
+		return;
+	}
 	DRV_LOG(DEBUG, "port %u closing device \"%s\"",
 		dev->data->port_id,
 		((priv->ctx != NULL) ? priv->ctx->device->name : ""));
@@ -849,26 +858,26 @@ mlx5_dev_spawn(struct rte_device *dpdk_dev,
 			DRV_LOG(ERR, "can not attach rte ethdev");
 			rte_errno = ENOMEM;
 			err = rte_errno;
-			goto error;
+			goto err_secondary;
 		}
 		eth_dev->device = dpdk_dev;
 		eth_dev->dev_ops = &mlx5_dev_sec_ops;
 		err = mlx5_proc_priv_init(eth_dev);
 		if (err) {
 			err = rte_errno;
-			goto error;
+			goto err_secondary;
 		}
 		/* Receive command fd from primary process */
 		err = mlx5_socket_connect(eth_dev);
 		if (err < 0) {
 			err = rte_errno;
-			goto error;
+			goto err_secondary;
 		}
 		/* Remap UAR for Tx queues. */
 		err = mlx5_tx_uar_init_secondary(eth_dev, err);
 		if (err) {
 			err = rte_errno;
-			goto error;
+			goto err_secondary;
 		}
 		/*
 		 * Ethdev pointer is still required as input since
@@ -879,6 +888,10 @@ mlx5_dev_spawn(struct rte_device *dpdk_dev,
 		eth_dev->tx_pkt_burst = mlx5_select_tx_function(eth_dev);
 		claim_zero(mlx5_glue->close_device(ctx));
 		return eth_dev;
+err_secondary:
+		if (eth_dev)
+			mlx5_dev_close(eth_dev);
+		return NULL;
 	}
 	/* Check port status. */
 	err = mlx5_glue->query_port(ctx, 1, &port_attr);
@@ -1499,8 +1512,17 @@ mlx5_pci_remove(struct rte_pci_device *pci_dev)
 	for (port_id = 0; port_id < RTE_MAX_ETHPORTS; port_id++) {
 		port = &rte_eth_devices[port_id];
 		if (port->state != RTE_ETH_DEV_UNUSED &&
-				port->device == &pci_dev->device)
-			rte_eth_dev_close(port_id);
+				port->device == &pci_dev->device) {
+			/*
+			 * mlx5_dev_close() is not registered to secondary
+			 * process, call the close function explicitly for
+			 * secondary process.
+			 */
+			if (rte_eal_process_type() == RTE_PROC_SECONDARY)
+				mlx5_dev_close(&rte_eth_devices[port_id]);
+			else
+				rte_eth_dev_close(port_id);
+		}
 	}
 	return 0;
 }
