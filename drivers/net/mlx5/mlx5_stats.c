@@ -3,11 +3,13 @@
  * Copyright 2015 Mellanox Technologies, Ltd
  */
 
+#include <fcntl.h>
 #include <inttypes.h>
 #include <linux/sockios.h>
 #include <linux/ethtool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <rte_ethdev_driver.h>
 #include <rte_common.h>
@@ -139,19 +141,24 @@ static const unsigned int xstats_n = RTE_DIM(mlx5_counters_init);
 static inline void
 mlx5_read_ib_stat(struct mlx5_priv *priv, const char *ctr_name, uint64_t *stat)
 {
-	FILE *file;
+	int fd;
+
 	MKSTR(path, "%s/ports/1/hw_counters/%s",
 		  priv->ibdev_path,
 		  ctr_name);
 
-	file = fopen(path, "rb");
-	if (file) {
-		int n = fscanf(file, "%" SCNu64, stat);
+	fd = open(path, O_RDONLY);
+	if (fd != -1) {
+		char buf[21] = {'\0'};
+		ssize_t n = read(fd, buf, sizeof(buf));
 
-		fclose(file);
-		if (n != 1)
-			stat = 0;
+		close(fd);
+		if (n != -1) {
+			*stat = strtoull(buf, NULL, 10);
+			return;
+		}
 	}
+	*stat = 0;
 }
 
 /**
