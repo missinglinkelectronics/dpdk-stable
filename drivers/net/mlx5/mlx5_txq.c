@@ -429,7 +429,6 @@ mlx5_txq_ibv_new(struct rte_eth_dev *dev, uint16_t idx)
 	struct mlx5_txq_ibv *txq_ibv = NULL;
 	union {
 		struct ibv_qp_init_attr_ex init;
-		struct ibv_cq_init_attr_ex cq;
 		struct ibv_qp_attr mod;
 	} attr;
 	unsigned int cqe_n;
@@ -451,9 +450,6 @@ mlx5_txq_ibv_new(struct rte_eth_dev *dev, uint16_t idx)
 		return NULL;
 	}
 	memset(&tmpl, 0, sizeof(struct mlx5_txq_ibv));
-	attr.cq = (struct ibv_cq_init_attr_ex){
-		.comp_mask = 0,
-	};
 	cqe_n = ((desc / MLX5_TX_COMP_THRESH) - 1) ?
 		((desc / MLX5_TX_COMP_THRESH) - 1) : 1;
 	if (is_empw_burst_func(tx_pkt_burst))
