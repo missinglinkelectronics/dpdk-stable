@@ -110,6 +110,30 @@ Limitations
   is set to multi-packet send or Enhanced multi-packet send. Otherwise it must have
   less than 50 segments.
 
+- When using DV flow engine (``dv_flow_en`` = 1), flow pattern without VLAN item
+  will match untagged packets only.
+  The flow rule::
+
+        flow create 0 ingress pattern eth / ipv4 / end ...
+
+  Will match untagged packets only.
+  The flow rule::
+
+        flow create 0 ingress pattern eth / vlan / ipv4 / end ...
+
+  Will match tagged packets only, with any VLAN ID value.
+  The flow rule::
+
+        flow create 0 ingress pattern eth / vlan vid is 3 / ipv4 / end ...
+
+  Will only match tagged packets with VLAN ID 3.
+
+- VLAN pop offload command:
+
+  - Flow rules having a VLAN pop offload command as one of their actions and
+    are lacking a match on VLAN as one of their items are not supported.
+  - The command is not supported on egress traffic.
+
 - Count action for RTE flow is **only supported in Mellanox OFED**.
 
 - Flows with a VXLAN Network Identifier equal (or ends to be equal)
