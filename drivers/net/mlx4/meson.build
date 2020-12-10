@@ -28,12 +28,18 @@ libs = [
 foreach lib:libs
 	if not lib.found()
 		build = false
+	elif not pmd_dlopen
+		ext_deps += lib
 	endif
 endforeach
+if pmd_dlopen
+	# Build without adding shared libs to Libs.private
+	ibv_cflags = run_command(pkgconf, '--cflags', 'libibverbs').stdout()
+	ext_deps += declare_dependency(compile_args: ibv_cflags.split())
+endif
 
 if build
 	allow_experimental_apis = true
-	ext_deps += libs
 	sources = files(
 		'mlx4.c',
 		'mlx4_ethdev.c',
