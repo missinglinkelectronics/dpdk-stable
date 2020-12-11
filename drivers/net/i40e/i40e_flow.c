@@ -4993,8 +4993,10 @@ i40e_flow_flush_fdir_filter(struct i40e_pf *pf)
 		}
 
 		for (pctype = I40E_FILTER_PCTYPE_NONF_IPV4_UDP;
-		     pctype <= I40E_FILTER_PCTYPE_L2_PAYLOAD; pctype++)
+		     pctype <= I40E_FILTER_PCTYPE_L2_PAYLOAD; pctype++) {
 			pf->fdir.inset_flag[pctype] = 0;
+			pf->fdir.flex_mask_flag[pctype] = 0;
+		}
 	}
 
 	return ret;
