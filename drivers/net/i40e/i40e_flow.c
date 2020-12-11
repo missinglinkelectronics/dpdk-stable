@@ -3191,8 +3191,7 @@ i40e_flow_parse_fdir_filter(struct rte_eth_dev *dev,
 
 	cons_filter_type = RTE_ETH_FILTER_FDIR;
 
-	if (dev->data->dev_conf.fdir_conf.mode != RTE_FDIR_MODE_PERFECT ||
-		pf->fdir.fdir_vsi == NULL) {
+	if (pf->fdir.fdir_vsi == NULL) {
 		/* Enable fdir when fdir flow is added at first time. */
 		ret = i40e_fdir_setup(pf);
 		if (ret != I40E_SUCCESS) {
@@ -3208,8 +3207,6 @@ i40e_flow_parse_fdir_filter(struct rte_eth_dev *dev,
 					   NULL, "Failed to configure fdir.");
 			goto err;
 		}
-
-		dev->data->dev_conf.fdir_conf.mode = RTE_FDIR_MODE_PERFECT;
 	}
 
 	return 0;
@@ -4808,12 +4805,6 @@ i40e_flow_destroy(struct rte_eth_dev *dev,
 	case RTE_ETH_FILTER_FDIR:
 		ret = i40e_flow_add_del_fdir_filter(dev,
 		       &((struct i40e_fdir_filter *)flow->rule)->fdir, 0);
-
-		/* If the last flow is destroyed, disable fdir. */
-		if (!ret && TAILQ_EMPTY(&pf->fdir.fdir_list)) {
-			dev->data->dev_conf.fdir_conf.mode =
-				   RTE_FDIR_MODE_NONE;
-		}
 		break;
 	case RTE_ETH_FILTER_HASH:
 		ret = i40e_config_rss_filter_del(dev,
