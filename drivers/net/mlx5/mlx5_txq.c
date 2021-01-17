@@ -258,6 +258,53 @@ txq_uar_init(struct mlx5_txq_ctrl *txq_ctrl)
 }
 
 /**
+ * Find the Tx UAR mmap offset for the page containing the specified register.
+ *
+ * @param dev
+ *   Pointer to Ethernet device.
+ * @param bf
+ *   Pointer to doorbell register.
+ *
+ * @return
+ *   found mmap offset, 0 otherwise.
+ *
+ * The rdma-core might support multiple registers within one UAR page, the
+ * registers beside the first one are considered as the children and it is
+ * supposed there is no need to mmap them due the page is already mapped
+ * for the first ("parent") register. The uar_map_offset is zero for the
+ * child register, to perform mapping in the secondary process we should
+ * find the uar_map_offset from the parent and use one for mapping.
+ */
+static off_t
+mlx5_tx_find_uar_offset(struct rte_eth_dev *dev, void *bf)
+{
+	const size_t page_size = sysconf(_SC_PAGESIZE);
+	const uintptr_t reg = RTE_ALIGN_FLOOR((uintptr_t)bf, page_size);
+	const struct mlx5_priv *priv = dev->data->dev_private;
+	unsigned int i;
+
+	for (i = 0; i != priv->txqs_n; ++i) {
+		struct mlx5_txq_ctrl *txq_ctrl = mlx5_txq_get(dev, i);
+
+		if (!txq_ctrl)
+			continue;
+		if (txq_ctrl->uar_mmap_offset && txq_ctrl->bf_reg) {
+			uintptr_t tx_reg = RTE_ALIGN_FLOOR
+						((uintptr_t)txq_ctrl->bf_reg,
+						 page_size);
+			if (tx_reg == reg) {
+				off_t offset = txq_ctrl->uar_mmap_offset;
+
+				mlx5_txq_release(dev, i);
+				return offset;
+			}
+		}
+		mlx5_txq_release(dev, i);
+	}
+	return 0;
+}
+
+/**
  * Remap UAR register of a Tx queue for secondary process.
  *
  * Remapped address is stored at the table in the process private structure of
@@ -584,7 +631,10 @@ mlx5_txq_ibv_new(struct rte_eth_dev *dev, uint16_t idx)
 	rte_atomic32_inc(&txq_ibv->refcnt);
 	txq_ctrl->bf_reg = qp.bf.reg;
 	if (qp.comp_mask & MLX5DV_QP_MASK_UAR_MMAP_OFFSET) {
-		txq_ctrl->uar_mmap_offset = qp.uar_mmap_offset;
+		txq_ctrl->uar_mmap_offset = qp.uar_mmap_offset ?
+					    qp.uar_mmap_offset :
+					    mlx5_tx_find_uar_offset
+						(dev, txq_ctrl->bf_reg);
 		DRV_LOG(DEBUG, "port %u: uar_mmap_offset 0x%"PRIx64,
 			dev->data->port_id, txq_ctrl->uar_mmap_offset);
 	} else {
