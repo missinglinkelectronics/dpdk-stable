@@ -14,9 +14,9 @@
 
 
 #include <rte_log.h>
+#include <rte_power.h>
 
 #include "guest_channel.h"
-#include "rte_power_guest_channel.h"
 
 #define RTE_LOGTYPE_GUEST_CHANNEL RTE_LOGTYPE_USER1
 

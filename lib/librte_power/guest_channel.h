@@ -8,8 +8,6 @@
 extern "C" {
 #endif
 
-#include <rte_power_guest_channel.h>
-
 /**
  * Connect to the Virtio-Serial VM end-point located in path. It is
  * thread safe for unique lcore_ids. This function must be only called once from
