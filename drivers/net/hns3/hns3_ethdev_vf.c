@@ -1643,8 +1643,10 @@ hns3vf_dev_close(struct rte_eth_dev *eth_dev)
 	struct hns3_adapter *hns = eth_dev->data->dev_private;
 	struct hns3_hw *hw = &hns->hw;
 
-	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY) {
+		rte_free(eth_dev->process_private);
 		return;
+    }
 
 	if (hw->adapter_state == HNS3_NIC_STARTED)
 		hns3vf_dev_stop(eth_dev);
@@ -2371,8 +2373,11 @@ hns3vf_dev_uninit(struct rte_eth_dev *eth_dev)
 
 	PMD_INIT_FUNC_TRACE();
 
-	if (rte_eal_process_type() != RTE_PROC_PRIMARY)
-		return -EPERM;
+	if (rte_eal_process_type() != RTE_PROC_PRIMARY) {
+		rte_free(eth_dev->process_private);
+		eth_dev->process_private = NULL;
+		return 0;
+	}
 
 	eth_dev->dev_ops = NULL;
 	eth_dev->rx_pkt_burst = NULL;
