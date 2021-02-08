@@ -605,6 +605,7 @@ uint16_t bnxt_recv_pkts(void *rx_queue, struct rte_mbuf **rx_pkts,
 	struct bnxt_cp_ring_info *cpr = rxq->cp_ring;
 	struct bnxt_rx_ring_info *rxr = rxq->rx_ring;
 	uint32_t raw_cons = cpr->cp_raw_cons;
+	bool alloc_failed = false;
 	uint32_t cons;
 	int nb_rx_pkts = 0;
 	struct rx_pkt_cmpl *rxcmp;
@@ -634,10 +635,14 @@ uint16_t bnxt_recv_pkts(void *rx_queue, struct rte_mbuf **rx_pkts,
 		/* TODO: Avoid magic numbers... */
 		if ((CMP_TYPE(rxcmp) & 0x30) == 0x10) {
 			rc = bnxt_rx_pkt(&rx_pkts[nb_rx_pkts], rxq, &raw_cons);
-			if (likely(!rc) || rc == -ENOMEM)
+			if (!rc)
 				nb_rx_pkts++;
-			if (rc == -EBUSY)	/* partial completion */
+			else if (rc == -EBUSY)	/* partial completion */
 				break;
+			else if (rc == -ENOMEM) {
+				nb_rx_pkts++;
+				alloc_failed = true;
+			}
 		} else if (!BNXT_NUM_ASYNC_CPR(rxq->bp)) {
 			evt =
 			bnxt_event_hwrm_resp_handler(rxq->bp,
@@ -676,21 +681,22 @@ uint16_t bnxt_recv_pkts(void *rx_queue, struct rte_mbuf **rx_pkts,
 		bnxt_db_write(&rxr->ag_db, rxr->ag_prod);
 
 	/* Attempt to alloc Rx buf in case of a previous allocation failure. */
-	if (rc == -ENOMEM) {
-		int i = RING_NEXT(rxr->rx_ring_struct, prod);
-		int cnt = nb_rx_pkts;
+	if (alloc_failed) {
+		uint16_t cnt;
 
-		for (; cnt;
-			i = RING_NEXT(rxr->rx_ring_struct, i), cnt--) {
-			struct bnxt_sw_rx_bd *rx_buf = &rxr->rx_buf_ring[i];
+		for (cnt = 0; cnt < nb_rx_pkts; cnt++) {
+			struct bnxt_sw_rx_bd *rx_buf;
+
+			prod = RING_NEXT(rxr->rx_ring_struct, prod);
+			rx_buf = &rxr->rx_buf_ring[prod];
 
 			/* Buffer already allocated for this index. */
 			if (rx_buf->mbuf != NULL)
 				continue;
 
 			/* This slot is empty. Alloc buffer for Rx */
-			if (!bnxt_alloc_rx_data(rxq, rxr, i)) {
-				rxr->rx_prod = i;
+			if (!bnxt_alloc_rx_data(rxq, rxr, prod)) {
+				rxr->rx_prod = prod;
 				bnxt_db_write(&rxr->rx_db, rxr->rx_prod);
 			} else {
 				PMD_DRV_LOG(ERR, "Alloc  mbuf failed\n");
