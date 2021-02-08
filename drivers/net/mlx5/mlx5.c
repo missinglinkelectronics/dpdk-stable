@@ -1251,13 +1251,13 @@ mlx5_proc_priv_init(struct rte_eth_dev *dev)
 	 */
 	ppriv_size =
 		sizeof(struct mlx5_proc_priv) + priv->txqs_n * sizeof(void *);
-	ppriv = rte_malloc_socket("mlx5_proc_priv", ppriv_size,
+	ppriv = rte_zmalloc_socket("mlx5_proc_priv", ppriv_size,
 				  RTE_CACHE_LINE_SIZE, dev->device->numa_node);
 	if (!ppriv) {
 		rte_errno = ENOMEM;
 		return -rte_errno;
 	}
-	ppriv->uar_table_sz = ppriv_size;
+	ppriv->uar_table_sz = priv->txqs_n;
 	dev->process_private = ppriv;
 	return 0;
 }
