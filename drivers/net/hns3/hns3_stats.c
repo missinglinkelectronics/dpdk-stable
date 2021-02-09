@@ -754,8 +754,12 @@ hns3_dev_xstats_get_by_id(struct rte_eth_dev *dev, const uint64_t *ids,
 	char *addr;
 	int ret;
 
-	if (ids == NULL || size < cnt_stats)
+	if (ids == NULL && values == NULL)
 		return cnt_stats;
+
+	if (ids == NULL)
+		if (size < cnt_stats)
+			return cnt_stats;
 
 	/* Update tqp stats by read register */
 	ret = hns3_update_tqp_stats(hw);
@@ -802,6 +806,15 @@ hns3_dev_xstats_get_by_id(struct rte_eth_dev *dev, const uint64_t *ids,
 			values_copy[count] = *(uint64_t *)addr;
 			count++;
 		}
+	}
+
+	if (ids == NULL && values != NULL) {
+		for (i = 0; i < cnt_stats; i++)
+			memcpy(&values[i], &values_copy[i], sizeof(values[i]));
+
+		rte_free(values_copy);
+
+		return cnt_stats;
 	}
 
 	for (i = 0; i < size; i++) {
@@ -852,8 +865,15 @@ hns3_dev_xstats_get_names_by_id(struct rte_eth_dev *dev,
 	uint16_t i, j;
 	uint64_t len;
 
-	if (ids == NULL || xstats_names == NULL)
+	if (xstats_names == NULL)
 		return cnt_stats;
+
+	if (ids == NULL) {
+		if (size < cnt_stats)
+			return cnt_stats;
+
+		return hns3_dev_xstats_get_names(dev, xstats_names, cnt_stats);
+	}
 
 	len = cnt_stats * sizeof(struct rte_eth_xstat_name);
 	xstats_names_copy = rte_zmalloc("hns3_xstats_names", len, 0);
