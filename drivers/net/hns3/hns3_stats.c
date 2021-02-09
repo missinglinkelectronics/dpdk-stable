@@ -505,16 +505,15 @@ hns3_stats_reset(struct rte_eth_dev *eth_dev)
 		}
 	}
 
-	/* Clear Rx BD and Tx error stats */
+	/*
+	 * Clear soft stats of rx error packet which will be dropped
+	 * in driver.
+	 */
 	for (i = 0; i != eth_dev->data->nb_rx_queues; ++i) {
 		rxq = eth_dev->data->rx_queues[i];
 		if (rxq) {
 			rxq->pkt_len_errors = 0;
 			rxq->l2_errors = 0;
-			rxq->l3_csum_erros = 0;
-			rxq->l4_csum_erros = 0;
-			rxq->ol3_csum_erros = 0;
-			rxq->ol4_csum_erros = 0;
 		}
 	}
 
@@ -914,7 +913,9 @@ hns3_dev_xstats_reset(struct rte_eth_dev *dev)
 {
 	struct hns3_adapter *hns = dev->data->dev_private;
 	struct hns3_pf *pf = &hns->pf;
+	struct hns3_rx_queue *rxq;
 	int ret;
+	int i;
 
 	/* Clear tqp stats */
 	ret = hns3_stats_reset(dev);
@@ -923,6 +924,17 @@ hns3_dev_xstats_reset(struct rte_eth_dev *dev)
 
 	/* Clear reset stats */
 	memset(&hns->hw.reset.stats, 0, sizeof(struct hns3_reset_stats));
+
+	/* Clear Rx checksum error stats */
+	for (i = 0; i < dev->data->nb_rx_queues; ++i) {
+		rxq = dev->data->rx_queues[i];
+		if (rxq) {
+			rxq->l3_csum_erros = 0;
+			rxq->l4_csum_erros = 0;
+			rxq->ol3_csum_erros = 0;
+			rxq->ol4_csum_erros = 0;
+		}
+	}
 
 	if (hns->is_vf)
 		return 0;
