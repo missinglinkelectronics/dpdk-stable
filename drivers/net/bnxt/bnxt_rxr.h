@@ -147,6 +147,10 @@ static inline uint16_t bnxt_tpa_start_agg_id(struct bnxt *bp,
 #define RX_CMP_L4_CS_UNKNOWN(rxcmp1)					\
 	    !((rxcmp1)->flags2 & RX_CMP_L4_CS_BITS)
 
+#define BNXT_RX_L2_AGG_BUFS(cmp) \
+	(((cmp)->agg_bufs_v1 & RX_PKT_CMPL_AGG_BUFS_MASK) >> \
+		RX_PKT_CMPL_AGG_BUFS_SFT)
+
 #define RX_CMP_T_L4_CS_BITS	\
 	rte_cpu_to_le_32(RX_PKT_CMPL_FLAGS2_T_L4_CS_CALC)
 
