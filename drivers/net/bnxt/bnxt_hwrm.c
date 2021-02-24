@@ -5095,3 +5095,24 @@ int bnxt_hwrm_port_ts_query(struct bnxt *bp, uint8_t path, uint64_t *timestamp)
 
 	return rc;
 }
+int bnxt_hwrm_poll_ver_get(struct bnxt *bp)
+{
+	struct hwrm_ver_get_input req = {.req_type = 0 };
+	struct hwrm_ver_get_output *resp = bp->hwrm_cmd_resp_addr;
+	int rc = 0;
+
+	bp->max_req_len = HWRM_MAX_REQ_LEN;
+	bp->hwrm_cmd_timeout = SHORT_HWRM_CMD_TIMEOUT;
+
+	HWRM_PREP(&req, HWRM_VER_GET, BNXT_USE_CHIMP_MB);
+	req.hwrm_intf_maj = HWRM_VERSION_MAJOR;
+	req.hwrm_intf_min = HWRM_VERSION_MINOR;
+	req.hwrm_intf_upd = HWRM_VERSION_UPDATE;
+
+	rc = bnxt_hwrm_send_message(bp, &req, sizeof(req), BNXT_USE_CHIMP_MB);
+
+	HWRM_CHECK_RESULT_SILENT();
+	HWRM_UNLOCK();
+
+	return rc;
+}
