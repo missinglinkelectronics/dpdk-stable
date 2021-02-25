@@ -18,8 +18,6 @@ apps = [
 	'test-pmd',
 	'test-sad']
 
-# for BSD only
-lib_execinfo = cc.find_library('execinfo', required: false)
 
 default_cflags = machine_args
 default_ldflags = []
@@ -51,7 +49,6 @@ foreach app:apps
 			dep_objs += get_variable(get_option('default_library')
 				 + '_rte_' + d)
 		endforeach
-		dep_objs += lib_execinfo
 
 		link_libs = []
 		if get_option('default_library') == 'static'
