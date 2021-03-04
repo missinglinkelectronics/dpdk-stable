@@ -174,7 +174,7 @@ def module_is_loaded(module):
     loaded_modules = sysfs_mods
 
     # add built-in modules as loaded
-    release = platform.uname().release
+    release = platform.release()
     filename = os.path.join("/lib/modules/", release, "modules.builtin")
     if os.path.exists(filename):
         try:
