@@ -156,6 +156,7 @@ struct mlx5_rxq_data {
 	uint32_t tunnel; /* Tunnel information. */
 	uint64_t flow_meta_mask;
 	int32_t flow_meta_offset;
+	uint32_t flow_meta_port_mask;
 } __rte_cache_aligned;
 
 enum mlx5_rxq_obj_type {
