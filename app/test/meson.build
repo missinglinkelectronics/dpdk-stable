@@ -378,7 +378,7 @@ if dpdk_conf.has('RTE_LIBRTE_COMPRESSDEV')
 	endif
 endif
 
-if dpdk_conf.has('RTE_LIBRTE_PMD_CRYPTO_SCHEDULER')
+if dpdk_conf.has('RTE_LIBRTE_CRYPTO_SCHEDULER_PMD')
 	driver_test_names += 'cryptodev_scheduler_autotest'
 	test_deps += 'pmd_crypto_scheduler'
 endif
