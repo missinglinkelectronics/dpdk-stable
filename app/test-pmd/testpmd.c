@@ -2542,9 +2542,6 @@ stop_port(portid_t pid)
 						RTE_PORT_HANDLING) == 0)
 			continue;
 
-		if (port->flow_list)
-			port_flow_flush(pi);
-
 		rte_eth_dev_stop(pi);
 
 		if (rte_atomic16_cmpset(&(port->port_status),
