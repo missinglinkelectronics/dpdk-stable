@@ -2919,3 +2919,311 @@ Tested Platforms
 * vdev_netvsc
 
    * hot-removal of VF driver can fail
+
+19.11.7 Release Notes
+---------------------
+
+19.11.7 Fixes
+~~~~~~~~~~~~~
+
+* app/crypto-perf: fix CSV output format
+* app/crypto-perf: fix latency CSV output
+* app/crypto-perf: fix spelling in output
+* app/crypto-perf: remove always true condition
+* app/eventdev: adjust event count order for pipeline test
+* app/eventdev: fix SMP barrier in performance test
+* app/eventdev: remove redundant enqueue in burst Tx
+* app: fix build with extra include paths
+* app/procinfo: fix check on xstats-ids
+* app/procinfo: fix _filters stats reporting
+* app/procinfo: remove useless memset
+* app/testpmd: avoid exit without terminal restore
+* app/testpmd: fix help of metering commands
+* app/testpmd: fix IP checksum calculation
+* app/testpmd: fix key for RSS flow rule
+* app/testpmd: fix max Rx packet length for VLAN packets
+* app/testpmd: fix packets dump overlapping
+* app/testpmd: release flows left before port stop
+* build: fix linker flags on Windows
+* build: fix plugin load on static build
+* build: fix scheduler macro definition for meson
+* build: force pkg-config for dependency detection
+* build: provide suitable error for "both" libraries option
+* common/mlx5: fix pointer cast on Windows
+* common/octeontx2: fix build with SVE
+* crypto/dpaa2_sec: fix memory allocation check
+* doc: fix mark action zero value in mlx5 guide
+* doc: fix product link in hns3 guide
+* doc: fix QinQ flow rules in testpmd guide
+* doc: update flow mark action in mlx5 guide
+* eal/arm: fix debug build with gcc for 128-bit atomics
+* eal: fix MCS lock header include
+* eal: fix reciprocal header include
+* eal/linux: fix handling of error events from epoll
+* ethdev: fix max Rx packet length check
+* ethdev: fix missing header include
+* eventdev: fix a return value comment
+* examples/eventdev: add info output for main core
+* examples/eventdev: check CPU core enabling
+* examples/eventdev: move ethdev stop to the end
+* examples/l3fwd: remove limitation on Tx queue count
+* fbarray: fix overlap check
+* fib: fix missing header includes
+* ip_frag: remove padding length of fragment
+* ipsec: fix missing header include
+* lib/power: fix make build error
+* lpm: fix vector IPv4 lookup
+* mbuf: add C++ include guard for dynamic fields header
+* mbuf: fix missing header include
+* mem: exclude unused memory from core dump
+* net/af_xdp: remove useless assignment
+* net/avp: remove always true condition
+* net/bnxt: disable end of packet padding for Rx
+* net/bnxt: fix cleanup on mutex init failure
+* net/bnxt: fix doorbell write ordering
+* net/bnxt: fix fallback mbuf allocation logic
+* net/bnxt: fix FW version log
+* net/bnxt: fix max rings computation
+* net/bnxt: fix memory leak when mapping fails
+* net/bnxt: fix null termination of Rx mbuf chain
+* net/bnxt: fix outer UDP checksum Rx offload capability
+* net/bnxt: fix Rx rings in RSS redirection table
+* net/bnxt: fix VNIC config on Rx queue stop
+* net/bnxt: fix VNIC RSS configure function
+* net/bnxt: propagate FW command failure to application
+* net/bnxt: release HWRM lock in error
+* net/bonding: fix PCI address comparison on non-PCI ports
+* net/bonding: fix port id validity check on parsing
+* net/bonding: remove local variable shadowing outer one
+* net/cxgbe: fix jumbo frame flag condition
+* net/dpaa2: fix jumbo frame flag condition for MTU set
+* net/dpaa: fix jumbo frame flag condition for MTU set
+* net/e1000: fix flow control mode setting
+* net/e1000: fix jumbo frame flag condition for MTU set
+* net/ena: flush Rx buffers memory pool cache
+* net/enetc: fix jumbo frame flag condition for MTU set
+* net/enic: fix filter log message
+* net/enic: fix filter type used for flow API
+* net/hns3: adjust format specifier for enum
+* net/hns3: fix data overwriting during register dump
+* net/hns3: fix dump register out of range
+* net/hns3: fix error code in xstats
+* net/hns3: fix firmware exceptions by concurrent commands
+* net/hns3: fix flow director rule residue on malloc failure
+* net/hns3: fix interception with flow director
+* net/hns3: fix jumbo frame flag condition for MTU set
+* net/hns3: fix memory leak on secondary process exit
+* net/hns3: fix register length when dumping registers
+* net/hns3: fix Rx/Tx errors stats
+* net/hns3: fix VF query link status in dev init
+* net/hns3: fix VF reset on mailbox failure
+* net/hns3: fix xstats with id and names
+* net/hns3: remove MPLS from supported flow items
+* net/hns3: use new opcode for clearing hardware resource
+* net/hns3: validate requested maximum Rx frame length
+* net/i40e: add null input checks
+* net/i40e: fix global register recovery
+* net/i40e: fix jumbo frame flag condition
+* net/i40e: fix L4 checksum flag
+* net/i40e: fix returned code for RSS hardware failure
+* net/i40e: fix Rx bytes statistics
+* net/i40e: fix stats counters
+* net/i40e: fix VLAN stripping in VF
+* net/i40e: fix X722 for 802.1ad frames ability
+* net/iavf: fix jumbo frame flag condition
+* net/iavf: fix vector mapping with queue
+* net/ice/base: fix memory handling
+* net/ice/base: fix null pointer dereference
+* net/ice/base: fix tunnel destroy
+* net/ice: check Rx queue number on RSS init
+* net/ice: disable IPv4 checksum offload in vector Tx
+* net/ice: enlarge Rx queue rearm threshold to 64
+* net/ice: fix jumbo frame flag condition
+* net/ice: fix outer checksum flags
+* net/ice: fix outer UDP Tx checksum offload
+* net/ice: fix RSS lookup table initialization
+* net/ipn3ke: fix jumbo frame flag condition for MTU set
+* net/ixgbe: add new flag of stripped VLAN for NEON
+* net/ixgbe: detect failed VF MTU set
+* net/ixgbe: disable NFS filtering
+* net/ixgbe: enable IXGBE NEON vector PMD when CHECKSUM need to checksum
+* net/ixgbe: fix configuration of max frame size
+* net/ixgbe: fix flex bytes flow director rule
+* net/ixgbe: fix jumbo frame flag condition
+* net/ixgbe: fix UDP zero checksum on x86
+* net/ixgbe: support bad checksum flag for NEON
+* net/ixgbe: support good checksum flag for NEON
+* net/liquidio: fix jumbo frame flag condition for MTU set
+* net/mlx4: fix handling of probing failure
+* net/mlx4: fix port attach in secondary process
+* net/mlx5: fix comparison sign in flow engine
+* net/mlx5: fix crash on secondary process port close
+* net/mlx5: fix leak on Rx queue creation failure
+* net/mlx5: fix leak on Tx queue creation failure
+* net/mlx5: refuse empty VLAN in flow pattern
+* net/mvneta: check allocation in Rx queue flush
+* net/mvpp2: fix frame size checking
+* net/mvpp2: fix stack corruption
+* net/mvpp2: remove CRC length from MRU validation
+* net/mvpp2: remove debug log on fast-path
+* net/mvpp2: remove VLAN flush
+* net/netvsc: ignore unsupported packet on sync command
+* net/nfp: fix jumbo frame flag condition for MTU set
+* net/nfp: read chip model from PluDevice register
+* net/octeontx2: fix corruption in segments list
+* net/octeontx2: fix jumbo frame flag condition for MTU
+* net/octeontx2: fix PF flow action for Tx
+* net/octeontx: fix build with SVE
+* net/pcap: fix byte stats for drop Tx
+* net/pcap: fix infinite Rx with large files
+* net/pcap: remove local variable shadowing outer one
+* net/qede: fix jumbo frame flag condition for MTU set
+* net/qede: fix promiscuous enable
+* net/sfc: fix generic byte statistics to exclude FCS bytes
+* net/sfc: fix jumbo frame flag condition for MTU set
+* net/sfc: fix TSO and checksum offloads for EF10
+* net/thunderx: fix jumbo frame flag condition for MTU set
+* net/virtio-user: fix run closing stdin and close callfd
+* power: clean up includes
+* power: create guest channel public header file
+* power: export guest channel header file
+* power: fix missing header includes
+* power: make channel message functions public
+* power: rename constants
+* power: rename public structs
+* Revert "app/testpmd: release flows left before port stop"
+* rib: fix insertion in some cases
+* rib: fix missing header include
+* rib: fix missing header includes
+* (tag: 19.11.7-20.11-21.02-rc2) app/testpmd: fix setting maximum packet length
+* (tag: 19.11.7-20.11-21.02-rc2-backports) net/mlx5: fix port attach in secondary process
+* (tag: 19.11.7-21.02rc2-21.02-rc3-backports) net/mlx5: fix VXLAN decap on non-VXLAN flow
+* (tag: 19.11.7-21.02rc2-21.02-rc3) mempool: fix panic on dump or audit
+* (tag: 19.11.7-21.02rc3-21.02-backports) mem: fix build
+* (tag: 19.11.7-21.02rc3-21.02) usertools: fix binding built-in kernel driver
+* (tag: v19.11.7-rc1) version: 19.11.7-rc1
+* test/distributor: fix return buffer queue overload
+* test/event_crypto: set cipher operation in transform
+* test: fix buffer overflow in Tx burst
+* test: fix terminal settings on exit
+* test/ipsec: fix result code for not supported
+* test/mcslock: remove unneeded per lcore copy
+* usertools: fix Python compatibility issue
+* vhost: fix packed ring dequeue offloading
+* vhost: fix vid allocation race
+
+19.11.7 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Red Hat(R) Testing
+
+   * Platform
+
+      * RHEL 8
+      * Kernel 4.18
+      * Qemu 5.2
+      * X540-AT2 NIC(ixgbe, 10G)
+      * Tested on 19.11.7-RC1
+
+   * Tests
+
+      * Guest with device assignment(PF) throughput testing(1G hugepage size): PASS
+      * Guest with device assignment(PF) throughput testing(2M hugepage size) : PASS
+      * Guest with device assignment(VF) throughput testing: PASS
+      * PVP (host dpdk testpmd as vswitch) 1Q: throughput testing: PASS
+      * PVP vhost-user 2Q throughput testing: PASS
+      * PVP vhost-user 1Q - cross numa node throughput testing: PASS
+      * Guest with vhost-user 2 queues throughput testing: PASS
+      * vhost-user reconnect with dpdk-client, qemu-server: qemu reconnect: PASS
+      * vhost-user reconnect with dpdk-client, qemu-server: ovs reconnect: PASS
+      * PVP 1Q live migration testing: PASS
+      * PVP 1Q cross numa node live migration testing: PASS
+      * Guest with ovs+dpdk+vhost-user 1Q live migration testing: PASS
+      * Guest with ovs+dpdk+vhost-user 1Q live migration testing (2M): PASS
+      * Guest with ovs+dpdk+vhost-user 2Q live migration testing: PASS
+      * Host PF + DPDK testing: PASS
+      * Host VF + DPDK testing: PASS
+
+* Nvidia (R) Testing
+
+   * functional tests on Mellanox hardware
+
+      * NIC: ConnectX-4 Lx / OS: RHEL7.4 / Driver: MLNX_OFED_LINUX-5.2-2.2.0.0 Firmware: 14.29.2002
+      * NIC: ConnectX-5 / OS: RHEL7.4 / Driver: MLNX_OFED_LINUX-5.2-2.2.0.0 Firmware: 16.29.2002
+
+   * Basic functionality:
+
+      * Send and receive multiple types of traffic.
+      * testpmd xstats counter test.
+      * testpmd timestamp test.
+      * Changing/checking link status through testpmd.
+      * RTE flow tests: Items: eth / vlan / ipv4 / ipv6 / tcp / udp / icmp / gre / nvgre / vxlan ip in ip / mplsoudp / mplsogre
+      * Actions: drop / queue / rss / mark / flag / jump / count / raw_encap / raw_decap / vxlan_encap / vxlan_decap / NAT / dec_ttl
+      * Some RSS tests.
+      * VLAN filtering, stripping and insertion tests.
+      * Checksum and TSO tests.
+      * ptype tests.
+      * link_status_interrupt example application tests.
+      * l3fwd-power example application tests.
+      * Multi-process example applications tests.
+
+   * Compilation tests with multiple configurations in the following OS/driver combinations are also passing:
+
+      * Ubuntu 20.04.2 with MLNX_OFED_LINUX-5.2-2.2.0.0.
+      * Ubuntu 20.04.2 with rdma-core master (a1a9ffb).
+      * Ubuntu 20.04.2 with rdma-core v28.0.
+      * Ubuntu 18.04.5 with rdma-core v17.1.
+      * Ubuntu 18.04.5 with rdma-core master (a1a9ffb) (i386).
+      * Ubuntu 16.04.7 with rdma-core v22.7.
+      * Fedora 32 with rdma-core v33.0.
+      * CentOS 7 7.9.2009 with rdma-core master (a1a9ffb).
+      * CentOS 7 7.9.2009 with MLNX_OFED_LINUX-5.2-2.2.0.0.
+      * CentOS 8 8.3.2011 with rdma-core master (a1a9ffb).
+      * OpenSUSE Leap 15.2 with rdma-core v27.1.
+
+* Intel(R) Testing
+
+   * Basic Intel NIC (ixgbe, i40e) testing
+
+      * PF (i40e)
+      * PF (ixgbe)
+      * VF (i40e)
+      * VF (ixgbe)
+      * Compile Testing
+      * Intel NIC single core/NIC performance
+
+   * Basic cryptodev and virtio testing
+
+      * vhost/virtio basic loopback, PVP and performance test
+      * cryptodev Function/Performance
+
+* Intel(R) Testing with Open vSwitch
+
+   * OVS testing with OVS 2.14.3
+
+      * I40e: Performance Tests Jumbo frames RSS
+      * Niantic: Performance Tests Jumbo frames RSS
+      * Ice: Performance Tests Jumbo frames RSS
+      * Vhost: Port addition, deletion, jumbo frames and RSS multi-queue tests.
+
+* Canonical(R) Testing
+
+   * Build tests on Ubuntu 21.04
+   * OVS-DPDK tests on x86_64
+
+      * performance tests
+
+         * test guest-openvswitch for OVS-5CPU  => Pass
+         * test guest-dpdk-vhost-user-client-multiq for OVSDPDK-VUC  => Pass
+
+      * VUC endurance tests
+
+         * start stop guests (client)  => Pass
+         * add/remove ports (client)  => Pass
+
+19.11.7 Known Issues
+~~~~~~~~~~~~~~~~~~~~
+
+* The UDP fragmentation offload feature of Virtio-net device can not be turned on in the VM. Bug: https://bugzilla.kernel.org/show_bug.cgi?id=207075
+
+* mlx5 VLAN packets will not do RSS. Bug: https://bugs.dpdk.org/show_bug.cgi?id=661
