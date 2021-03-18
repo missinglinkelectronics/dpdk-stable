@@ -169,8 +169,6 @@ static inline uint16_t bnxt_tpa_start_agg_id(struct bnxt *bp,
 	 ((rxcmp1)->errors_v2 & \
 	  rte_cpu_to_le_32(RX_PKT_CMPL_ERRORS_L4_CS_ERROR))
 
-#define BNXT_RX_POST_THRESH	32
-
 enum pkt_hash_types {
 	PKT_HASH_TYPE_NONE,	/* Undefined type */
 	PKT_HASH_TYPE_L2,	/* Input: src_MAC, dest_MAC */
