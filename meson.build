@@ -64,9 +64,14 @@ configure_file(output: build_cfg,
 		install_dir: join_paths(get_option('includedir'),
 				get_option('include_subdir_arch')))
 
+platform_flags = []
+if not is_windows
+       platform_flags += ['-Wl,--export-dynamic'] # ELF only
+endif
+
 # for static builds, include the drivers as libs and we need to "whole-archive"
 # them.
-dpdk_drivers = ['-Wl,--whole-archive'] + dpdk_drivers + ['-Wl,--no-whole-archive']
+dpdk_drivers = ['-Wl,--whole-archive'] + dpdk_drivers + ['-Wl,--no-whole-archive'] + platform_flags
 
 pkg = import('pkgconfig')
 pkg_extra_cflags = ['-include', 'rte_config.h'] + machine_args
