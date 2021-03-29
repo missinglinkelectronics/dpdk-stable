@@ -19036,7 +19036,8 @@ cmd_show_rx_tx_desc_status_parsed(void *parsed_result,
 		rc = rte_eth_rx_descriptor_status(res->cmd_pid, res->cmd_qid,
 					     res->cmd_did);
 		if (rc < 0) {
-			printf("Invalid queueid = %d\n", res->cmd_qid);
+			printf("Invalid input: queue id = %d, desc id = %d\n",
+			       res->cmd_qid, res->cmd_did);
 			return;
 		}
 		if (rc == RTE_ETH_RX_DESC_AVAIL)
@@ -19049,7 +19050,8 @@ cmd_show_rx_tx_desc_status_parsed(void *parsed_result,
 		rc = rte_eth_tx_descriptor_status(res->cmd_pid, res->cmd_qid,
 					     res->cmd_did);
 		if (rc < 0) {
-			printf("Invalid queueid = %d\n", res->cmd_qid);
+			printf("Invalid input: queue id = %d, desc id = %d\n",
+			       res->cmd_qid, res->cmd_did);
 			return;
 		}
 		if (rc == RTE_ETH_TX_DESC_FULL)
