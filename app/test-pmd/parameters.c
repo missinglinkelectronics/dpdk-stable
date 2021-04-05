@@ -694,7 +694,7 @@ launch_args_parse(int argc, char** argv)
 		case 0: /*long options */
 			if (!strcmp(lgopts[opt_idx].name, "help")) {
 				usage(argv[0]);
-				rte_exit(EXIT_SUCCESS, "Displayed help\n");
+				exit(EXIT_SUCCESS);
 			}
 #ifdef RTE_LIBRTE_CMDLINE
 			if (!strcmp(lgopts[opt_idx].name, "interactive")) {
@@ -1356,7 +1356,7 @@ launch_args_parse(int argc, char** argv)
 			break;
 		case 'h':
 			usage(argv[0]);
-			rte_exit(EXIT_SUCCESS, "Displayed help\n");
+			exit(EXIT_SUCCESS);
 			break;
 		default:
 			usage(argv[0]);
