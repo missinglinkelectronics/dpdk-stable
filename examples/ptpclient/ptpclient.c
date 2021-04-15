@@ -784,5 +784,8 @@ main(int argc, char *argv[])
 	/* Call lcore_main on the master core only. */
 	lcore_main();
 
+	/* clean up the EAL */
+	rte_eal_cleanup();
+
 	return 0;
 }

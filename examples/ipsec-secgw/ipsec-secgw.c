@@ -2543,5 +2543,7 @@ main(int32_t argc, char **argv)
 			return -1;
 	}
 
+	/* clean up the EAL */
+	rte_eal_cleanup();
 	return 0;
 }
