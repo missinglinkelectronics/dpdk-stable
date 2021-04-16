@@ -3227,3 +3227,49 @@ Tested Platforms
 * The UDP fragmentation offload feature of Virtio-net device can not be turned on in the VM. Bug: https://bugzilla.kernel.org/show_bug.cgi?id=207075
 
 * mlx5 VLAN packets will not do RSS. Bug: https://bugs.dpdk.org/show_bug.cgi?id=661
+
+19.11.8 Release Notes
+---------------------
+
+19.11.8 Fixes
+~~~~~~~~~~~~~
+
+* Regenerate meson.build changes required due to reverts
+* Revert "Revert "Revert "build: always link whole DPDK static libraries"""
+* Revert "Revert "Revert "build/pkg-config: improve static linking flags"""
+* Revert "Revert "Revert "build/pkg-config: move pkg-config file creation"""
+* Revert "Revert "Revert "build/pkg-config: output drivers first for static build"""
+* Revert "Revert "Revert "build/pkg-config: prevent overlinking"""
+* Revert "Revert "Revert "devtools: test static linkage with pkg-config"""
+
+19.11.8 Validation
+~~~~~~~~~~~~~~~~~~
+
+* Intel(R) Testing
+
+   * Builds
+
+   * Basic Intel NIC (ixgbe, i40e) testing
+
+      * PF (i40e)
+      * PF (ixgbe)
+      * VF (i40e)
+      * VF (ixgbe)
+      * Compile Testing
+      * Intel NIC single core/NIC performance
+
+   * Basic cryptodev and virtio testing
+
+      * vhost/virtio basic loopback, PVP and performance test
+      * cryptodev Function/Performance
+
+* Intel(R) Testing with Open vSwitch
+
+   * OVS build and link testing with OVS 2.13 (make based)
+   * OVS build and link testing with OVS 2.14 (make based)
+
+* Canonical(R) Testing
+
+   * Build tests of DPDK & OVS 2.13.3 on Ubuntu 20.04 (meson based)
+   * Build tests of DPDK & OVS 2.13.3 on Ubuntu 20.10 (meson based)
+   * OVS-DPDK tests on x86_64
