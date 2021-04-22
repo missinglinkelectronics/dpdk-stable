@@ -3447,6 +3447,8 @@ bond_remove(struct rte_vdev_device *dev)
 	rte_bitmap_free(internals->vlan_filter_bmp);
 	rte_free(internals->vlan_filter_bmpmem);
 
+	if (internals->kvlist != NULL)
+		rte_kvargs_free(internals->kvlist);
 	rte_eth_dev_release_port(eth_dev);
 
 	return 0;
