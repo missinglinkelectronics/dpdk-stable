@@ -386,8 +386,7 @@ hns3_dev_handle_mbx_msg(struct hns3_hw *hw)
 			hns3_handle_link_change_event(hw, req);
 			break;
 		default:
-			hns3_err(hw,
-				 "VF received unsupported(%d) mbx msg from PF",
+			hns3_err(hw, "received unsupported(%d) mbx msg",
 				 req->msg[0]);
 			break;
 		}
