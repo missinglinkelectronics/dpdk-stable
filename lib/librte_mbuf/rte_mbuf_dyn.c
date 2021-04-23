@@ -114,8 +114,10 @@ init_shared_mem(void)
 	} else {
 		mz = rte_memzone_lookup(RTE_MBUF_DYN_MZNAME);
 	}
-	if (mz == NULL)
+	if (mz == NULL) {
+		RTE_LOG(ERR, MBUF, "Failed to get mbuf dyn shared memory\n");
 		return -1;
+	}
 
 	shm = mz->addr;
 
@@ -524,7 +526,11 @@ void rte_mbuf_dyn_dump(FILE *out)
 	size_t i;
 
 	rte_mcfg_tailq_write_lock();
-	init_shared_mem();
+	if (init_shared_mem() < 0) {
+		rte_mcfg_tailq_write_unlock();
+		return;
+	}
+
 	fprintf(out, "Reserved fields:\n");
 	mbuf_dynfield_list = RTE_TAILQ_CAST(
 		mbuf_dynfield_tailq.head, mbuf_dynfield_list);
