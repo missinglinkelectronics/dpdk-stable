@@ -349,7 +349,7 @@ hns3_vlan_filter_configure(struct hns3_adapter *hns, uint16_t vlan_id, int on)
 	 * When port base vlan enabled, we use port base vlan as the vlan
 	 * filter condition. In this case, we don't update vlan filter table
 	 * when user add new vlan or remove exist vlan, just update the
-	 * vlan list. The vlan id in vlan list will be writen in vlan filter
+	 * vlan list. The vlan id in vlan list will be written in vlan filter
 	 * table until port base vlan disabled
 	 */
 	if (hw->port_base_vlan_cfg.state == HNS3_PORT_BASE_VLAN_DISABLE) {
@@ -3459,8 +3459,8 @@ hns3_rx_buffer_calc(struct hns3_hw *hw, struct hns3_pkt_buf_alloc *buf_alloc)
 	 * For different application scenes, the enabled port number, TC number
 	 * and no_drop TC number are different. In order to obtain the better
 	 * performance, software could allocate the buffer size and configure
-	 * the waterline by tring to decrease the private buffer size according
-	 * to the order, namely, waterline of valided tc, pfc disabled tc, pfc
+	 * the waterline by trying to decrease the private buffer size according
+	 * to the order, namely, waterline of valid tc, pfc disabled tc, pfc
 	 * enabled tc.
 	 */
 	if (hns3_rx_buf_calc_all(hw, false, buf_alloc))
