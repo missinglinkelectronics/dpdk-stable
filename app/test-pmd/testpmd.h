@@ -404,7 +404,6 @@ extern uint64_t noisy_lkup_num_reads;
 extern uint64_t noisy_lkup_num_reads_writes;
 
 extern uint8_t dcb_config;
-extern uint8_t dcb_test;
 
 extern uint16_t mbuf_data_size; /**< Mbuf data space size. */
 extern uint32_t param_total_num_mbufs;
