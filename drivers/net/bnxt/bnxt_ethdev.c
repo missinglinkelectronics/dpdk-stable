@@ -1114,8 +1114,6 @@ static void bnxt_mac_addr_remove_op(struct rte_eth_dev *eth_dev,
 				STAILQ_REMOVE(&vnic->filter, filter,
 						bnxt_filter_info, next);
 				bnxt_hwrm_clear_l2_filter(bp, filter);
-				filter->mac_index = INVALID_MAC_INDEX;
-				memset(&filter->l2_addr, 0, RTE_ETHER_ADDR_LEN);
 				bnxt_free_filter(bp, filter);
 			}
 			filter = temp_filter;
@@ -1162,7 +1160,6 @@ static int bnxt_add_mac_filter(struct bnxt *bp, struct bnxt_vnic_info *vnic,
 		else
 			STAILQ_INSERT_TAIL(&vnic->filter, filter, next);
 	} else {
-		memset(&filter->l2_addr, 0, RTE_ETHER_ADDR_LEN);
 		bnxt_free_filter(bp, filter);
 	}
 
@@ -1921,7 +1918,6 @@ static int bnxt_add_vlan_filter(struct bnxt *bp, uint16_t vlan_id)
 		/* Free the newly allocated filter as we were
 		 * not able to create the filter in hardware.
 		 */
-		filter->fw_l2_filter_id = UINT64_MAX;
 		bnxt_free_filter(bp, filter);
 		return rc;
 	}
@@ -1976,7 +1972,6 @@ static int bnxt_del_dflt_mac_filter(struct bnxt *bp,
 				STAILQ_REMOVE(&vnic->filter, filter,
 					      bnxt_filter_info, next);
 				bnxt_free_filter(bp, filter);
-				filter->fw_l2_filter_id = UINT64_MAX;
 			}
 			return rc;
 		}
@@ -2990,14 +2985,11 @@ bnxt_cfg_ntuple_filter(struct bnxt *bp,
 
 		STAILQ_REMOVE(&vnic->filter, mfilter, bnxt_filter_info, next);
 		bnxt_free_filter(bp, mfilter);
-		mfilter->fw_l2_filter_id = -1;
 		bnxt_free_filter(bp, bfilter);
-		bfilter->fw_l2_filter_id = -1;
 	}
 
 	return 0;
 free_filter:
-	bfilter->fw_l2_filter_id = -1;
 	bnxt_free_filter(bp, bfilter);
 	return ret;
 }
@@ -3395,7 +3387,6 @@ bnxt_fdir_filter(struct rte_eth_dev *dev,
 			STAILQ_REMOVE(&vnic->filter, match,
 				      bnxt_filter_info, next);
 			bnxt_free_filter(bp, match);
-			filter->fw_l2_filter_id = -1;
 			bnxt_free_filter(bp, filter);
 		}
 		break;
@@ -3428,7 +3419,6 @@ bnxt_fdir_filter(struct rte_eth_dev *dev,
 	return ret;
 
 free_filter:
-	filter->fw_l2_filter_id = -1;
 	bnxt_free_filter(bp, filter);
 	return ret;
 }
