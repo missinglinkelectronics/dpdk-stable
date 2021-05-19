@@ -7918,8 +7918,15 @@ __flow_dv_apply(struct rte_eth_dev *dev, struct rte_flow *flow,
 		n = dv->actions_n;
 		if (dev_flow->actions & MLX5_FLOW_ACTION_DROP) {
 			if (dev_flow->transfer) {
-				dv->actions[n++] = priv->sh->esw_drop_action;
+				assert(priv->sh->dr_drop_action);
+				dv->actions[n++] = priv->sh->dr_drop_action;
 			} else {
+#ifdef HAVE_MLX5DV_DR
+				/* DR supports drop action placeholder. */
+				assert(priv->sh->dr_drop_action);
+				dv->actions[n++] = priv->sh->dr_drop_action;
+#else
+				/* For DV we use the explicit drop queue. */
 				dv->hrxq = mlx5_hrxq_drop_new(dev);
 				if (!dv->hrxq) {
 					rte_flow_error_set
@@ -7930,6 +7937,7 @@ __flow_dv_apply(struct rte_eth_dev *dev, struct rte_flow *flow,
 					goto error;
 				}
 				dv->actions[n++] = dv->hrxq->action;
+#endif
 			}
 		} else if (dev_flow->actions &
 			   (MLX5_FLOW_ACTION_QUEUE | MLX5_FLOW_ACTION_RSS)) {
