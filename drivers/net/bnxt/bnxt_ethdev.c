@@ -942,6 +942,73 @@ static int bnxt_dev_set_link_down_op(struct rte_eth_dev *eth_dev)
 	return 0;
 }
 
+static void bnxt_ptp_get_current_time(void *arg)
+{
+	struct bnxt *bp = arg;
+	struct bnxt_ptp_cfg *ptp = bp->ptp_cfg;
+	int rc;
+
+	rc = is_bnxt_in_error(bp);
+	if (rc)
+		return;
+
+	if (!ptp)
+		return;
+
+	bnxt_hwrm_port_ts_query(bp, BNXT_PTP_FLAGS_CURRENT_TIME,
+				&ptp->current_time);
+
+	rc = rte_eal_alarm_set(US_PER_S, bnxt_ptp_get_current_time, (void *)bp);
+	if (rc != 0) {
+		PMD_DRV_LOG(ERR, "Failed to re-schedule PTP alarm\n");
+		bp->flags &= ~BNXT_FLAGS_PTP_ALARM_SCHEDULED;
+	}
+}
+
+static int bnxt_schedule_ptp_alarm(struct bnxt *bp)
+{
+	struct bnxt_ptp_cfg *ptp = bp->ptp_cfg;
+	int rc;
+
+	if (bp->flags & BNXT_FLAGS_PTP_ALARM_SCHEDULED)
+		return 0;
+
+	bnxt_hwrm_port_ts_query(bp, BNXT_PTP_FLAGS_CURRENT_TIME,
+				&ptp->current_time);
+
+	rc = rte_eal_alarm_set(US_PER_S, bnxt_ptp_get_current_time, (void *)bp);
+	return rc;
+}
+
+static void bnxt_cancel_ptp_alarm(struct bnxt *bp)
+{
+	if (bp->flags & BNXT_FLAGS_PTP_ALARM_SCHEDULED) {
+		rte_eal_alarm_cancel(bnxt_ptp_get_current_time, (void *)bp);
+		bp->flags &= ~BNXT_FLAGS_PTP_ALARM_SCHEDULED;
+	}
+}
+
+static void bnxt_ptp_stop(struct bnxt *bp)
+{
+	bnxt_cancel_ptp_alarm(bp);
+	bp->flags &= ~BNXT_FLAGS_PTP_TIMESYNC_ENABLED;
+}
+
+static int bnxt_ptp_start(struct bnxt *bp)
+{
+	int rc;
+
+	rc = bnxt_schedule_ptp_alarm(bp);
+	if (rc != 0) {
+		PMD_DRV_LOG(ERR, "Failed to schedule PTP alarm\n");
+	} else {
+		bp->flags |= BNXT_FLAGS_PTP_TIMESYNC_ENABLED;
+		bp->flags |= BNXT_FLAGS_PTP_ALARM_SCHEDULED;
+	}
+
+	return rc;
+}
+
 /* Unload the driver, release resources */
 static void bnxt_dev_stop_op(struct rte_eth_dev *eth_dev)
 {
@@ -961,6 +1028,9 @@ static void bnxt_dev_stop_op(struct rte_eth_dev *eth_dev)
 	rte_intr_disable(intr_handle);
 
 	bnxt_cancel_fw_health_check(bp);
+
+	if (BNXT_THOR_PTP_TIMESYNC_ENABLED(bp))
+		bnxt_cancel_ptp_alarm(bp);
 
 	/* Do not bring link down during reset recovery */
 	if (!is_bnxt_in_error(bp)) {
@@ -1431,6 +1501,9 @@ static int bnxt_reta_query_op(struct rte_eth_dev *eth_dev,
 			reta_conf[idx].reta[sft] = qid;
 		}
 	}
+
+	if (BNXT_THOR_PTP_TIMESYNC_ENABLED(bp))
+		bnxt_schedule_ptp_alarm(bp);
 
 	return 0;
 }
@@ -3605,8 +3678,10 @@ bnxt_timesync_enable(struct rte_eth_dev *dev)
 
 	if (!BNXT_CHIP_THOR(bp))
 		bnxt_map_ptp_regs(bp);
+	else
+		rc = bnxt_ptp_start(bp);
 
-	return 0;
+	return rc;
 }
 
 static int
@@ -3626,6 +3701,8 @@ bnxt_timesync_disable(struct rte_eth_dev *dev)
 
 	if (!BNXT_CHIP_THOR(bp))
 		bnxt_unmap_ptp_regs(bp);
+	else
+		bnxt_ptp_stop(bp);
 
 	return 0;
 }
