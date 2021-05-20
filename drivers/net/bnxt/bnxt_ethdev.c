@@ -5105,7 +5105,7 @@ bnxt_dev_uninit(struct rte_eth_dev *eth_dev)
 
 	if (eth_dev->data->dev_started)
 		bnxt_dev_close_op(eth_dev);
-	bnxt_hwrm_free_vf_info(bp);
+	bnxt_free_vf_info(bp);
 	eth_dev->dev_ops = NULL;
 	eth_dev->rx_pkt_burst = NULL;
 	eth_dev->tx_pkt_burst = NULL;
