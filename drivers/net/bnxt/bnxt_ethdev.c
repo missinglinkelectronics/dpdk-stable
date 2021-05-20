@@ -2417,14 +2417,13 @@ bnxt_rx_queue_count_op(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 
 		switch (cmpl_type) {
 		case CMPL_BASE_TYPE_RX_L2:
-		case CMPL_BASE_TYPE_RX_L2_V2:
 			agg_cnt = BNXT_RX_L2_AGG_BUFS(rxcmp);
 			raw_cons = raw_cons + CMP_LEN(cmpl_type) + agg_cnt;
 			desc++;
 			break;
 
 		case CMPL_BASE_TYPE_RX_TPA_END:
-			if (BNXT_CHIP_P5(rxq->bp)) {
+			if (BNXT_CHIP_THOR(rxq->bp)) {
 				struct rx_tpa_v2_end_cmpl_hi *p5_tpa_end;
 
 				p5_tpa_end = (void *)rxcmp;
@@ -3474,12 +3473,12 @@ static int bnxt_get_tx_ts(struct bnxt *bp, uint64_t *ts)
 static int bnxt_clr_rx_ts(struct bnxt *bp, uint64_t *last_ts)
 {
 	struct bnxt_ptp_cfg *ptp = bp->ptp_cfg;
-	struct bnxt_pf_info *pf = bp->pf;
+	struct bnxt_pf_info *pf = &bp->pf;
 	uint16_t port_id;
 	int i = 0;
 	uint32_t fifo;
 
-	if (!ptp || (bp->flags & BNXT_FLAG_CHIP_P5))
+	if (!ptp || BNXT_CHIP_THOR(bp))
 		return -EINVAL;
 
 	port_id = pf->port_id;

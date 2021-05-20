@@ -5108,7 +5108,7 @@ int bnxt_hwrm_poll_ver_get(struct bnxt *bp)
 	bp->max_req_len = HWRM_MAX_REQ_LEN;
 	bp->hwrm_cmd_timeout = SHORT_HWRM_CMD_TIMEOUT;
 
-	HWRM_PREP(&req, HWRM_VER_GET, BNXT_USE_CHIMP_MB);
+	HWRM_PREP(req, VER_GET, BNXT_USE_CHIMP_MB);
 	req.hwrm_intf_maj = HWRM_VERSION_MAJOR;
 	req.hwrm_intf_min = HWRM_VERSION_MINOR;
 	req.hwrm_intf_upd = HWRM_VERSION_UPDATE;
