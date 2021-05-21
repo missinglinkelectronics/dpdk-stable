@@ -2522,42 +2522,77 @@ bnxt_rx_queue_count_op(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 static int
 bnxt_rx_descriptor_status_op(void *rx_queue, uint16_t offset)
 {
-	struct bnxt_rx_queue *rxq = (struct bnxt_rx_queue *)rx_queue;
-	struct bnxt_rx_ring_info *rxr;
+	struct bnxt_rx_queue *rxq = rx_queue;
 	struct bnxt_cp_ring_info *cpr;
 	struct bnxt_sw_rx_bd *rx_buf;
+	struct bnxt_rx_ring_info *rxr;
+	uint32_t desc, raw_cons;
+	struct bnxt *bp = rxq->bp;
 	struct rx_pkt_cmpl *rxcmp;
-	uint32_t cons, cp_cons;
 	int rc;
 
-	if (!rxq)
-		return -EINVAL;
-
-	rc = is_bnxt_in_error(rxq->bp);
+	rc = is_bnxt_in_error(bp);
 	if (rc)
 		return rc;
-
-	cpr = rxq->cp_ring;
-	rxr = rxq->rx_ring;
 
 	if (offset >= rxq->nb_rx_desc)
 		return -EINVAL;
 
-	cons = RING_CMP(cpr->cp_ring_struct, offset);
-	cp_cons = cpr->cp_raw_cons;
-	rxcmp = (struct rx_pkt_cmpl *)&cpr->cp_desc_ring[cons];
+	rxr = rxq->rx_ring;
+	cpr = rxq->cp_ring;
 
-	if (cons > cp_cons) {
-		if (CMPL_VALID(rxcmp, cpr->valid))
-			return RTE_ETH_RX_DESC_DONE;
-	} else {
-		if (CMPL_VALID(rxcmp, !cpr->valid))
-			return RTE_ETH_RX_DESC_DONE;
+	raw_cons = cpr->cp_raw_cons;
+	desc = 0;
+	while (1) {
+		uint32_t agg_cnt, cons, cmpl_type;
+
+		cons = RING_CMP(cpr->cp_ring_struct, raw_cons);
+		rxcmp = (struct rx_pkt_cmpl *)&cpr->cp_desc_ring[cons];
+
+		if (!CMP_VALID(rxcmp, raw_cons, cpr->cp_ring_struct))
+			break;
+
+		cmpl_type = CMP_TYPE(rxcmp);
+
+		switch (cmpl_type) {
+		case CMPL_BASE_TYPE_RX_L2:
+			if (desc == offset) {
+				cons = rxcmp->opaque;
+				rx_buf = &rxr->rx_buf_ring[cons];
+				if (rx_buf->mbuf != NULL)
+					return RTE_ETH_RX_DESC_DONE;
+				else
+					return RTE_ETH_RX_DESC_UNAVAIL;
+			}
+			agg_cnt = BNXT_RX_L2_AGG_BUFS(rxcmp);
+			raw_cons = raw_cons + CMP_LEN(cmpl_type) + agg_cnt;
+			desc++;
+			break;
+
+		case CMPL_BASE_TYPE_RX_TPA_END:
+			if (desc == offset)
+				return RTE_ETH_RX_DESC_DONE;
+
+			if (BNXT_CHIP_THOR(rxq->bp)) {
+				struct rx_tpa_v2_end_cmpl_hi *p5_tpa_end;
+
+				p5_tpa_end = (void *)rxcmp;
+				agg_cnt = BNXT_TPA_END_AGG_BUFS_TH(p5_tpa_end);
+			} else {
+				struct rx_tpa_end_cmpl *tpa_end;
+
+				tpa_end = (void *)rxcmp;
+				agg_cnt = BNXT_TPA_END_AGG_BUFS(tpa_end);
+			}
+
+			raw_cons = raw_cons + CMP_LEN(cmpl_type) + agg_cnt;
+			desc++;
+			break;
+
+		default:
+			raw_cons += CMP_LEN(cmpl_type);
+		}
 	}
-	rx_buf = &rxr->rx_buf_ring[cons];
-	if (rx_buf->mbuf == NULL)
-		return RTE_ETH_RX_DESC_UNAVAIL;
-
 
 	return RTE_ETH_RX_DESC_AVAIL;
 }
