@@ -161,11 +161,15 @@ static void ctrl_params_free(struct rte_thread_ctrl_params *params)
 static void *rte_thread_init(void *arg)
 {
 	struct rte_thread_ctrl_params *params = arg;
-	void *(*start_routine)(void *) = params->start_routine;
+	void *(*start_routine)(void *);
 	void *routine_arg = params->arg;
 
 	pthread_barrier_wait(&params->configured);
+	start_routine = params->start_routine;
 	ctrl_params_free(params);
+
+	if (start_routine == NULL)
+		return NULL;
 
 	return start_routine(routine_arg);
 }
@@ -188,14 +192,12 @@ rte_ctrl_thread_create(pthread_t *thread, const char *name,
 	params->refcnt = 2;
 
 	ret = pthread_barrier_init(&params->configured, NULL, 2);
-	if (ret != 0) {
-		free(params);
-		return -ret;
-	}
+	if (ret != 0)
+		goto fail_no_barrier;
 
 	ret = pthread_create(thread, attr, rte_thread_init, (void *)params);
 	if (ret != 0)
-		goto fail;
+		goto fail_with_barrier;
 
 	if (name != NULL) {
 		ret = rte_thread_setname(*thread, name);
@@ -206,19 +208,22 @@ rte_ctrl_thread_create(pthread_t *thread, const char *name,
 
 	ret = pthread_setaffinity_np(*thread, sizeof(*cpuset), cpuset);
 	if (ret != 0)
-		goto fail_cancel;
+		params->start_routine = NULL;
 
 	pthread_barrier_wait(&params->configured);
 	ctrl_params_free(params);
 
-	return 0;
+	if (ret != 0)
+		/* start_routine has been set to NULL above; */
+		/* ctrl thread will exit immediately */
+		pthread_join(*thread, NULL);
 
-fail_cancel:
-	pthread_cancel(*thread);
-	pthread_join(*thread, NULL);
+	return -ret;
 
-fail:
+fail_with_barrier:
 	(void)pthread_barrier_destroy(&params->configured);
+
+fail_no_barrier:
 	free(params);
 
 	return -ret;
