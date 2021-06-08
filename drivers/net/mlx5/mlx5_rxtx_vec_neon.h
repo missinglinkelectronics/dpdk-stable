@@ -497,7 +497,7 @@ rxq_burst_v(struct mlx5_rxq_data *rxq, struct rte_mbuf **pkts, uint16_t pkts_n,
 	 * there's no instruction to count trailing zeros. __builtin_clzl() is
 	 * used instead.
 	 *
-	 * A. copy 4 mbuf pointers from elts ring to returing pkts.
+	 * A. copy 4 mbuf pointers from elts ring to returning pkts.
 	 * B. load 64B CQE and extract necessary fields
 	 *    Final 16bytes cqes[] extracted from original 64bytes CQE has the
 	 *    following structure:
