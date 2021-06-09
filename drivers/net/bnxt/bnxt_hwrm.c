@@ -2938,7 +2938,6 @@ error:
 	return rc;
 }
 
-/* JIRA 22088 */
 int bnxt_hwrm_func_qcfg(struct bnxt *bp, uint16_t *mtu)
 {
 	struct hwrm_func_qcfg_input req = {0};
@@ -2953,8 +2952,8 @@ int bnxt_hwrm_func_qcfg(struct bnxt *bp, uint16_t *mtu)
 
 	HWRM_CHECK_RESULT();
 
-	/* Hard Coded.. 0xfff VLAN ID mask */
-	bp->vlan = rte_le_to_cpu_16(resp->vlan) & 0xfff;
+	bp->vlan = rte_le_to_cpu_16(resp->vlan) & ETH_VLAN_ID_MAX;
+
 	flags = rte_le_to_cpu_16(resp->flags);
 	if (BNXT_PF(bp) && (flags & HWRM_FUNC_QCFG_OUTPUT_FLAGS_MULTI_HOST))
 		bp->flags |= BNXT_FLAG_MULTI_HOST;
