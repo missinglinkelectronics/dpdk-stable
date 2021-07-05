@@ -7377,12 +7377,13 @@ __flow_dv_translate(struct rte_eth_dev *dev,
 				rte_errno = ENOTSUP;
 				goto cnt_err;
 			}
-			flow->counter = flow_dv_counter_alloc(dev,
-							      count->shared,
-							      count->id,
-							      dev_flow->group);
-			if (flow->counter == NULL)
-				goto cnt_err;
+			if (!flow->counter) {
+				flow->counter =	flow_dv_counter_alloc
+						(dev, count->shared,
+						 count->id, dev_flow->group);
+				if (flow->counter == NULL)
+					goto cnt_err;
+			}
 			dev_flow->dv.actions[actions_n++] =
 				flow->counter->action;
 			action_flags |= MLX5_FLOW_ACTION_COUNT;
