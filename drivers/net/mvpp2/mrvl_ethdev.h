@@ -208,6 +208,8 @@ struct mrvl_priv {
 	LIST_HEAD(shaper_profiles, mrvl_tm_shaper_profile) shaper_profiles;
 	LIST_HEAD(nodes, mrvl_tm_node) nodes;
 	uint64_t rate_max;
+
+	uint8_t configured; /** indicates if device has been configured */
 };
 
 /** Flow operations forward declaration. */
