@@ -1410,7 +1410,7 @@ mlx5_txq_release(struct rte_eth_dev *dev, uint16_t idx)
 	struct mlx5_priv *priv = dev->data->dev_private;
 	struct mlx5_txq_ctrl *txq;
 
-	if (!(*priv->txqs)[idx])
+	if (priv->txqs == NULL || (*priv->txqs)[idx] == NULL)
 		return 0;
 	txq = container_of((*priv->txqs)[idx], struct mlx5_txq_ctrl, txq);
 	if (txq->obj && !mlx5_txq_obj_release(txq->obj))
