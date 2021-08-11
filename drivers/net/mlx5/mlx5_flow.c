@@ -1589,7 +1589,7 @@ mlx5_flow_validate_item_ipv4(const struct rte_flow_item *item,
 					  RTE_FLOW_ERROR_TYPE_ITEM, item,
 					  "IPv4 cannot follow L2/VLAN layer "
 					  "which ether type is not IPv4");
-	if (item_flags & MLX5_FLOW_LAYER_IPIP) {
+	if (item_flags & MLX5_FLOW_LAYER_TUNNEL) {
 		if (mask && spec)
 			next_proto = mask->hdr.next_proto_id &
 				     spec->hdr.next_proto_id;
@@ -1691,7 +1691,7 @@ mlx5_flow_validate_item_ipv6(const struct rte_flow_item *item,
 					  RTE_FLOW_ERROR_TYPE_ITEM, item,
 					  "IPv6 cannot follow L2/VLAN layer "
 					  "which ether type is not IPv6");
-	if (item_flags & MLX5_FLOW_LAYER_IPV6_ENCAP) {
+	if (item_flags & MLX5_FLOW_LAYER_TUNNEL) {
 		if (mask && spec)
 			next_proto = mask->hdr.proto & spec->hdr.proto;
 		if (next_proto == IPPROTO_IPIP || next_proto == IPPROTO_IPV6)
