@@ -1877,6 +1877,8 @@ static int ena_dev_configure(struct rte_eth_dev *dev)
 
 	adapter->state = ENA_ADAPTER_STATE_CONFIG;
 
+	dev->data->dev_conf.txmode.offloads |= DEV_TX_OFFLOAD_MULTI_SEGS;
+
 	adapter->tx_selected_offloads = dev->data->dev_conf.txmode.offloads;
 	adapter->rx_selected_offloads = dev->data->dev_conf.rxmode.offloads;
 	return 0;
@@ -1948,6 +1950,7 @@ static int ena_infos_get(struct rte_eth_dev *dev,
 			DEV_RX_OFFLOAD_TCP_CKSUM;
 
 	rx_feat |= DEV_RX_OFFLOAD_JUMBO_FRAME;
+	tx_feat |= DEV_TX_OFFLOAD_MULTI_SEGS;
 
 	/* Inform framework about available features */
 	dev_info->rx_offload_capa = rx_feat;
