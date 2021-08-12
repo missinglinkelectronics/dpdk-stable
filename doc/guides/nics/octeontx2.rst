@@ -162,7 +162,7 @@ Runtime Config Options
 
       -w 0002:02:00.0,max_sqb_count=64
 
-   With the above configuration, each send queue's decscriptor buffer count is
+   With the above configuration, each send queue's descriptor buffer count is
    limited to a maximum of 64 buffers.
 
 - ``switch header enable`` (default ``none``)
