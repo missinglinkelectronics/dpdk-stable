@@ -1062,7 +1062,7 @@ rte_flow_expand_rss(struct rte_flow_expand_rss *buf, size_t size,
 		    const struct rte_flow_expand_node graph[],
 		    int graph_root_index)
 {
-	const int elt_n = 8;
+	const int elt_n = 16;
 	const struct rte_flow_item *item;
 	const struct rte_flow_expand_node *node = &graph[graph_root_index];
 	const int *next_node;
@@ -1185,7 +1185,7 @@ rte_flow_expand_rss(struct rte_flow_expand_rss *buf, size_t size,
 			}
 		}
 		/* Go deeper. */
-		if (node->next) {
+		if (!node->optional && node->next) {
 			next_node = node->next;
 			if (stack_pos++ == elt_n) {
 				rte_errno = E2BIG;
