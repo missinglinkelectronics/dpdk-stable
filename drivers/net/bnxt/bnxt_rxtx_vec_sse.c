@@ -203,9 +203,8 @@ bnxt_parse_csum(struct rte_mbuf *mbuf, struct rx_pkt_cmpl_hi *rxcmp1)
 	}
 }
 
-uint16_t
-bnxt_recv_pkts_vec(void *rx_queue, struct rte_mbuf **rx_pkts,
-		   uint16_t nb_pkts)
+static uint16_t
+recv_burst_vec_sse(void *rx_queue, struct rte_mbuf **rx_pkts, uint16_t nb_pkts)
 {
 	struct bnxt_rx_queue *rxq = rx_queue;
 	struct bnxt_cp_ring_info *cpr = rxq->cp_ring;
@@ -229,9 +228,6 @@ bnxt_recv_pkts_vec(void *rx_queue, struct rte_mbuf **rx_pkts,
 
 	if (rxq->rxrearm_nb >= RTE_BNXT_RXQ_REARM_THRESH)
 		bnxt_rxq_rearm(rxq, rxr);
-
-	/* Return no more than RTE_BNXT_MAX_RX_BURST per call. */
-	nb_pkts = RTE_MIN(nb_pkts, RTE_BNXT_MAX_RX_BURST);
 
 	/*
 	 * Make nb_pkts an integer multiple of RTE_BNXT_DESCS_PER_LOOP.
@@ -352,6 +348,27 @@ bnxt_tx_cmp_vec(struct bnxt_tx_queue *txq, int nr_pkts)
 		rte_mempool_put_bulk(free[0]->pool, (void **)free, blk);
 
 	txr->tx_cons = cons;
+}
+
+uint16_t
+bnxt_recv_pkts_vec(void *rx_queue, struct rte_mbuf **rx_pkts, uint16_t nb_pkts)
+{
+	uint16_t cnt = 0;
+
+	while (nb_pkts > RTE_BNXT_MAX_RX_BURST) {
+		uint16_t burst;
+
+		burst = recv_burst_vec_sse(rx_queue, rx_pkts + cnt,
+					   RTE_BNXT_MAX_RX_BURST);
+
+		cnt += burst;
+		nb_pkts -= burst;
+
+		if (burst < RTE_BNXT_MAX_RX_BURST)
+			return cnt;
+	}
+
+	return cnt + recv_burst_vec_sse(rx_queue, rx_pkts + cnt, nb_pkts);
 }
 
 static void
