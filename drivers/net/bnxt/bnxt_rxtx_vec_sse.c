@@ -210,6 +210,7 @@ recv_burst_vec_sse(void *rx_queue, struct rte_mbuf **rx_pkts, uint16_t nb_pkts)
 	struct bnxt_cp_ring_info *cpr = rxq->cp_ring;
 	struct bnxt_rx_ring_info *rxr = rxq->rx_ring;
 	uint32_t raw_cons = cpr->cp_raw_cons;
+	uint32_t cp_ring_size;
 	uint32_t cons;
 	int nb_rx_pkts = 0;
 	struct rx_pkt_cmpl *rxcmp;
@@ -237,13 +238,15 @@ recv_burst_vec_sse(void *rx_queue, struct rte_mbuf **rx_pkts, uint16_t nb_pkts)
 	if (!nb_pkts)
 		return 0;
 
+	cp_ring_size = cpr->cp_ring_struct->ring_size;
+
 	/* Handle RX burst request */
 	while (1) {
 		cons = RING_CMP(cpr->cp_ring_struct, raw_cons);
 
 		rxcmp = (struct rx_pkt_cmpl *)&cpr->cp_desc_ring[cons];
 
-		if (!CMP_VALID(rxcmp, raw_cons, cpr->cp_ring_struct))
+		if (!bnxt_cpr_cmp_valid(rxcmp, raw_cons, cp_ring_size))
 			break;
 
 		if (likely(CMP_TYPE(rxcmp) == RX_PKT_CMPL_TYPE_RX_L2)) {
@@ -258,8 +261,8 @@ recv_burst_vec_sse(void *rx_queue, struct rte_mbuf **rx_pkts, uint16_t nb_pkts)
 			rxcmp1 = (struct rx_pkt_cmpl_hi *)
 						&cpr->cp_desc_ring[cp_cons];
 
-			if (!CMP_VALID(rxcmp1, tmp_raw_cons,
-				       cpr->cp_ring_struct))
+			if (!bnxt_cpr_cmp_valid(rxcmp1, tmp_raw_cons,
+						cp_ring_size))
 				break;
 
 			raw_cons = tmp_raw_cons;
@@ -387,7 +390,7 @@ bnxt_handle_tx_cp_vec(struct bnxt_tx_queue *txq)
 		cons = RING_CMPL(ring_mask, raw_cons);
 		txcmp = (struct tx_cmpl *)&cp_desc_ring[cons];
 
-		if (!CMP_VALID(txcmp, raw_cons, cp_ring_struct))
+		if (!bnxt_cpr_cmp_valid(txcmp, raw_cons, ring_mask + 1))
 			break;
 
 		if (likely(CMP_TYPE(txcmp) == TX_CMPL_TYPE_TX_L2))
