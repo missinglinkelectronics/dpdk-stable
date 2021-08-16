@@ -156,7 +156,7 @@ i40e_fdir_setup(struct i40e_pf *pf)
 	int err = I40E_SUCCESS;
 	char z_name[RTE_MEMZONE_NAMESIZE];
 	const struct rte_memzone *mz = NULL;
-	struct rte_eth_dev *eth_dev = pf->adapter->eth_dev;
+	struct rte_eth_dev *eth_dev = &rte_eth_devices[pf->dev_data->port_id];
 
 	if ((pf->flags & I40E_FLAG_FDIR) == 0) {
 		PMD_INIT_LOG(ERR, "HW doesn't support FDIR");
