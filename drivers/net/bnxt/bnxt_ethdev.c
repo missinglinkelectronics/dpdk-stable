@@ -547,7 +547,6 @@ static int bnxt_dev_info_get_op(struct rte_eth_dev *eth_dev,
 	dev_info->tx_offload_capa = BNXT_DEV_TX_OFFLOAD_SUPPORT;
 	dev_info->flow_type_rss_offloads = BNXT_ETH_RSS_SUPPORT;
 
-	/* *INDENT-OFF* */
 	dev_info->default_rxconf = (struct rte_eth_rxconf) {
 		.rx_thresh = {
 			.pthresh = 8,
@@ -573,8 +572,6 @@ static int bnxt_dev_info_get_op(struct rte_eth_dev *eth_dev,
 	dev_info->rx_desc_lim.nb_max = BNXT_MAX_RX_RING_DESC;
 	dev_info->tx_desc_lim.nb_min = BNXT_MIN_RING_DESC;
 	dev_info->tx_desc_lim.nb_max = BNXT_MAX_TX_RING_DESC;
-
-	/* *INDENT-ON* */
 
 	/*
 	 * TODO: default_rxconf, default_txconf, rx_desc_lim, and tx_desc_lim
