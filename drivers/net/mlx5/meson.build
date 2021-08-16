@@ -138,6 +138,8 @@ if build
 		'IBV_WQ_FLAG_RX_END_PADDING' ],
 		[ 'HAVE_MLX5DV_DR_DEVX_PORT', 'infiniband/mlx5dv.h',
 		'mlx5dv_query_devx_port' ],
+		[ 'HAVE_MLX5DV_DR_DEVX_PORT_V35', 'infiniband/mlx5dv.h',
+		'mlx5dv_query_port' ],
 		[ 'HAVE_MLX5DV_DR_CREATE_DEST_IB_PORT', 'infiniband/mlx5dv.h',
 		'mlx5dv_dr_action_create_dest_ib_port' ],
 		[ 'HAVE_IBV_DEVX_OBJ', 'infiniband/mlx5dv.h',
