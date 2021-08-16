@@ -24388,8 +24388,15 @@ struct hwrm_ring_reset_input {
 	#define HWRM_RING_RESET_INPUT_RING_TYPE_RX        UINT32_C(0x2)
 	/* RoCE Notification Completion Ring (ROCE_CR) */
 	#define HWRM_RING_RESET_INPUT_RING_TYPE_ROCE_CMPL UINT32_C(0x3)
-	#define HWRM_RING_RESET_INPUT_RING_TYPE_LAST \
-		HWRM_RING_RESET_INPUT_RING_TYPE_ROCE_CMPL
+	/*
+	 * Rx Ring Group.  This is to reset rx and aggregation in an atomic
+	 * operation. Completion ring associated with this ring group is
+	 * not reset.
+	 */
+        #define HWRM_RING_RESET_INPUT_RING_TYPE_RX_RING_GRP UINT32_C(0x6)
+        #define HWRM_RING_RESET_INPUT_RING_TYPE_LAST \
+                HWRM_RING_RESET_INPUT_RING_TYPE_RX_RING_GRP
+
 	uint8_t	unused_0;
 	/* Physical number of the ring. */
 	uint16_t	ring_id;

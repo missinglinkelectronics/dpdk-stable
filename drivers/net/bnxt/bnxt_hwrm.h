@@ -229,4 +229,5 @@ int bnxt_clear_one_vnic_filter(struct bnxt *bp,
 			       struct bnxt_filter_info *filter);
 int bnxt_hwrm_poll_ver_get(struct bnxt *bp);
 int bnxt_hwrm_port_phy_qcaps(struct bnxt *bp);
+int bnxt_hwrm_rx_ring_reset(struct bnxt *bp, int queue_index);
 #endif
