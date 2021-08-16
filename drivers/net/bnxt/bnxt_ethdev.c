@@ -4995,6 +4995,8 @@ static int bnxt_init_fw(struct bnxt *bp)
 
 	bnxt_hwrm_port_led_qcaps(bp);
 
+	bnxt_hwrm_port_phy_qcaps(bp);
+
 	return 0;
 }
 
