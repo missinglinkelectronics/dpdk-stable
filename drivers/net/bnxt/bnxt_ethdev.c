@@ -4290,6 +4290,10 @@ err_start:
 err:
 	bp->flags |= BNXT_FLAG_FATAL_ERROR;
 	bnxt_uninit_resources(bp, false);
+	if (bp->eth_dev->data->dev_conf.intr_conf.rmv)
+		_rte_eth_dev_callback_process(bp->eth_dev,
+					      RTE_ETH_EVENT_INTR_RMV,
+					      NULL);
 	PMD_DRV_LOG(ERR, "Failed to recover from FW reset\n");
 }
 
@@ -5239,7 +5243,8 @@ static int bnxt_pci_remove(struct rte_pci_device *pci_dev)
 
 static struct rte_pci_driver bnxt_rte_pmd = {
 	.id_table = bnxt_pci_id_map,
-	.drv_flags = RTE_PCI_DRV_NEED_MAPPING | RTE_PCI_DRV_INTR_LSC,
+	.drv_flags = RTE_PCI_DRV_NEED_MAPPING | RTE_PCI_DRV_INTR_LSC |
+			RTE_PCI_DRV_INTR_RMV,
 	.probe = bnxt_pci_probe,
 	.remove = bnxt_pci_remove,
 };
