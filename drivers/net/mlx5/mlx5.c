@@ -2134,6 +2134,33 @@ mlx5_dev_check_sibling_config(struct mlx5_priv *priv,
 	}
 	return 0;
 }
+
+/**
+ * DR flow drop action support detect.
+ *
+ * @param dev
+ *   Pointer to rte_eth_dev structure.
+ *
+ */
+static void
+mlx5_flow_drop_action_config(struct rte_eth_dev *dev __rte_unused)
+{
+#ifdef HAVE_MLX5DV_DR
+	struct mlx5_priv *priv = dev->data->dev_private;
+
+	if (!priv->config.dv_flow_en || !priv->sh->dr_drop_action)
+		return;
+	/**
+	 * DR supports drop action placeholder when it is supported;
+	 * otherwise, use the queue drop action.
+	 */
+	if (mlx5_flow_discover_dr_action_support(dev))
+		priv->root_verbs_drop_action = 1;
+	else
+		priv->root_verbs_drop_action = 0;
+#endif
+}
+
 /**
  * Spawn an Ethernet device from Verbs information.
  *
@@ -2849,6 +2876,7 @@ err_secondary:
 			goto error;
 		}
 	}
+	mlx5_flow_drop_action_config(eth_dev);
 	return eth_dev;
 error:
 	if (priv) {

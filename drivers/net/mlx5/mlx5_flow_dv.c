@@ -7920,12 +7920,14 @@ __flow_dv_apply(struct rte_eth_dev *dev, struct rte_flow *flow,
 			if (dev_flow->transfer) {
 				assert(priv->sh->dr_drop_action);
 				dv->actions[n++] = priv->sh->dr_drop_action;
-			} else {
 #ifdef HAVE_MLX5DV_DR
+			} else if (dev_flow->group ||
+				   !priv->root_verbs_drop_action) {
 				/* DR supports drop action placeholder. */
 				assert(priv->sh->dr_drop_action);
 				dv->actions[n++] = priv->sh->dr_drop_action;
-#else
+#endif
+			} else {
 				/* For DV we use the explicit drop queue. */
 				dv->hrxq = mlx5_hrxq_drop_new(dev);
 				if (!dv->hrxq) {
@@ -7937,7 +7939,6 @@ __flow_dv_apply(struct rte_eth_dev *dev, struct rte_flow *flow,
 					goto error;
 				}
 				dv->actions[n++] = dv->hrxq->action;
-#endif
 			}
 		} else if (dev_flow->actions &
 			   (MLX5_FLOW_ACTION_QUEUE | MLX5_FLOW_ACTION_RSS)) {
@@ -8370,6 +8371,71 @@ flow_dv_query(struct rte_eth_dev *dev,
 						  "action not supported");
 		}
 	}
+	return ret;
+}
+
+/**
+ * Check whether the DR drop action is supported on the root table or not.
+ *
+ * Create a simple flow with DR drop action on root table to validate
+ * if DR drop action on root table is supported or not.
+ *
+ * @param[in] dev
+ *   Pointer to rte_eth_dev structure.
+ *
+ * @return
+ *   0 on success, a negative errno value otherwise and rte_errno is set.
+ */
+int
+mlx5_flow_discover_dr_action_support(struct rte_eth_dev *dev)
+{
+	struct mlx5_priv *priv = dev->data->dev_private;
+	struct mlx5_ibv_shared *sh = priv->sh;
+	struct mlx5_flow_dv_match_params mask = {
+		.size = sizeof(mask.buf),
+	};
+	struct mlx5_flow_dv_match_params value = {
+		.size = sizeof(value.buf),
+	};
+	struct mlx5dv_flow_matcher_attr dv_attr = {
+		.type = IBV_FLOW_ATTR_NORMAL,
+		.priority = 0,
+		.match_criteria_enable = 0,
+		.match_mask = (void *)&mask,
+	};
+	struct mlx5_flow_tbl_resource *tbl = NULL;
+	void *matcher = NULL;
+	void *flow = NULL;
+	int ret = -1;
+
+	tbl = flow_dv_tbl_resource_get(dev, 0, 0, 0, NULL);
+	if (!tbl)
+		goto err;
+	matcher = mlx5_glue->dv_create_flow_matcher(sh->ctx, &dv_attr,
+						    tbl->obj);
+	if (!matcher)
+		goto err;
+	flow = mlx5_glue->dv_create_flow(matcher, (void *)&value, 1,
+					 &sh->dr_drop_action);
+err:
+	/*
+	 * If DR drop action is not supported on root table, flow create will
+	 * be failed with EOPNOTSUPP or EPROTONOSUPPORT.
+	 */
+	if (!flow) {
+		if (matcher &&
+		    (errno == EPROTONOSUPPORT || errno == EOPNOTSUPP))
+			DRV_LOG(INFO, "DR drop action is not supported in root table.");
+		else
+			DRV_LOG(ERR, "Unexpected error in DR drop action support detection");
+		ret = -1;
+	} else {
+		claim_zero(mlx5_glue->dv_destroy_flow(flow));
+	}
+	if (matcher)
+		claim_zero(mlx5_glue->dv_destroy_flow_matcher(matcher));
+	if (tbl)
+		flow_dv_tbl_resource_release(dev, tbl);
 	return ret;
 }
 
