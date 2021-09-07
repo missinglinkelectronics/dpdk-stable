@@ -241,7 +241,7 @@ vhost_user_add_connection(int fd, struct vhost_user_socket *vsocket)
 	if (vsocket->linearbuf)
 		vhost_enable_linearbuf(vid);
 
-	RTE_LOG(INFO, VHOST_CONFIG, "new device, handle is %d\n", vid);
+	RTE_LOG(INFO, VHOST_CONFIG, "new device, handle is %d, path is %s\n", vid, vsocket->path);
 
 	if (vsocket->notify_ops->new_connection) {
 		ret = vsocket->notify_ops->new_connection(vid);
