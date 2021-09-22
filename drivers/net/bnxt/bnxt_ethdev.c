@@ -5213,7 +5213,7 @@ bnxt_uninit_resources(struct bnxt *bp, bool reconfig_dev)
 	bnxt_free_int(bp);
 	bnxt_free_mem(bp, reconfig_dev);
 	bnxt_hwrm_func_buf_unrgtr(bp);
-	rc = bnxt_hwrm_func_driver_unregister(bp, 0);
+	rc = bnxt_hwrm_func_driver_unregister(bp);
 	bp->flags &= ~BNXT_FLAG_REGISTERED;
 	bnxt_free_ctx_mem(bp);
 	if (!reconfig_dev) {

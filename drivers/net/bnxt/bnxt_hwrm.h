@@ -90,7 +90,7 @@ int bnxt_hwrm_func_driver_register(struct bnxt *bp);
 int bnxt_hwrm_func_qcaps(struct bnxt *bp);
 void bnxt_free_vf_info(struct bnxt *bp);
 int bnxt_hwrm_func_reset(struct bnxt *bp);
-int bnxt_hwrm_func_driver_unregister(struct bnxt *bp, uint32_t flags);
+int bnxt_hwrm_func_driver_unregister(struct bnxt *bp);
 int bnxt_hwrm_func_qstats(struct bnxt *bp, uint16_t fid,
 			  struct rte_eth_stats *stats);
 int bnxt_hwrm_func_qstats_tx_drop(struct bnxt *bp, uint16_t fid,
