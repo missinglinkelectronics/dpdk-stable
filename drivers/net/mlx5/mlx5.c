@@ -849,6 +849,7 @@ mlx5_free_table_hash_list(struct mlx5_priv *priv)
 		rte_free(tbl_data);
 	}
 	mlx5_hlist_destroy(sh->flow_tbls, NULL, NULL);
+	sh->flow_tbls = NULL;
 }
 
 /**
