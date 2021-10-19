@@ -10,10 +10,15 @@ if get_option('kernel_dir') == '' and meson.is_cross_build()
 endif
 
 kernel_dir = get_option('kernel_dir')
+kernel_source_dir = get_option('kernel_dir')
 if kernel_dir == ''
 	# use default path for native builds
 	kernel_version = run_command('uname', '-r').stdout().strip()
 	kernel_dir = '/lib/modules/' + kernel_version
+	if kernel_source_dir == ''
+		# use default path for native builds
+		kernel_source_dir = '/lib/modules/' + kernel_version + '/source'
+	endif
 endif
 
 # test running make in kernel directory, using "make kernelversion"
