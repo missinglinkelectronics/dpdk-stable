@@ -39,9 +39,6 @@
 #include <rte_ether.h>
 #include <rte_ethdev.h>
 #include <rte_string_fns.h>
-#ifdef RTE_LIBRTE_PMD_BOND
-#include <rte_eth_bond.h>
-#endif
 #include <rte_flow.h>
 
 #include "testpmd.h"
