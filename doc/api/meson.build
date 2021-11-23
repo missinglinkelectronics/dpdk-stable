@@ -37,7 +37,7 @@ cdata.set('API_EXAMPLES', join_paths(meson.build_root(), 'doc', 'api', 'examples
 cdata.set('OUTPUT', join_paths(meson.build_root(), 'doc', 'api'))
 cdata.set('HTML_OUTPUT', 'api')
 cdata.set('TOPDIR', meson.source_root())
-cdata.set('STRIP_FROM_PATH', meson.source_root())
+cdata.set('STRIP_FROM_PATH', ' '.join([meson.source_root(), join_paths(meson.build_root(), 'doc', 'api')]))
 
 doxy_conf = configure_file(input: 'doxy-api.conf.in',
 	output: 'doxy-api.conf',
