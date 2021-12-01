@@ -1605,7 +1605,7 @@ pkt_burst_stats_display(const char *rx_tx, struct pkt_burst_stats *pbs)
 	total_burst = 0;
 	burst_stats[0] = burst_stats[1] = burst_stats[2] = 0;
 	pktnb_stats[0] = pktnb_stats[1] = pktnb_stats[2] = 0;
-	for (nb_pkt = 0; nb_pkt < MAX_PKT_BURST; nb_pkt++) {
+	for (nb_pkt = 0; nb_pkt < MAX_PKT_BURST + 1; nb_pkt++) {
 		nb_burst = pbs->pkt_burst_spread[nb_pkt];
 		if (nb_burst == 0)
 			continue;
