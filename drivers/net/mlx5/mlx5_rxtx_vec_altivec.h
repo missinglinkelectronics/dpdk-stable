@@ -808,10 +808,10 @@ rxq_burst_v(struct mlx5_rxq_data *rxq, struct rte_mbuf **pkts, uint16_t pkts_n,
 			(vector unsigned short)cqe_tmp1, cqe_sel_mask1);
 		cqe_tmp2 = (vector unsigned char)(vector unsigned long){
 			*(__attribute__((__aligned__(8))) unsigned long *)
-			&cq[pos + p3].rsvd3[9], 0LL};
+			&cq[pos + p3].rsvd4[2], 0LL};
 		cqe_tmp1 = (vector unsigned char)(vector unsigned long){
 			*(__attribute__((__aligned__(8))) unsigned long *)
-			&cq[pos + p2].rsvd3[9], 0LL};
+			&cq[pos + p2].rsvd4[2], 0LL};
 		cqes[3] = (vector unsigned char)
 			vec_sel((vector unsigned short)cqes[3],
 			(vector unsigned short)cqe_tmp2,
@@ -871,10 +871,10 @@ rxq_burst_v(struct mlx5_rxq_data *rxq, struct rte_mbuf **pkts, uint16_t pkts_n,
 			(vector unsigned short)cqe_tmp1, cqe_sel_mask1);
 		cqe_tmp2 = (vector unsigned char)(vector unsigned long){
 			*(__attribute__((__aligned__(8))) unsigned long *)
-			&cq[pos + p1].rsvd3[9], 0LL};
+			&cq[pos + p1].rsvd4[2], 0LL};
 		cqe_tmp1 = (vector unsigned char)(vector unsigned long){
 			*(__attribute__((__aligned__(8))) unsigned long *)
-			&cq[pos].rsvd3[9], 0LL};
+			&cq[pos].rsvd4[2], 0LL};
 		cqes[1] = (vector unsigned char)
 			vec_sel((vector unsigned short)cqes[1],
 			(vector unsigned short)cqe_tmp2, cqe_sel_mask2);
