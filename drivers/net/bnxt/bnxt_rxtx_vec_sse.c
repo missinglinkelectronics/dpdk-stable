@@ -287,8 +287,9 @@ recv_burst_vec_sse(void *rx_queue, struct rte_mbuf **rx_pkts, uint16_t nb_pkts)
 			if (rxcmp->flags_type & RX_PKT_CMPL_FLAGS_RSS_VALID)
 				mbuf->ol_flags |= PKT_RX_RSS_HASH;
 
-			if (rxcmp1->flags2 &
-			    RX_PKT_CMPL_FLAGS2_META_FORMAT_VLAN) {
+			if (BNXT_RX_VLAN_STRIP_EN(rxq->bp) &&
+			    (rxcmp1->flags2 &
+			     RX_PKT_CMPL_FLAGS2_META_FORMAT_VLAN)) {
 				mbuf->vlan_tci = rxcmp1->metadata &
 					(RX_PKT_CMPL_METADATA_VID_MASK |
 					RX_PKT_CMPL_METADATA_DE |

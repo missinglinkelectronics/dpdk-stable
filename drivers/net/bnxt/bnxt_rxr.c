@@ -209,8 +209,9 @@ static void bnxt_tpa_start(struct bnxt_rx_queue *rxq,
 		mbuf->hash.fdir.id = rte_le_to_cpu_16(tpa_start1->cfa_code);
 		mbuf->ol_flags |= PKT_RX_FDIR | PKT_RX_FDIR_ID;
 	}
-	if (tpa_start1->flags2 &
-	    rte_cpu_to_le_32(RX_TPA_START_CMPL_FLAGS2_META_FORMAT_VLAN)) {
+	if (BNXT_RX_VLAN_STRIP_EN(rxq->bp) &&
+	    (tpa_start1->flags2 &
+	     rte_cpu_to_le_32(RX_TPA_START_CMPL_FLAGS2_META_FORMAT_VLAN))) {
 		mbuf->vlan_tci = rte_le_to_cpu_32(tpa_start1->metadata);
 		mbuf->ol_flags |= PKT_RX_VLAN | PKT_RX_VLAN_STRIPPED;
 	}
@@ -601,7 +602,8 @@ static int bnxt_rx_pkt(struct rte_mbuf **rx_pkt,
 	if (agg_buf)
 		bnxt_rx_pages(rxq, mbuf, &tmp_raw_cons, agg_buf, NULL);
 
-	if (rxcmp1->flags2 & RX_PKT_CMPL_FLAGS2_META_FORMAT_VLAN) {
+	if (BNXT_RX_VLAN_STRIP_EN(rxq->bp) &&
+	    (rxcmp1->flags2 & RX_PKT_CMPL_FLAGS2_META_FORMAT_VLAN)) {
 		mbuf->vlan_tci = rxcmp1->metadata &
 			(RX_PKT_CMPL_METADATA_VID_MASK |
 			RX_PKT_CMPL_METADATA_DE |
