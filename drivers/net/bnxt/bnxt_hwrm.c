@@ -734,6 +734,10 @@ static int __bnxt_hwrm_func_qcaps(struct bnxt *bp)
 	if (flags & HWRM_FUNC_QCAPS_OUTPUT_FLAGS_HOT_RESET_CAPABLE)
 		bp->fw_cap |= BNXT_FW_CAP_HOT_RESET;
 
+	if (!(flags & HWRM_FUNC_QCAPS_OUTPUT_FLAGS_VLAN_ACCELERATION_TX_DISABLED)) {
+		bp->fw_cap |= BNXT_FW_CAP_VLAN_TX_INSERT;
+		PMD_DRV_LOG(DEBUG, "VLAN acceleration for TX is enabled\n");
+	}
 unlock:
 	HWRM_UNLOCK();
 
@@ -785,6 +789,12 @@ int bnxt_hwrm_vnic_qcaps(struct bnxt *bp)
 	    HWRM_VNIC_QCAPS_OUTPUT_FLAGS_COS_ASSIGNMENT_CAP) {
 		bp->vnic_cap_flags |= BNXT_VNIC_CAP_COS_CLASSIFY;
 		PMD_DRV_LOG(INFO, "CoS assignment capability enabled\n");
+	}
+
+	if (rte_le_to_cpu_32(resp->flags) &
+	    HWRM_VNIC_QCAPS_OUTPUT_FLAGS_VLAN_STRIP_CAP) {
+		bp->vnic_cap_flags |= BNXT_VNIC_CAP_VLAN_RX_STRIP;
+		PMD_DRV_LOG(DEBUG, "Rx VLAN strip capability enabled\n");
 	}
 
 	bp->max_tpa_v2 = rte_le_to_cpu_16(resp->max_aggs_supported);

@@ -7441,6 +7441,9 @@ struct hwrm_func_qcaps_output {
 	 */
 	#define HWRM_FUNC_QCAPS_OUTPUT_FLAGS_NOTIFY_VF_DEF_VNIC_CHNG_SUPPORTED \
 		UINT32_C(0x4000000)
+	/* If set to 1, then the vlan acceleration for TX is disabled. */
+	#define HWRM_FUNC_QCAPS_OUTPUT_FLAGS_VLAN_ACCELERATION_TX_DISABLED \
+		UINT32_C(0x8000000)
 	/*
 	 * This value is current MAC address configured for this
 	 * function. A value of 00-00-00-00-00-00 indicates no

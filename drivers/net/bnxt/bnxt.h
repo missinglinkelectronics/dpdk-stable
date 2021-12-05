@@ -592,11 +592,13 @@ struct bnxt {
 #define BNXT_FW_CAP_IF_CHANGE		BIT(1)
 #define BNXT_FW_CAP_ERROR_RECOVERY	BIT(2)
 #define BNXT_FW_CAP_ERR_RECOVER_RELOAD	BIT(3)
+#define BNXT_FW_CAP_VLAN_TX_INSERT	BIT(4)
 
 	pthread_mutex_t         flow_lock;
 
 	uint32_t		vnic_cap_flags;
 #define BNXT_VNIC_CAP_COS_CLASSIFY	BIT(0)
+#define BNXT_VNIC_CAP_VLAN_RX_STRIP	BIT(1)
 	unsigned int		rx_nr_rings;
 	unsigned int		rx_cp_nr_rings;
 	unsigned int		rx_num_qs_per_vnic;

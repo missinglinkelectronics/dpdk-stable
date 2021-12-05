@@ -100,8 +100,7 @@ static const struct rte_pci_id bnxt_pci_id_map[] = {
 	ETH_RSS_NONFRAG_IPV6_TCP |	\
 	ETH_RSS_NONFRAG_IPV6_UDP)
 
-#define BNXT_DEV_TX_OFFLOAD_SUPPORT (DEV_TX_OFFLOAD_VLAN_INSERT | \
-				     DEV_TX_OFFLOAD_IPV4_CKSUM | \
+#define BNXT_DEV_TX_OFFLOAD_SUPPORT (DEV_TX_OFFLOAD_IPV4_CKSUM | \
 				     DEV_TX_OFFLOAD_TCP_CKSUM | \
 				     DEV_TX_OFFLOAD_UDP_CKSUM | \
 				     DEV_TX_OFFLOAD_TCP_TSO | \
@@ -114,7 +113,6 @@ static const struct rte_pci_id bnxt_pci_id_map[] = {
 				     DEV_TX_OFFLOAD_MULTI_SEGS)
 
 #define BNXT_DEV_RX_OFFLOAD_SUPPORT (DEV_RX_OFFLOAD_VLAN_FILTER | \
-				     DEV_RX_OFFLOAD_VLAN_STRIP | \
 				     DEV_RX_OFFLOAD_IPV4_CKSUM | \
 				     DEV_RX_OFFLOAD_UDP_CKSUM | \
 				     DEV_RX_OFFLOAD_TCP_CKSUM | \
@@ -587,7 +585,11 @@ static int bnxt_dev_info_get_op(struct rte_eth_dev *eth_dev,
 	dev_info->rx_offload_capa = BNXT_DEV_RX_OFFLOAD_SUPPORT;
 	if (bp->flags & BNXT_FLAG_PTP_SUPPORTED)
 		dev_info->rx_offload_capa |= DEV_RX_OFFLOAD_TIMESTAMP;
+	if (bp->vnic_cap_flags & BNXT_VNIC_CAP_VLAN_RX_STRIP)
+		dev_info->rx_offload_capa |= DEV_RX_OFFLOAD_VLAN_STRIP;
 	dev_info->tx_offload_capa = BNXT_DEV_TX_OFFLOAD_SUPPORT;
+	if (bp->fw_cap & BNXT_FW_CAP_VLAN_TX_INSERT)
+		dev_info->tx_offload_capa |= DEV_TX_OFFLOAD_VLAN_INSERT;
 	dev_info->flow_type_rss_offloads = BNXT_ETH_RSS_SUPPORT;
 
 	dev_info->default_rxconf = (struct rte_eth_rxconf) {
