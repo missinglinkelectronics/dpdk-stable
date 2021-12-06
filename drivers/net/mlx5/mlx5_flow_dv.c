@@ -5875,18 +5875,19 @@ flow_dv_translate_item_gre_key(void *matcher, void *key,
  *   Flow matcher value.
  * @param[in] item
  *   Flow pattern to translate.
- * @param[in] inner
- *   Item is inner pattern.
+ * @param[in] pattern_flags
+ *   Accumulated pattern flags.
  */
 static void
 flow_dv_translate_item_gre(void *matcher, void *key,
 			   const struct rte_flow_item *item,
-			   int inner)
+			   uint64_t pattern_flags)
 {
+	static const struct rte_flow_item_gre empty_gre = {0,};
 	const struct rte_flow_item_gre *gre_m = item->mask;
 	const struct rte_flow_item_gre *gre_v = item->spec;
-	void *headers_m;
-	void *headers_v;
+	void *headers_m = MLX5_ADDR_OF(fte_match_param, matcher, outer_headers);
+	void *headers_v = MLX5_ADDR_OF(fte_match_param, key, outer_headers);
 	void *misc_m = MLX5_ADDR_OF(fte_match_param, matcher, misc_parameters);
 	void *misc_v = MLX5_ADDR_OF(fte_match_param, key, misc_parameters);
 	struct {
@@ -5903,26 +5904,17 @@ flow_dv_translate_item_gre(void *matcher, void *key,
 			uint16_t value;
 		};
 	} gre_crks_rsvd0_ver_m, gre_crks_rsvd0_ver_v;
+	uint16_t protocol_m, protocol_v;
 
-	if (inner) {
-		headers_m = MLX5_ADDR_OF(fte_match_param, matcher,
-					 inner_headers);
-		headers_v = MLX5_ADDR_OF(fte_match_param, key, inner_headers);
-	} else {
-		headers_m = MLX5_ADDR_OF(fte_match_param, matcher,
-					 outer_headers);
-		headers_v = MLX5_ADDR_OF(fte_match_param, key, outer_headers);
-	}
 	MLX5_SET(fte_match_set_lyr_2_4, headers_m, ip_protocol, 0xff);
 	MLX5_SET(fte_match_set_lyr_2_4, headers_v, ip_protocol, IPPROTO_GRE);
-	if (!gre_v)
-		return;
-	if (!gre_m)
-		gre_m = &rte_flow_item_gre_mask;
-	MLX5_SET(fte_match_set_misc, misc_m, gre_protocol,
-		 rte_be_to_cpu_16(gre_m->protocol));
-	MLX5_SET(fte_match_set_misc, misc_v, gre_protocol,
-		 rte_be_to_cpu_16(gre_v->protocol & gre_m->protocol));
+	if (!gre_v) {
+		gre_v = &empty_gre;
+		gre_m = &empty_gre;
+	} else {
+		if (!gre_m)
+			gre_m = &rte_flow_item_gre_mask;
+	}
 	gre_crks_rsvd0_ver_m.value = rte_be_to_cpu_16(gre_m->c_rsvd0_ver);
 	gre_crks_rsvd0_ver_v.value = rte_be_to_cpu_16(gre_v->c_rsvd0_ver);
 	MLX5_SET(fte_match_set_misc, misc_m, gre_c_present,
@@ -5940,6 +5932,16 @@ flow_dv_translate_item_gre(void *matcher, void *key,
 	MLX5_SET(fte_match_set_misc, misc_v, gre_s_present,
 		 gre_crks_rsvd0_ver_v.s_present &
 		 gre_crks_rsvd0_ver_m.s_present);
+	protocol_m = rte_be_to_cpu_16(gre_m->protocol);
+	protocol_v = rte_be_to_cpu_16(gre_v->protocol);
+	if (!protocol_m) {
+		/* Force next protocol to prevent matchers duplication */
+		protocol_m = 0xFFFF;
+		protocol_v = mlx5_translate_tunnel_etypes(pattern_flags);
+	}
+	MLX5_SET(fte_match_set_misc, misc_m, gre_protocol, protocol_m);
+	MLX5_SET(fte_match_set_misc, misc_v, gre_protocol,
+		 protocol_m & protocol_v);
 }
 
 /**
@@ -5951,13 +5953,13 @@ flow_dv_translate_item_gre(void *matcher, void *key,
  *   Flow matcher value.
  * @param[in] item
  *   Flow pattern to translate.
- * @param[in] inner
- *   Item is inner pattern.
+ * @param[in] pattern_flags
+ *   Accumulated pattern flags.
  */
 static void
 flow_dv_translate_item_nvgre(void *matcher, void *key,
 			     const struct rte_flow_item *item,
-			     int inner)
+			     unsigned long pattern_flags)
 {
 	const struct rte_flow_item_nvgre *nvgre_m = item->mask;
 	const struct rte_flow_item_nvgre *nvgre_v = item->spec;
@@ -5984,7 +5986,7 @@ flow_dv_translate_item_nvgre(void *matcher, void *key,
 		.mask = &gre_mask,
 		.last = NULL,
 	};
-	flow_dv_translate_item_gre(matcher, key, &gre_item, inner);
+	flow_dv_translate_item_gre(matcher, key, &gre_item, pattern_flags);
 	if (!nvgre_v)
 		return;
 	if (!nvgre_m)
@@ -7796,11 +7798,10 @@ cnt_err:
 					     MLX5_FLOW_LAYER_OUTER_L4_UDP;
 			break;
 		case RTE_FLOW_ITEM_TYPE_GRE:
-			flow_dv_translate_item_gre(match_mask, match_value,
-						   items, tunnel);
 			matcher.priority = flow->rss.level >= 2 ?
 				    MLX5_PRIORITY_MAP_L2 : MLX5_PRIORITY_MAP_L4;
 			last_item = MLX5_FLOW_LAYER_GRE;
+			tunnel_item = items;
 			break;
 		case RTE_FLOW_ITEM_TYPE_GRE_KEY:
 			flow_dv_translate_item_gre_key(match_mask,
@@ -7808,11 +7809,10 @@ cnt_err:
 			last_item = MLX5_FLOW_LAYER_GRE_KEY;
 			break;
 		case RTE_FLOW_ITEM_TYPE_NVGRE:
-			flow_dv_translate_item_nvgre(match_mask, match_value,
-						     items, tunnel);
 			matcher.priority = flow->rss.level >= 2 ?
 				    MLX5_PRIORITY_MAP_L2 : MLX5_PRIORITY_MAP_L4;
 			last_item = MLX5_FLOW_LAYER_GRE;
+			tunnel_item = items;
 			break;
 		case RTE_FLOW_ITEM_TYPE_VXLAN:
 			flow_dv_translate_item_vxlan(match_mask, match_value,
@@ -7900,6 +7900,16 @@ cnt_err:
 	else if (item_flags & MLX5_FLOW_LAYER_GENEVE)
 		flow_dv_translate_item_geneve(match_mask, match_value,
 					      tunnel_item, item_flags);
+	else if (item_flags & MLX5_FLOW_LAYER_GRE) {
+		if (tunnel_item->type == RTE_FLOW_ITEM_TYPE_GRE)
+			flow_dv_translate_item_gre(match_mask, match_value,
+						   tunnel_item, item_flags);
+		else if (tunnel_item->type == RTE_FLOW_ITEM_TYPE_NVGRE)
+			flow_dv_translate_item_nvgre(match_mask, match_value,
+						     tunnel_item, item_flags);
+		else
+			RTE_VERIFY(false);
+	}
 	assert(!flow_dv_check_valid_spec(matcher.mask.buf,
 					 dev_flow->dv.value.buf));
 	/*
