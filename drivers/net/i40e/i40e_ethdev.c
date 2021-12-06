@@ -1888,7 +1888,7 @@ i40e_dev_configure(struct rte_eth_dev *dev)
 	/* VMDQ setup.
 	 *  Needs to move VMDQ setting out of i40e_pf_config_mq_rx() as VMDQ and
 	 *  RSS setting have different requirements.
-	 *  General PMD driver call sequence are NIC init, configure,
+	 *  General PMD call sequence are NIC init, configure,
 	 *  rx/tx_queue_setup and dev_start. In rx/tx_queue_setup() function, it
 	 *  will try to lookup the VSI that specific queue belongs to if VMDQ
 	 *  applicable. So, VMDQ setting has to be done before
