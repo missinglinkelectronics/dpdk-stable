@@ -200,4 +200,4 @@ Common Issues
 * Option "builtin-net-driver" is incompatible with QEMU
 
   QEMU vhost net device start will fail if protocol feature is not negotiated.
-  DPDK virtio-user pmd can be the replacement of QEMU.
+  DPDK virtio-user PMD can be the replacement of QEMU.

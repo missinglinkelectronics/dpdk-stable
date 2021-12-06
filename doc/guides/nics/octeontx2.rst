@@ -191,7 +191,7 @@ Limitations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The OCTEON TX2 SoC family NIC has inbuilt HW assisted external mempool manager.
-``net_octeontx2`` pmd only works with ``mempool_octeontx2`` mempool handler
+``net_octeontx2`` PMD only works with ``mempool_octeontx2`` mempool handler
 as it is performance wise most effective way for packet allocation and Tx buffer
 recycling on OCTEON TX2 SoC platform.
 
@@ -204,7 +204,7 @@ the host interface irrespective of the offload configuration.
 Multicast MAC filtering
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-``net_octeontx2`` pmd supports multicast mac filtering feature only on physical
+``net_octeontx2`` PMD supports multicast mac filtering feature only on physical
 function devices.
 
 SDP interface support
