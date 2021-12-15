@@ -29,6 +29,7 @@ else ifeq ($(CONFIG_RTE_TOOLCHAIN_CLANG),y)
 #
 CFLAGS_BASE_DRIVER = -Wno-unused-parameter -Wno-unused-value
 CFLAGS_BASE_DRIVER += -Wno-strict-aliasing -Wno-format-extra-args
+CFLAGS_BASE_DRIVER += -Wno-unused-but-set-variable
 
 else
 #
