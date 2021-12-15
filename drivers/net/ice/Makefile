@@ -26,6 +26,7 @@ CFLAGS_BASE_DRIVER +=
 else ifeq ($(CONFIG_RTE_TOOLCHAIN_CLANG),y)
 CFLAGS_BASE_DRIVER += -Wno-unused-parameter
 CFLAGS_BASE_DRIVER += -Wno-unused-variable
+CFLAGS_BASE_DRIVER += -Wno-unused-but-set-variable
 else
 CFLAGS_BASE_DRIVER += -Wno-unused-parameter
 CFLAGS_BASE_DRIVER += -Wno-unused-variable
