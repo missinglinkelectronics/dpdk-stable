@@ -143,6 +143,14 @@ if numa_dep.found() and cc.has_header('numaif.h')
 	dpdk_extra_ldflags += '-lnuma'
 endif
 
+# Some false positives can trigger at LTO stage, so this warning needs to be
+# disabled on the linker as well for gcc 10.
+# Fixed in gcc-11 and not present <gcc-10
+# https://bugs.dpdk.org/show_bug.cgi?id=908
+if cc.get_id() == 'gcc' and cc.version().version_compare('>=10.0') and cc.version().version_compare('<11.0')
+	add_project_link_arguments('-Wno-stringop-overflow', language: 'c')
+endif
+
 has_libfdt = 0
 fdt_dep = cc.find_library('libfdt', required: false)
 if fdt_dep.found() and cc.has_header('fdt.h')
