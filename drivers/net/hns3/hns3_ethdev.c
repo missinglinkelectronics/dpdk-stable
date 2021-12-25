@@ -4749,6 +4749,7 @@ hns3_dev_close(struct rte_eth_dev *eth_dev)
 	if (rte_eal_process_type() != RTE_PROC_PRIMARY) {
 		rte_free(eth_dev->process_private);
 		eth_dev->process_private = NULL;
+		__atomic_fetch_sub(&hw->secondary_cnt, 1, __ATOMIC_RELAXED);
 		return;
 	}
 
@@ -5437,8 +5438,7 @@ hns3_dev_init(struct rte_eth_dev *eth_dev)
 				     "process, ret = %d", ret);
 			goto err_mp_init_secondary;
 		}
-
-		hw->secondary_cnt++;
+		__atomic_fetch_add(&hw->secondary_cnt, 1, __ATOMIC_RELAXED);
 		return 0;
 	}
 
@@ -5551,6 +5551,7 @@ hns3_dev_uninit(struct rte_eth_dev *eth_dev)
 	if (rte_eal_process_type() != RTE_PROC_PRIMARY) {
 		rte_free(eth_dev->process_private);
 		eth_dev->process_private = NULL;
+		__atomic_fetch_sub(&hw->secondary_cnt, 1, __ATOMIC_RELAXED);
 		return 0;
 	}
 
