@@ -3692,8 +3692,7 @@ compilers, toolchains and kernels that happen to be incompatible with the
 * Meson based [build issues with ICC-19.1.1](https://bugs.dpdk.org/show_bug.cgi?id=747)
 
 19.11.10 Release Notes
-
-
+----------------------
 
 19.11.10 Fixes
 ~~~~~~~~~~~~~~
@@ -3960,8 +3959,7 @@ happen to be incompatible with the 19.11.x code.
 * Meson based [build issues with ICC-19.1.1](https://bugs.dpdk.org/show_bug.cgi?id=747)
 
 19.11.11 Release Notes
-
-
+----------------------
 
 19.11.11 Fixes
 ~~~~~~~~~~~~~~
