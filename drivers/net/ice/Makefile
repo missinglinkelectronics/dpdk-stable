@@ -37,6 +37,10 @@ ifeq ($(shell test $(GCC_VERSION) -ge 44 && echo 1), 1)
 CFLAGS_BASE_DRIVER += -Wno-unused-but-set-variable
 endif
 
+ifeq ($(shell test $(GCC_VERSION) -ge 110 && echo 1), 1)
+CFLAGS_BASE_DRIVER += -Wno-maybe-uninitialized
+endif
+
 endif
 OBJS_BASE_DRIVER=$(patsubst %.c,%.o,$(notdir $(wildcard $(SRCDIR)/base/*.c)))
 $(foreach obj, $(OBJS_BASE_DRIVER), $(eval CFLAGS_$(obj)+=$(CFLAGS_BASE_DRIVER)))
