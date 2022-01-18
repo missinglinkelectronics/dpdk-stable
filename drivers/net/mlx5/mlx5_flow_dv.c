@@ -3487,7 +3487,7 @@ flow_dv_validate_action_jump(const struct rte_flow_action *action,
 			     const struct rte_flow_attr *attributes,
 			     bool external, struct rte_flow_error *error)
 {
-	uint32_t target_group, table;
+	uint32_t target_group, table = 0;
 	int ret = 0;
 
 	if (action_flags & (MLX5_FLOW_FATE_ACTIONS |
@@ -3515,6 +3515,10 @@ flow_dv_validate_action_jump(const struct rte_flow_action *action,
 					  RTE_FLOW_ERROR_TYPE_ACTION, NULL,
 					  "target group must be other than"
 					  " the current flow group");
+	if (table == 0)
+		return rte_flow_error_set(error, EINVAL,
+					  RTE_FLOW_ERROR_TYPE_ACTION_CONF,
+					  NULL, "root table shouldn't be destination");
 	return 0;
 }
 
