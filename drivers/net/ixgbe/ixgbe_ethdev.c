@@ -3102,6 +3102,7 @@ ixgbe_dev_close(struct rte_eth_dev *dev)
 
 #ifdef RTE_LIBRTE_SECURITY
 	rte_free(dev->security_ctx);
+	dev->security_ctx = NULL;
 #endif
 
 }
