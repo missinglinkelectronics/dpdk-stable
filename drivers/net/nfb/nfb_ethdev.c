@@ -515,7 +515,6 @@ nfb_eth_dev_init(struct rte_eth_dev *dev)
 
 	data->promiscuous = nfb_eth_promiscuous_get(dev);
 	data->all_multicast = nfb_eth_allmulticast_get(dev);
-	internals->rx_filter_original = data->promiscuous;
 
 	RTE_LOG(INFO, PMD, "NFB device ("
 		PCI_PRI_FMT ") successfully initialized\n",
