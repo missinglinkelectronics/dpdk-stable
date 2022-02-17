@@ -783,7 +783,7 @@ xsk_umem_info *xdp_umem_configure(struct pmd_internals *internals __rte_unused,
 
 	umem = rte_zmalloc_socket("umem", sizeof(*umem), 0, rte_socket_id());
 	if (umem == NULL) {
-		AF_XDP_LOG(ERR, "Failed to allocate umem info");
+		AF_XDP_LOG(ERR, "Failed to allocate umem info\n");
 		return NULL;
 	}
 
@@ -795,7 +795,7 @@ xsk_umem_info *xdp_umem_configure(struct pmd_internals *internals __rte_unused,
 			       &umem->fq, &umem->cq, &usr_config);
 
 	if (ret) {
-		AF_XDP_LOG(ERR, "Failed to create umem");
+		AF_XDP_LOG(ERR, "Failed to create umem\n");
 		goto err;
 	}
 	umem->buffer = base_addr;
@@ -819,7 +819,7 @@ xsk_umem_info *xdp_umem_configure(struct pmd_internals *internals,
 
 	umem = rte_zmalloc_socket("umem", sizeof(*umem), 0, rte_socket_id());
 	if (umem == NULL) {
-		AF_XDP_LOG(ERR, "Failed to allocate umem info");
+		AF_XDP_LOG(ERR, "Failed to allocate umem info\n");
 		return NULL;
 	}
 
@@ -855,7 +855,7 @@ xsk_umem_info *xdp_umem_configure(struct pmd_internals *internals,
 			       &usr_config);
 
 	if (ret) {
-		AF_XDP_LOG(ERR, "Failed to create umem");
+		AF_XDP_LOG(ERR, "Failed to create umem\n");
 		goto err;
 	}
 	umem->mz = mz;
