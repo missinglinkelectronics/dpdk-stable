@@ -58,11 +58,6 @@
 
 #define ENA_MIN_RING_DESC	128
 
-enum ethtool_stringset {
-	ETH_SS_TEST             = 0,
-	ETH_SS_STATS,
-};
-
 struct ena_stats {
 	char name[ETH_GSTRING_LEN];
 	int stat_offset;
