@@ -8592,6 +8592,7 @@ cmd_set_vf_rxmode_parsed(void *parsed_result,
 	}
 
 	RTE_SET_USED(is_on);
+	RTE_SET_USED(vf_rxmode);
 
 #ifdef RTE_LIBRTE_IXGBE_PMD
 	if (ret == -ENOTSUP)
