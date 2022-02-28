@@ -7858,11 +7858,13 @@ cnt_err:
 		case RTE_FLOW_ITEM_TYPE_ICMP:
 			flow_dv_translate_item_icmp(match_mask, match_value,
 						    items, tunnel);
+			matcher.priority = MLX5_PRIORITY_MAP_L4;
 			last_item = MLX5_FLOW_LAYER_ICMP;
 			break;
 		case RTE_FLOW_ITEM_TYPE_ICMP6:
 			flow_dv_translate_item_icmp6(match_mask, match_value,
 						      items, tunnel);
+			matcher.priority = MLX5_PRIORITY_MAP_L4;
 			last_item = MLX5_FLOW_LAYER_ICMP6;
 			break;
 		case RTE_FLOW_ITEM_TYPE_TAG:
