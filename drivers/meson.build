@@ -116,7 +116,7 @@ foreach class:dpdk_driver_classes
 					include_directories: includes,
 					dependencies: static_deps,
 					c_args: cflags)
-			objs += tmp_lib.extract_all_objects()
+			objs += tmp_lib.extract_all_objects(recursive: true)
 			sources = custom_target(out_filename,
 					command: [pmdinfo, tmp_lib.full_path(),
 						'@OUTPUT@', pmdinfogen],
