@@ -22,8 +22,8 @@ is_ms_linker = is_windows and (cc.get_id() == 'clang')
 # depending on the configuration options
 pver = meson.project_version().split('.')
 major_version = '@0@.@1@'.format(pver.get(0), pver.get(1))
-abi_version = run_command(find_program('cat', 'more'),
-	abi_version_file).stdout().strip()
+abi_version = run_command(find_program('cat', 'more'), abi_version_file,
+		check: true).stdout().strip()
 # experimental libraries are versioned as 0.majorminor versions, e.g. 0.201
 ever = abi_version.split('.')
 experimental_abi_version = '0.@0@@1@'.format(ever.get(0), ever.get(1))

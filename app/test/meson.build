@@ -405,7 +405,7 @@ dpdk_test = executable('dpdk-test',
 has_hugepage = true
 if is_linux
 	check_hugepage = run_command('cat',
-				     '/proc/sys/vm/nr_hugepages')
+				     '/proc/sys/vm/nr_hugepages', check: false)
 	if (check_hugepage.returncode() != 0 or
 	    check_hugepage.stdout().strip() == '0')
 		has_hugepage = false
