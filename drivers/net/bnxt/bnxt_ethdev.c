@@ -209,7 +209,7 @@ static int bnxt_alloc_mem(struct bnxt *bp, bool reconfig)
 	if (rc)
 		goto alloc_mem_err;
 
-	rc = bnxt_alloc_vnic_attributes(bp);
+	rc = bnxt_alloc_vnic_attributes(bp, reconfig);
 	if (rc)
 		goto alloc_mem_err;
 
@@ -657,6 +657,7 @@ static int bnxt_dev_configure_op(struct rte_eth_dev *eth_dev)
 {
 	struct bnxt *bp = eth_dev->data->dev_private;
 	uint64_t rx_offloads = eth_dev->data->dev_conf.rxmode.offloads;
+	struct rte_eth_rss_conf *rss_conf = &eth_dev->data->dev_conf.rx_adv_conf.rss_conf;
 	int rc;
 
 	bp->rx_queues = (void *)eth_dev->data->rx_queues;
@@ -737,6 +738,17 @@ static int bnxt_dev_configure_op(struct rte_eth_dev *eth_dev)
 	if (eth_dev->data->dev_conf.rxmode.mq_mode & ETH_MQ_RX_RSS_FLAG)
 		rx_offloads |= DEV_RX_OFFLOAD_RSS_HASH;
 	eth_dev->data->dev_conf.rxmode.offloads = rx_offloads;
+
+	/* application provides the hash key to program */
+	if (rss_conf->rss_key != NULL) {
+		if (rss_conf->rss_key_len != HW_HASH_KEY_SIZE)
+			PMD_DRV_LOG(WARNING, "port %u RSS key len must be %d bytes long",
+				    eth_dev->data->port_id, HW_HASH_KEY_SIZE);
+		else
+			memcpy(bp->rss_conf.rss_key, rss_conf->rss_key, HW_HASH_KEY_SIZE);
+	}
+	bp->rss_conf.rss_key_len = HW_HASH_KEY_SIZE;
+	bp->rss_conf.rss_hf = rss_conf->rss_hf;
 
 	if (rx_offloads & DEV_RX_OFFLOAD_JUMBO_FRAME) {
 		eth_dev->data->mtu =
@@ -1575,13 +1587,13 @@ static int bnxt_rss_hash_update_op(struct rte_eth_dev *eth_dev,
 	}
 
 	bp->flags |= BNXT_FLAG_UPDATE_HASH;
-	memcpy(&eth_dev->data->dev_conf.rx_adv_conf.rss_conf,
-	       rss_conf,
-	       sizeof(*rss_conf));
 
 	/* Update the default RSS VNIC(s) */
 	vnic = &bp->vnic_info[0];
 	vnic->hash_type = bnxt_rte_to_hwrm_hash_types(rss_conf->rss_hf);
+
+	/* Cache the hash function */
+	bp->rss_conf.rss_hf = rss_conf->rss_hf;
 
 	/*
 	 * If hashkey is not specified, use the previously configured
@@ -1597,6 +1609,9 @@ static int bnxt_rss_hash_update_op(struct rte_eth_dev *eth_dev,
 		return -EINVAL;
 	}
 	memcpy(vnic->rss_hash_key, rss_conf->rss_key, rss_conf->rss_key_len);
+
+	/* Cache the hash key */
+	memcpy(bp->rss_conf.rss_key, rss_conf->rss_key, HW_HASH_KEY_SIZE);
 
 rss_config:
 	rc = bnxt_hwrm_vnic_rss_cfg(bp, vnic);
@@ -5146,6 +5161,16 @@ static int bnxt_init_resources(struct bnxt *bp, bool reconfig_dev)
 		}
 	}
 
+	if (!reconfig_dev) {
+		bp->rss_conf.rss_key = rte_zmalloc("bnxt_rss_key",
+						   HW_HASH_KEY_SIZE, 0);
+		if (bp->rss_conf.rss_key == NULL) {
+			PMD_DRV_LOG(ERR, "port %u cannot allocate RSS hash key memory",
+				    bp->eth_dev->data->port_id);
+			return -ENOMEM;
+		}
+	}
+
 	rc = bnxt_alloc_mem(bp, reconfig_dev);
 	if (rc)
 		return rc;
@@ -5265,6 +5290,8 @@ bnxt_uninit_resources(struct bnxt *bp, bool reconfig_dev)
 		}
 		rte_free(bp->mcast_addr_list);
 		bp->mcast_addr_list = NULL;
+		rte_free(bp->rss_conf.rss_key);
+		bp->rss_conf.rss_key = NULL;
 	}
 
 	bnxt_uninit_locks(bp);
