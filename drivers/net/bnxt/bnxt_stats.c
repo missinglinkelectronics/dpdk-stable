@@ -597,7 +597,7 @@ int bnxt_dev_xstats_get_op(struct rte_eth_dev *eth_dev,
 
 int bnxt_dev_xstats_get_names_op(__rte_unused struct rte_eth_dev *eth_dev,
 	struct rte_eth_xstat_name *xstats_names,
-	__rte_unused unsigned int limit)
+	unsigned int size)
 {
 	/* Account for the Tx drop pkts aka the Anti spoof counter */
 	const unsigned int stat_cnt = RTE_DIM(bnxt_rx_stats_strings) +
@@ -605,52 +605,49 @@ int bnxt_dev_xstats_get_names_op(__rte_unused struct rte_eth_dev *eth_dev,
 				RTE_DIM(bnxt_rx_ext_stats_strings) +
 				RTE_DIM(bnxt_tx_ext_stats_strings);
 	struct bnxt *bp = (struct bnxt *)eth_dev->data->dev_private;
-	unsigned int i, count;
+	unsigned int i, count = 0;
 	int rc;
 
 	rc = is_bnxt_in_error(bp);
 	if (rc)
 		return rc;
 
-	if (xstats_names != NULL) {
-		count = 0;
+	if (xstats_names != NULL || size < stat_cnt)
+		return stat_cnt;
 
-		for (i = 0; i < RTE_DIM(bnxt_rx_stats_strings); i++) {
-			strlcpy(xstats_names[count].name,
-				bnxt_rx_stats_strings[i].name,
-				sizeof(xstats_names[count].name));
-			count++;
-		}
-
-		for (i = 0; i < RTE_DIM(bnxt_tx_stats_strings); i++) {
-			strlcpy(xstats_names[count].name,
-				bnxt_tx_stats_strings[i].name,
-				sizeof(xstats_names[count].name));
-			count++;
-		}
-
+	for (i = 0; i < RTE_DIM(bnxt_rx_stats_strings); i++) {
 		strlcpy(xstats_names[count].name,
-			bnxt_func_stats_strings[4].name,
+			bnxt_rx_stats_strings[i].name,
 			sizeof(xstats_names[count].name));
 		count++;
-
-		for (i = 0; i < RTE_DIM(bnxt_rx_ext_stats_strings); i++) {
-			strlcpy(xstats_names[count].name,
-				bnxt_rx_ext_stats_strings[i].name,
-				sizeof(xstats_names[count].name));
-
-			count++;
-		}
-
-		for (i = 0; i < RTE_DIM(bnxt_tx_ext_stats_strings); i++) {
-			strlcpy(xstats_names[count].name,
-				bnxt_tx_ext_stats_strings[i].name,
-				sizeof(xstats_names[count].name));
-
-			count++;
-		}
-
 	}
+
+	for (i = 0; i < RTE_DIM(bnxt_tx_stats_strings); i++) {
+		strlcpy(xstats_names[count].name,
+			bnxt_tx_stats_strings[i].name,
+			sizeof(xstats_names[count].name));
+		count++;
+	}
+
+	strlcpy(xstats_names[count].name,
+		bnxt_func_stats_strings[4].name,
+		sizeof(xstats_names[count].name));
+	count++;
+
+	for (i = 0; i < RTE_DIM(bnxt_rx_ext_stats_strings); i++) {
+		strlcpy(xstats_names[count].name,
+			bnxt_rx_ext_stats_strings[i].name,
+			sizeof(xstats_names[count].name));
+		count++;
+	}
+
+	for (i = 0; i < RTE_DIM(bnxt_tx_ext_stats_strings); i++) {
+		strlcpy(xstats_names[count].name,
+			bnxt_tx_ext_stats_strings[i].name,
+			sizeof(xstats_names[count].name));
+		count++;
+	}
+
 	return stat_cnt;
 }
 
