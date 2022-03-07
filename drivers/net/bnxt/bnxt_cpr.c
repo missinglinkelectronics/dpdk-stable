@@ -46,6 +46,22 @@ void bnxt_wait_for_device_shutdown(struct bnxt *bp)
 	} while (timeout);
 }
 
+void bnxt_handle_vf_cfg_change(void *arg)
+{
+	struct bnxt *bp = arg;
+	struct rte_eth_dev *eth_dev = bp->eth_dev;
+	int rc;
+
+	/* Free and recreate filters with default VLAN */
+	if (eth_dev->data->dev_started) {
+		bnxt_dev_stop_op(eth_dev);
+
+		rc = bnxt_dev_start_op(eth_dev);
+		if (rc != 0)
+			PMD_DRV_LOG(ERR, "Failed to start Port:%u\n", eth_dev->data->port_id);
+	}
+}
+
 /*
  * Async event handling
  */
@@ -73,6 +89,8 @@ void bnxt_handle_async_event(struct bnxt *bp,
 	case HWRM_ASYNC_EVENT_CMPL_EVENT_ID_VF_CFG_CHANGE:
 		PMD_DRV_LOG(INFO, "Async event: VF config changed\n");
 		bnxt_hwrm_func_qcfg(bp, NULL);
+		if (BNXT_VF(bp))
+			rte_eal_alarm_set(1, bnxt_handle_vf_cfg_change, (void *)bp);
 		break;
 	case HWRM_ASYNC_EVENT_CMPL_EVENT_ID_PORT_CONN_NOT_ALLOWED:
 		PMD_DRV_LOG(INFO, "Port conn async event\n");

@@ -772,7 +772,9 @@ uint16_t bnxt_dummy_recv_pkts(void *rx_queue, struct rte_mbuf **rx_pkts,
 			      uint16_t nb_pkts);
 uint16_t bnxt_dummy_xmit_pkts(void *tx_queue, struct rte_mbuf **tx_pkts,
 			      uint16_t nb_pkts);
-
+int bnxt_dev_start_op(struct rte_eth_dev *eth_dev);
+void bnxt_dev_stop_op(struct rte_eth_dev *eth_dev);
+void bnxt_handle_vf_cfg_change(void *arg);
 extern const struct rte_flow_ops bnxt_flow_ops;
 #define bnxt_acquire_flow_lock(bp) \
 	pthread_mutex_lock(&(bp)->flow_lock)
