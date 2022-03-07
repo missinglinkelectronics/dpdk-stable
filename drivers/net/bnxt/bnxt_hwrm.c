@@ -710,6 +710,8 @@ static int __bnxt_hwrm_func_qcaps(struct bnxt *bp)
 		bp->max_vnics = 1;
 	}
 	bp->max_stat_ctx = rte_le_to_cpu_16(resp->max_stat_ctx);
+	bp->max_mcast_addr = rte_le_to_cpu_32(resp->max_mcast_filters);
+
 	if (BNXT_PF(bp)) {
 		bp->pf.total_vnics = rte_le_to_cpu_16(resp->max_vnics);
 		if (flags & HWRM_FUNC_QCAPS_OUTPUT_FLAGS_PTP_SUPPORTED) {
