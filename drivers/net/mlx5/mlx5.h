@@ -575,6 +575,7 @@ struct mlx5_flow_counter_mng {
 struct mlx5_ibv_shared_port {
 	uint32_t ih_port_id;
 	uint32_t devx_ih_port_id;
+	uint32_t nl_ih_port_id;
 	/*
 	 * Interrupt handler port_id. Used by shared interrupt
 	 * handler to find the corresponding rte_eth device
@@ -693,6 +694,7 @@ struct mlx5_ibv_shared {
 	/* Shared interrupt handler section. */
 	struct rte_intr_handle intr_handle; /* Interrupt handler for device. */
 	struct rte_intr_handle intr_handle_devx; /* DEVX interrupt handler. */
+	struct rte_intr_handle intr_handle_nl; /* Netlink interrupt handler. */
 	struct mlx5dv_devx_cmd_comp *devx_comp; /* DEVX async comp obj. */
 	struct mlx5_devx_obj *tis; /* TIS object. */
 	struct mlx5_devx_obj *td; /* Transport domain. */
@@ -841,6 +843,7 @@ int mlx5_dev_to_pci_addr(const char *dev_path,
 void mlx5_dev_link_status_handler(void *arg);
 void mlx5_dev_interrupt_handler(void *arg);
 void mlx5_dev_interrupt_handler_devx(void *arg);
+void mlx5_dev_interrupt_handler_nl(void *arg);
 void mlx5_dev_interrupt_handler_uninstall(struct rte_eth_dev *dev);
 void mlx5_dev_interrupt_handler_install(struct rte_eth_dev *dev);
 int mlx5_set_link_down(struct rte_eth_dev *dev);

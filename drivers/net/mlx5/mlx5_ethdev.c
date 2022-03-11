@@ -1301,6 +1301,57 @@ mlx5_dev_interrupt_device_fatal(struct mlx5_ibv_shared *sh)
 	}
 }
 
+static void
+mlx5_dev_interrupt_nl_cb(struct nlmsghdr *hdr, void *cb_arg)
+{
+	struct mlx5_ibv_shared *sh = cb_arg;
+	uint32_t i;
+	uint32_t if_index;
+
+	if (mlx5_nl_parse_link_status_update(hdr, &if_index) < 0)
+		return;
+	for (i = 0; i < sh->max_port; i++) {
+		struct mlx5_ibv_shared_port *port = &sh->port[i];
+		struct rte_eth_dev *dev;
+		struct mlx5_priv *priv;
+		bool configured;
+
+		if (port->nl_ih_port_id >= RTE_MAX_ETHPORTS)
+			continue;
+		dev = &rte_eth_devices[port->nl_ih_port_id];
+		configured = dev->process_private != NULL;
+		/* Probing may initiate an LSC before configuration is done. */
+		if (configured && !dev->data->dev_conf.intr_conf.lsc)
+			break;
+		priv = dev->data->dev_private;
+		if (priv->if_index == if_index) {
+			/* Block logical LSC events. */
+			uint16_t prev_status = dev->data->dev_link.link_status;
+
+			if (mlx5_link_update(dev, 0) < 0)
+				DRV_LOG(ERR, "Failed to update link status: %s",
+					rte_strerror(rte_errno));
+			else if (prev_status != dev->data->dev_link.link_status)
+				_rte_eth_dev_callback_process
+					(dev, RTE_ETH_EVENT_INTR_LSC, NULL);
+			break;
+		}
+	}
+}
+
+void
+mlx5_dev_interrupt_handler_nl(void *arg)
+{
+	struct mlx5_ibv_shared *sh = arg;
+	int nlsk_fd = sh->intr_handle_nl.fd;
+
+	if (nlsk_fd < 0)
+		return;
+	if (mlx5_nl_read_events(nlsk_fd, mlx5_dev_interrupt_nl_cb, sh) < 0)
+		DRV_LOG(ERR, "Failed to process Netlink events: %s",
+			rte_strerror(rte_errno));
+}
+
 /**
  * Handle shared asynchronous events the NIC (removal event
  * and link status change). Supports multiport IB device.
@@ -1364,18 +1415,6 @@ mlx5_dev_interrupt_handler(void *cb_arg)
 		tmp = sh->port[tmp - 1].ih_port_id;
 		dev = &rte_eth_devices[tmp];
 		assert(dev);
-		if ((event.event_type == IBV_EVENT_PORT_ACTIVE ||
-		     event.event_type == IBV_EVENT_PORT_ERR) &&
-			dev->data->dev_conf.intr_conf.lsc) {
-			mlx5_glue->ack_async_event(&event);
-			if (mlx5_link_update(dev, 0) == -EAGAIN) {
-				usleep(0);
-				continue;
-			}
-			_rte_eth_dev_callback_process
-				(dev, RTE_ETH_EVENT_INTR_LSC, NULL);
-			continue;
-		}
 		DRV_LOG(DEBUG,
 			"port %u cannot handle an unknown event (type %d)",
 			dev->data->port_id, event.event_type);
