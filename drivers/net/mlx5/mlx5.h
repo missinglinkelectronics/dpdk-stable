@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <netlink/netlink.h>
 #include <sys/queue.h>
 
 /* Verbs header. */
@@ -991,7 +992,9 @@ void mlx5_mp_uninit_secondary(void);
 
 /* mlx5_nl.c */
 
-int mlx5_nl_init(int protocol);
+typedef void (mlx5_nl_event_cb)(struct nlmsghdr *hdr, void *user_data);
+
+int mlx5_nl_init(int protocol, int groups);
 int mlx5_nl_mac_addr_add(struct rte_eth_dev *dev, struct rte_ether_addr *mac,
 			 uint32_t index);
 int mlx5_nl_mac_addr_remove(struct rte_eth_dev *dev, struct rte_ether_addr *mac,
@@ -1006,6 +1009,8 @@ int mlx5_nl_vf_mac_addr_modify(struct rte_eth_dev *dev,
 			       struct rte_ether_addr *mac, int vf_index);
 int mlx5_nl_switch_info(int nl, unsigned int ifindex,
 			struct mlx5_switch_info *info);
+int mlx5_nl_read_events(int nlsk_fd, mlx5_nl_event_cb *cb, void *cb_arg);
+int mlx5_nl_parse_link_status_update(struct nlmsghdr *hdr, uint32_t *ifindex);
 
 struct mlx5_vlan_vmwa_context *mlx5_vlan_vmwa_init(struct rte_eth_dev *dev,
 						   uint32_t ifindex);
