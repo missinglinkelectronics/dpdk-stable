@@ -79,10 +79,6 @@ static struct ifpga_rawdev ifpga_rawdevices[IFPGA_RAWDEV_NUM];
 static int ifpga_monitor_start;
 static pthread_t ifpga_monitor_start_thread;
 
-#define IFPGA_MAX_IRQ 12
-/* 0 for FME interrupt, others are reserved for AFU irq */
-static struct rte_intr_handle ifpga_irq_handle[IFPGA_MAX_IRQ];
-
 static struct ifpga_rawdev *
 ifpga_rawdev_allocate(struct rte_rawdev *rawdev);
 static int set_surprise_link_check_aer(
@@ -126,6 +122,7 @@ ifpga_rawdev_allocate(struct rte_rawdev *rawdev)
 {
 	struct ifpga_rawdev *dev;
 	uint16_t dev_id;
+	int i = 0;
 
 	dev = ifpga_rawdev_get(rawdev);
 	if (dev != NULL) {
@@ -142,6 +139,8 @@ ifpga_rawdev_allocate(struct rte_rawdev *rawdev)
 	dev = &ifpga_rawdevices[dev_id];
 	dev->rawdev = rawdev;
 	dev->dev_id = dev_id;
+	for (i = 0; i < IFPGA_MAX_IRQ; i++)
+		dev->intr_handle[i] = NULL;
 
 	return dev;
 }
@@ -1335,36 +1334,63 @@ fme_interrupt_handler(void *param)
 }
 
 int
-ifpga_unregister_msix_irq(enum ifpga_irq_type type,
+ifpga_unregister_msix_irq(struct ifpga_rawdev *dev, enum ifpga_irq_type type,
 		int vec_start, rte_intr_callback_fn handler, void *arg)
 {
-	struct rte_intr_handle *intr_handle;
+	struct rte_intr_handle **intr_handle;
+	int rc = 0;
+	int i = vec_start + 1;
+
+	if (!dev)
+		return -ENODEV;
 
 	if (type == IFPGA_FME_IRQ)
-		intr_handle = &ifpga_irq_handle[0];
+		intr_handle = (struct rte_intr_handle **)&dev->intr_handle[0];
 	else if (type == IFPGA_AFU_IRQ)
-		intr_handle = &ifpga_irq_handle[vec_start + 1];
+		intr_handle = (struct rte_intr_handle **)&dev->intr_handle[i];
 	else
-		return 0;
+		return -EINVAL;
 
-	rte_intr_efd_disable(intr_handle);
+	if ((*intr_handle) == NULL) {
+		IFPGA_RAWDEV_PMD_ERR("%s interrupt %d not registered\n",
+			type == IFPGA_FME_IRQ ? "FME" : "AFU",
+			type == IFPGA_FME_IRQ ? 0 : vec_start);
+		return -ENOENT;
+	}
 
-	return rte_intr_callback_unregister(intr_handle, handler, arg);
+	rte_intr_efd_disable(*intr_handle);
+
+
+	rc = rte_intr_callback_unregister(*intr_handle, handler, arg);
+	if (rc < 0) {
+		IFPGA_RAWDEV_PMD_ERR("Failed to unregister %s interrupt %d\n",
+			type == IFPGA_FME_IRQ ? "FME" : "AFU",
+			type == IFPGA_FME_IRQ ? 0 : vec_start);
+	} else {
+		rte_free(*intr_handle);
+		*intr_handle = NULL;
+	}
+
+	return rc;
 }
 
 int
-ifpga_register_msix_irq(struct rte_rawdev *dev, int port_id,
+ifpga_register_msix_irq(struct ifpga_rawdev *dev, int port_id,
 		enum ifpga_irq_type type, int vec_start, int count,
 		rte_intr_callback_fn handler, const char *name,
 		void *arg)
 {
 	int ret;
-	struct rte_intr_handle *intr_handle;
+	struct rte_intr_handle **intr_handle;
 	struct opae_adapter *adapter;
 	struct opae_manager *mgr;
 	struct opae_accelerator *acc;
+	int i;
 
-	adapter = ifpga_rawdev_get_priv(dev);
+	if (!dev || !dev->rawdev)
+		return -ENODEV;
+
+	adapter = ifpga_rawdev_get_priv(dev->rawdev);
 	if (!adapter)
 		return -ENODEV;
 
@@ -1373,29 +1399,37 @@ ifpga_register_msix_irq(struct rte_rawdev *dev, int port_id,
 		return -ENODEV;
 
 	if (type == IFPGA_FME_IRQ) {
-		intr_handle = &ifpga_irq_handle[0];
+		intr_handle = (struct rte_intr_handle **)&dev->intr_handle[0];
 		count = 1;
 	} else if (type == IFPGA_AFU_IRQ) {
-		intr_handle = &ifpga_irq_handle[vec_start + 1];
+		i = vec_start + 1;
+		intr_handle = (struct rte_intr_handle **)&dev->intr_handle[i];
 	} else {
 		return -EINVAL;
 	}
 
-	intr_handle->type = RTE_INTR_HANDLE_VFIO_MSIX;
+	if (*intr_handle)
+		return -EBUSY;
 
-	ret = rte_intr_efd_enable(intr_handle, count);
+	*intr_handle = rte_zmalloc(NULL, sizeof(struct rte_intr_handle), 0);
+	if (!(*intr_handle))
+		return -ENOMEM;
+
+	(*intr_handle)->type = RTE_INTR_HANDLE_VFIO_MSIX;
+
+	ret = rte_intr_efd_enable(*intr_handle, count);
 	if (ret)
 		return -ENODEV;
 
-	intr_handle->fd = intr_handle->efds[0];
+	(*intr_handle)->fd = (*intr_handle)->efds[0];
 
 	IFPGA_RAWDEV_PMD_DEBUG("register %s irq, vfio_fd=%d, fd=%d\n",
-			name, intr_handle->vfio_dev_fd,
-			intr_handle->fd);
+			name, (*intr_handle)->vfio_dev_fd,
+			(*intr_handle)->fd);
 
 	if (type == IFPGA_FME_IRQ) {
 		struct fpga_fme_err_irq_set err_irq_set;
-		err_irq_set.evtfd = intr_handle->efds[0];
+		err_irq_set.evtfd = (*intr_handle)->efds[0];
 
 		ret = opae_manager_ifpga_set_err_irq(mgr, &err_irq_set);
 		if (ret)
@@ -1406,13 +1440,13 @@ ifpga_register_msix_irq(struct rte_rawdev *dev, int port_id,
 			return -EINVAL;
 
 		ret = opae_acc_set_irq(acc, vec_start, count,
-				intr_handle->efds);
+				(*intr_handle)->efds);
 		if (ret)
 			return -EINVAL;
 	}
 
 	/* register interrupt handler using DPDK API */
-	ret = rte_intr_callback_register(intr_handle,
+	ret = rte_intr_callback_register(*intr_handle,
 			handler, (void *)arg);
 	if (ret)
 		return -EINVAL;
@@ -1511,7 +1545,7 @@ ifpga_rawdev_create(struct rte_pci_device *pci_dev,
 		IFPGA_RAWDEV_PMD_INFO("this is a PF function");
 	}
 
-	ret = ifpga_register_msix_irq(rawdev, 0, IFPGA_FME_IRQ, 0, 0,
+	ret = ifpga_register_msix_irq(dev, 0, IFPGA_FME_IRQ, 0, 0,
 			fme_interrupt_handler, "fme_irq", mgr);
 	if (ret)
 		goto free_adapter_data;
@@ -1536,6 +1570,7 @@ ifpga_rawdev_destroy(struct rte_pci_device *pci_dev)
 	char name[RTE_RAWDEV_NAME_MAX_LEN];
 	struct opae_adapter *adapter;
 	struct opae_manager *mgr;
+	struct ifpga_rawdev *dev;
 
 	if (!pci_dev) {
 		IFPGA_RAWDEV_PMD_ERR("Invalid pci_dev of the device!");
@@ -1555,6 +1590,7 @@ ifpga_rawdev_destroy(struct rte_pci_device *pci_dev)
 		IFPGA_RAWDEV_PMD_ERR("Invalid device name (%s)", name);
 		return -EINVAL;
 	}
+	dev = ifpga_rawdev_get(rawdev);
 
 	adapter = ifpga_rawdev_get_priv(rawdev);
 	if (!adapter)
@@ -1564,7 +1600,7 @@ ifpga_rawdev_destroy(struct rte_pci_device *pci_dev)
 	if (!mgr)
 		return -ENODEV;
 
-	if (ifpga_unregister_msix_irq(IFPGA_FME_IRQ, 0,
+	if (ifpga_unregister_msix_irq(dev, IFPGA_FME_IRQ, 0,
 				fme_interrupt_handler, mgr) < 0)
 		return -EINVAL;
 
