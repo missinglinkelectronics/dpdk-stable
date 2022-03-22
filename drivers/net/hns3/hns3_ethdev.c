@@ -2902,6 +2902,10 @@ hns3_get_configuration(struct hns3_hw *hw)
 		return ret;
 	}
 
+	ret = hns3_query_mac_stats_reg_num(hw);
+	if (ret)
+		return ret;
+
 	/* Get pf resource */
 	ret = hns3_query_pf_resource(hw);
 	if (ret) {

@@ -5,10 +5,6 @@
 #ifndef _HNS3_STATS_H_
 #define _HNS3_STATS_H_
 
-/* stats macro */
-#define HNS3_MAC_CMD_NUM		21
-#define HNS3_RD_FIRST_STATS_NUM		2
-#define HNS3_RD_OTHER_STATS_NUM		4
 #define HNS3_VALUES_BYTES		8
 
 /* TQP stats */
@@ -23,6 +19,7 @@ struct hns3_tqp_stats {
 struct hns3_mac_stats {
 	uint64_t mac_tx_mac_pause_num;
 	uint64_t mac_rx_mac_pause_num;
+	uint64_t rsv0;
 	uint64_t mac_tx_pfc_pri0_pkt_num;
 	uint64_t mac_tx_pfc_pri1_pkt_num;
 	uint64_t mac_tx_pfc_pri2_pkt_num;
@@ -59,7 +56,7 @@ struct hns3_mac_stats {
 	uint64_t mac_tx_1519_2047_oct_pkt_num;
 	uint64_t mac_tx_2048_4095_oct_pkt_num;
 	uint64_t mac_tx_4096_8191_oct_pkt_num;
-	uint64_t rsv0;
+	uint64_t rsv1;
 	uint64_t mac_tx_8192_9216_oct_pkt_num;
 	uint64_t mac_tx_9217_12287_oct_pkt_num;
 	uint64_t mac_tx_12288_16383_oct_pkt_num;
@@ -86,7 +83,7 @@ struct hns3_mac_stats {
 	uint64_t mac_rx_1519_2047_oct_pkt_num;
 	uint64_t mac_rx_2048_4095_oct_pkt_num;
 	uint64_t mac_rx_4096_8191_oct_pkt_num;
-	uint64_t rsv1;
+	uint64_t rsv2;
 	uint64_t mac_rx_8192_9216_oct_pkt_num;
 	uint64_t mac_rx_9217_12287_oct_pkt_num;
 	uint64_t mac_rx_12288_16383_oct_pkt_num;
@@ -149,4 +146,5 @@ int hns3_dev_xstats_get_names_by_id(struct rte_eth_dev *dev,
 				    const uint64_t *ids,
 				    uint32_t size);
 int hns3_stats_reset(struct rte_eth_dev *dev);
+int hns3_query_mac_stats_reg_num(struct hns3_hw *hw);
 #endif /* _HNS3_STATS_H_ */
