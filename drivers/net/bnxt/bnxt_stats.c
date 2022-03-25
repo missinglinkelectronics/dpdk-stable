@@ -612,7 +612,7 @@ int bnxt_dev_xstats_get_names_op(__rte_unused struct rte_eth_dev *eth_dev,
 	if (rc)
 		return rc;
 
-	if (xstats_names != NULL || size < stat_cnt)
+	if (xstats_names == NULL || size < stat_cnt)
 		return stat_cnt;
 
 	for (i = 0; i < RTE_DIM(bnxt_rx_stats_strings); i++) {
