@@ -12,7 +12,7 @@
 #include <limits.h>
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netlink/netlink.h>
+#include <linux/netlink.h>
 #include <sys/queue.h>
 
 /* Verbs header. */
