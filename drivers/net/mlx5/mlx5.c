@@ -1625,9 +1625,9 @@ mlx5_args_check(const char *key, const char *val, void *opaque)
 	} else if (strcmp(MLX5_RX_MPRQ_EN, key) == 0) {
 		config->mprq.enabled = !!tmp;
 	} else if (strcmp(MLX5_RX_MPRQ_LOG_STRIDE_NUM, key) == 0) {
-		config->mprq.stride_num_n = tmp;
+		config->mprq.log_stride_num = tmp;
 	} else if (strcmp(MLX5_RX_MPRQ_LOG_STRIDE_SIZE, key) == 0) {
-		config->mprq.stride_size_n = tmp;
+		config->mprq.log_stride_size = tmp;
 	} else if (strcmp(MLX5_RX_MPRQ_MAX_MEMCPY_LEN, key) == 0) {
 		config->mprq.max_memcpy_len = tmp;
 	} else if (strcmp(MLX5_RXQS_MIN_MPRQ, key) == 0) {
@@ -2706,34 +2706,34 @@ err_secondary:
 #endif
 	}
 	if (config.mprq.enabled && mprq) {
-		if (config.mprq.stride_num_n &&
-		    (config.mprq.stride_num_n > mprq_max_stride_num_n ||
-		     config.mprq.stride_num_n < mprq_min_stride_num_n)) {
-			config.mprq.stride_num_n =
-				RTE_MIN(RTE_MAX(MLX5_MPRQ_STRIDE_NUM_N,
-						mprq_min_stride_num_n),
-					mprq_max_stride_num_n);
+		if (config.mprq.log_stride_num &&
+		    (config.mprq.log_stride_num > mprq_max_stride_num_n ||
+		     config.mprq.log_stride_num < mprq_min_stride_num_n)) {
+			config.mprq.log_stride_num =
+			       RTE_MIN(RTE_MAX(MLX5_MPRQ_DEFAULT_LOG_STRIDE_NUM,
+					       mprq_min_stride_num_n),
+				       mprq_max_stride_num_n);
 			DRV_LOG(WARNING,
 				"the number of strides"
 				" for Multi-Packet RQ is out of range,"
 				" setting default value (%u)",
-				1 << config.mprq.stride_num_n);
+				1 << config.mprq.log_stride_num);
 		}
-		if (config.mprq.stride_size_n &&
-		    (config.mprq.stride_size_n > mprq_max_stride_size_n ||
-		     config.mprq.stride_size_n < mprq_min_stride_size_n)) {
-			config.mprq.stride_size_n =
-				RTE_MIN(RTE_MAX(MLX5_MPRQ_STRIDE_SIZE_N,
-						mprq_min_stride_size_n),
-					mprq_max_stride_size_n);
+		if (config.mprq.log_stride_size &&
+		    (config.mprq.log_stride_size > mprq_max_stride_size_n ||
+		     config.mprq.log_stride_size < mprq_min_stride_size_n)) {
+			config.mprq.log_stride_size =
+			      RTE_MIN(RTE_MAX(MLX5_MPRQ_DEFAULT_LOG_STRIDE_SIZE,
+					      mprq_min_stride_size_n),
+				      mprq_max_stride_size_n);
 			DRV_LOG(WARNING,
 				"the size of a stride"
 				" for Multi-Packet RQ is out of range,"
 				" setting default value (%u)",
-				1 << config.mprq.stride_size_n);
+				1 << config.mprq.log_stride_size);
 		}
-		config.mprq.min_stride_size_n = mprq_min_stride_size_n;
-		config.mprq.max_stride_size_n = mprq_max_stride_size_n;
+		config.mprq.log_min_stride_size = mprq_min_stride_size_n;
+		config.mprq.log_max_stride_size = mprq_max_stride_size_n;
 	} else if (config.mprq.enabled && !mprq) {
 		DRV_LOG(WARNING, "Multi-Packet RQ isn't supported");
 		config.mprq.enabled = 0;
@@ -3458,8 +3458,8 @@ mlx5_pci_probe(struct rte_pci_driver *pci_drv __rte_unused,
 		.mr_ext_memseg_en = 1,
 		.mprq = {
 			.enabled = 0, /* Disabled by default. */
-			.stride_num_n = 0,
-			.stride_size_n = 0,
+			.log_stride_num = 0,
+			.log_stride_size = 0,
 			.max_memcpy_len = MLX5_MPRQ_MEMCPY_DEFAULT_LEN,
 			.min_rxqs_num = MLX5_MPRQ_MIN_RXQS,
 		},

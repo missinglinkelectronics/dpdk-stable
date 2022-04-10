@@ -110,8 +110,8 @@ struct mlx5_rxq_data {
 	unsigned int elts_n:4; /* Log 2 of Mbufs. */
 	unsigned int rss_hash:1; /* RSS hash result is enabled. */
 	unsigned int mark:1; /* Marked flow available on the queue. */
-	unsigned int strd_num_n:5; /* Log 2 of the number of stride. */
-	unsigned int strd_sz_n:4; /* Log 2 of stride size. */
+	unsigned int log_strd_num:5; /* Log 2 of the number of stride. */
+	unsigned int log_strd_sz:4; /* Log 2 of stride size. */
 	unsigned int strd_shift_en:1; /* Enable 2bytes shift on a stride. */
 	unsigned int err_state:2; /* enum mlx5_rxq_err_state. */
 	unsigned int strd_scatter_en:1; /* Scattered packets from a stride. */

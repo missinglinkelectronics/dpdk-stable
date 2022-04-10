@@ -471,7 +471,7 @@ rx_queue_count(struct mlx5_rxq_data *rxq)
 	const unsigned int cqe_n = (1 << rxq->cqe_n);
 	const unsigned int sges_n = (1 << rxq->sges_n);
 	const unsigned int elts_n = (1 << rxq->elts_n);
-	const unsigned int strd_n = (1 << rxq->strd_num_n);
+	const unsigned int strd_n = (1 << rxq->log_strd_num);
 	const unsigned int cqe_cnt = cqe_n - 1;
 	unsigned int cq_ci, used;
 
@@ -769,10 +769,10 @@ mlx5_rxq_initialize(struct mlx5_rxq_data *rxq)
 
 			scat = &((volatile struct mlx5_wqe_mprq *)
 				rxq->wqes)[i].dseg;
-			addr = (uintptr_t)mlx5_mprq_buf_addr(buf,
-							 1 << rxq->strd_num_n);
-			byte_count = (1 << rxq->strd_sz_n) *
-					(1 << rxq->strd_num_n);
+			addr = (uintptr_t)mlx5_mprq_buf_addr
+					(buf, (1 << rxq->log_strd_num));
+			byte_count = (1 << rxq->log_strd_sz) *
+				     (1 << rxq->log_strd_num);
 		} else {
 			struct rte_mbuf *buf = (*rxq->elts)[i];
 
@@ -1579,8 +1579,8 @@ uint16_t
 mlx5_rx_burst_mprq(void *dpdk_rxq, struct rte_mbuf **pkts, uint16_t pkts_n)
 {
 	struct mlx5_rxq_data *rxq = dpdk_rxq;
-	const unsigned int strd_n = 1 << rxq->strd_num_n;
-	const unsigned int strd_sz = 1 << rxq->strd_sz_n;
+	const unsigned int strd_n = 1 << rxq->log_strd_num;
+	const unsigned int strd_sz = 1 << rxq->log_strd_sz;
 	const unsigned int strd_shift =
 		MLX5_MPRQ_STRIDE_SHIFT_BYTE * rxq->strd_shift_en;
 	const unsigned int cq_mask = (1 << rxq->cqe_n) - 1;
