@@ -728,12 +728,11 @@ flow_rxq_tunnel_ptype_update(struct mlx5_rxq_ctrl *rxq_ctrl)
  *   Pointer to device flow structure.
  */
 static void
-flow_drv_rxq_flags_set(struct rte_eth_dev *dev, struct mlx5_flow *dev_flow)
+flow_drv_rxq_flags_set(struct rte_eth_dev *dev, struct mlx5_flow *dev_flow,
+			int mark)
 {
 	struct mlx5_priv *priv = dev->data->dev_private;
 	struct rte_flow *flow = dev_flow->flow;
-	const int mark = !!(dev_flow->actions &
-			    (MLX5_FLOW_ACTION_FLAG | MLX5_FLOW_ACTION_MARK));
 	const int tunnel = !!(dev_flow->layers & MLX5_FLOW_LAYER_TUNNEL);
 	unsigned int i;
 
@@ -752,10 +751,8 @@ flow_drv_rxq_flags_set(struct rte_eth_dev *dev, struct mlx5_flow *dev_flow)
 		    priv->config.dv_xmeta_en != MLX5_XMETA_MODE_LEGACY &&
 		    mlx5_flow_ext_mreg_supported(dev)) {
 			rxq_ctrl->rxq.mark = 1;
-			rxq_ctrl->flow_mark_n = 1;
 		} else if (mark) {
 			rxq_ctrl->rxq.mark = 1;
-			rxq_ctrl->flow_mark_n++;
 		}
 		if (tunnel) {
 			unsigned int j;
@@ -774,6 +771,20 @@ flow_drv_rxq_flags_set(struct rte_eth_dev *dev, struct mlx5_flow *dev_flow)
 	}
 }
 
+static void
+flow_rxq_mark_flag_set(struct rte_eth_dev *dev)
+{
+	struct mlx5_priv *priv = dev->data->dev_private;
+	struct mlx5_rxq_ctrl *rxq_ctrl;
+
+	if (priv->mark_enabled)
+		return;
+	LIST_FOREACH(rxq_ctrl, &priv->rxqsctrl, next) {
+		rxq_ctrl->rxq.mark = 1;
+	}
+	priv->mark_enabled = 1;
+}
+
 /**
  * Set the Rx queue flags (Mark/Flag and Tunnel Ptypes) for a flow
  *
@@ -786,9 +797,14 @@ static void
 flow_rxq_flags_set(struct rte_eth_dev *dev, struct rte_flow *flow)
 {
 	struct mlx5_flow *dev_flow;
-
+	int mark = 0;
 	LIST_FOREACH(dev_flow, &flow->dev_flows, next)
-		flow_drv_rxq_flags_set(dev, dev_flow);
+		mark = mark | (!!(dev_flow->actions & (MLX5_FLOW_ACTION_FLAG |
+		MLX5_FLOW_ACTION_MARK)));
+	if (mark)
+		flow_rxq_mark_flag_set(dev);
+	LIST_FOREACH(dev_flow, &flow->dev_flows, next)
+		flow_drv_rxq_flags_set(dev, dev_flow, mark);
 }
 
 /**
@@ -805,8 +821,6 @@ flow_drv_rxq_flags_trim(struct rte_eth_dev *dev, struct mlx5_flow *dev_flow)
 {
 	struct mlx5_priv *priv = dev->data->dev_private;
 	struct rte_flow *flow = dev_flow->flow;
-	const int mark = !!(dev_flow->actions &
-			    (MLX5_FLOW_ACTION_FLAG | MLX5_FLOW_ACTION_MARK));
 	const int tunnel = !!(dev_flow->layers & MLX5_FLOW_LAYER_TUNNEL);
 	unsigned int i;
 
@@ -821,10 +835,6 @@ flow_drv_rxq_flags_trim(struct rte_eth_dev *dev, struct mlx5_flow *dev_flow)
 		    priv->config.dv_xmeta_en != MLX5_XMETA_MODE_LEGACY &&
 		    mlx5_flow_ext_mreg_supported(dev)) {
 			rxq_ctrl->rxq.mark = 1;
-			rxq_ctrl->flow_mark_n = 1;
-		} else if (mark) {
-			rxq_ctrl->flow_mark_n--;
-			rxq_ctrl->rxq.mark = !!rxq_ctrl->flow_mark_n;
 		}
 		if (tunnel) {
 			unsigned int j;
@@ -881,7 +891,6 @@ flow_rxq_flags_clear(struct rte_eth_dev *dev)
 			continue;
 		rxq_ctrl = container_of((*priv->rxqs)[i],
 					struct mlx5_rxq_ctrl, rxq);
-		rxq_ctrl->flow_mark_n = 0;
 		rxq_ctrl->rxq.mark = 0;
 		for (j = 0; j != MLX5_FLOW_TUNNEL; ++j)
 			rxq_ctrl->flow_tunnels_n[j] = 0;
