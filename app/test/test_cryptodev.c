@@ -4591,9 +4591,9 @@ test_snow3g_cipher_auth(const struct snow3g_test_data *tdata)
 	if (retval < 0)
 		return retval;
 
+	TEST_ASSERT_NOT_NULL(ut_params->op, "failed to retrieve obuf");
 	ut_params->op = process_crypto_request(ts_params->valid_devs[0],
 			ut_params->op);
-	TEST_ASSERT_NOT_NULL(ut_params->op, "failed to retrieve obuf");
 	ut_params->obuf = ut_params->op->sym->m_src;
 	if (ut_params->obuf)
 		ciphertext = rte_pktmbuf_mtod(ut_params->obuf, uint8_t *);
