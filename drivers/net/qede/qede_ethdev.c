@@ -270,7 +270,7 @@ qede_interrupt_handler(void *param)
 static void
 qede_alloc_etherdev(struct qede_dev *qdev, struct qed_dev_eth_info *info)
 {
-	rte_memcpy(&qdev->dev_info, info, sizeof(*info));
+	qdev->dev_info = *info;
 	qdev->ops = qed_ops;
 }
 
