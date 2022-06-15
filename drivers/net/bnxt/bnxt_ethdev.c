@@ -2428,6 +2428,10 @@ int bnxt_mtu_set_op(struct rte_eth_dev *eth_dev, uint16_t new_mtu)
 	}
 #endif
 
+	/* Is there a change in mtu setting? */
+	if (eth_dev->data->dev_conf.rxmode.max_rx_pkt_len == new_pkt_size)
+		return rc;
+
 	if (new_mtu > RTE_ETHER_MTU) {
 		bp->flags |= BNXT_FLAG_JUMBO;
 		bp->eth_dev->data->dev_conf.rxmode.offloads |=
@@ -2437,10 +2441,6 @@ int bnxt_mtu_set_op(struct rte_eth_dev *eth_dev, uint16_t new_mtu)
 			~DEV_RX_OFFLOAD_JUMBO_FRAME;
 		bp->flags &= ~BNXT_FLAG_JUMBO;
 	}
-
-	/* Is there a change in mtu setting? */
-	if (eth_dev->data->dev_conf.rxmode.max_rx_pkt_len == new_pkt_size)
-		return rc;
 
 	for (i = 0; i < bp->nr_vnics; i++) {
 		struct bnxt_vnic_info *vnic = &bp->vnic_info[i];
