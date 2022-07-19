@@ -2095,13 +2095,14 @@ bond_ethdev_stop(struct rte_eth_dev *eth_dev)
 	internals->link_status_polling_enabled = 0;
 	for (i = 0; i < internals->slave_count; i++) {
 		uint16_t slave_id = internals->slaves[i].port_id;
+
+		internals->slaves[i].last_link_status = 0;
+		rte_eth_dev_stop(slave_id);
+		/* active slaves need to be deactivated. */
 		if (find_slave_by_id(internals->active_slaves,
 				internals->active_slave_count, slave_id) !=
-						internals->active_slave_count) {
-			internals->slaves[i].last_link_status = 0;
-			rte_eth_dev_stop(slave_id);
+					internals->active_slave_count)
 			deactivate_slave(eth_dev, slave_id);
-		}
 	}
 }
 
