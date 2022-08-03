@@ -2700,6 +2700,7 @@ close_port(portid_t pid)
 			num_slaves = rte_eth_bond_slaves_get(pi,
 					slave_pids, RTE_MAX_ETHPORTS);
 #endif
+		mcast_addr_pool_destroy(pi);
 		rte_eth_dev_close(pi);
 		/*
 		 * If this port is bonded device, all slaves under the
