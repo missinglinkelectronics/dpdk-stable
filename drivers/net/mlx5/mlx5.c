@@ -579,6 +579,11 @@ mlx5_dev_shared_handler_uninstall(struct mlx5_ibv_shared *sh)
 	if (sh->intr_handle.fd >= 0)
 		mlx5_intr_callback_unregister(&sh->intr_handle,
 					      mlx5_dev_interrupt_handler, sh);
+	if (sh->intr_handle_nl.fd >= 0) {
+		mlx5_intr_callback_unregister(&sh->intr_handle_nl,
+					      mlx5_dev_interrupt_handler_nl, sh);
+		close(sh->intr_handle_nl.fd);
+	}
 #ifdef HAVE_IBV_DEVX_ASYNC
 	if (sh->intr_handle_devx.fd >= 0)
 		rte_intr_callback_unregister(&sh->intr_handle_devx,
