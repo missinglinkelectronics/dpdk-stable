@@ -820,6 +820,8 @@ txa_service_queue_del(uint8_t id,
 		uint16_t i, q, nb_queues;
 		int ret = 0;
 
+		if (txa->txa_ethdev == NULL)
+			return 0;
 		nb_queues = txa->txa_ethdev[port_id].nb_queues;
 		if (nb_queues == 0)
 			return 0;
@@ -832,10 +834,10 @@ txa_service_queue_del(uint8_t id,
 
 			if (tqi[q].added) {
 				ret = txa_service_queue_del(id, dev, q);
+				i++;
 				if (ret != 0)
 					break;
 			}
-			i++;
 			q++;
 		}
 		return ret;
