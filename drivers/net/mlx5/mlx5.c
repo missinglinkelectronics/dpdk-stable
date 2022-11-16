@@ -2297,6 +2297,8 @@ mlx5_dev_spawn(struct rte_device *dpdk_dev,
 	}
 	DRV_LOG(DEBUG, "naming Ethernet device \"%s\"", name);
 	if (rte_eal_process_type() == RTE_PROC_SECONDARY) {
+		int fd;
+
 		eth_dev = rte_eth_dev_attach_secondary(name);
 		if (eth_dev == NULL) {
 			DRV_LOG(ERR, "can not attach rte ethdev");
@@ -2309,11 +2311,12 @@ mlx5_dev_spawn(struct rte_device *dpdk_dev,
 		if (err)
 			return NULL;
 		/* Receive command fd from primary process */
-		err = mlx5_mp_req_verbs_cmd_fd(eth_dev);
-		if (err < 0)
+		fd = mlx5_mp_req_verbs_cmd_fd(eth_dev);
+		if (fd < 0)
 			goto err_secondary;
 		/* Remap UAR for Tx queues. */
-		err = mlx5_tx_uar_init_secondary(eth_dev, err);
+		err = mlx5_tx_uar_init_secondary(eth_dev, fd);
+		close(fd);
 		if (err)
 			goto err_secondary;
 		/*
