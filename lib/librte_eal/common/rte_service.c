@@ -447,6 +447,12 @@ service_runner_func(void *arg)
 		rte_smp_rmb();
 	}
 
+	/* Switch off this core for all services, to ensure that future
+	 * calls to may_be_active() know this core is switched off.
+	 */
+	for (i = 0; i < RTE_SERVICE_NUM_MAX; i++)
+		cs->service_active_on_lcore[i] = 0;
+
 	return 0;
 }
 
@@ -716,11 +722,6 @@ rte_service_lcore_stop(uint32_t lcore)
 		int32_t service_running = rte_service_runstate_get(i);
 		int32_t only_core = (1 ==
 			rte_atomic32_read(&rte_services[i].num_mapped_cores));
-
-		/* Switch off this core for all services, to ensure that future
-		 * calls to may_be_active() know this core is switched off.
-		 */
-		cs->service_active_on_lcore[i] = 0;
 
 		/* if the core is mapped, and the service is running, and this
 		 * is the only core that is mapped, the service would cease to
