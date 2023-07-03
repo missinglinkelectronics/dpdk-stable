@@ -37,6 +37,7 @@ drivers = [
         'memif',
         'mlx4',
         'mlx5',
+	'mqnic',
         'mvneta',
         'mvpp2',
         'netvsc',
