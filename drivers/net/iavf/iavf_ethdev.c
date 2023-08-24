@@ -1034,6 +1034,9 @@ iavf_dev_stop(struct rte_eth_dev *dev)
 
 	PMD_INIT_FUNC_TRACE();
 
+	if (vf->vf_reset)
+		return 0;
+
 	if (adapter->closed)
 		return -1;
 
@@ -1043,8 +1046,6 @@ iavf_dev_stop(struct rte_eth_dev *dev)
 
 	if (adapter->stopped == 1)
 		return 0;
-
-	iavf_stop_queues(dev);
 
 	/* Disable the interrupt for Rx */
 	rte_intr_efd_disable(intr_handle);
@@ -1057,6 +1058,8 @@ iavf_dev_stop(struct rte_eth_dev *dev)
 	/* remove all multicast addresses */
 	iavf_add_del_mc_addr_list(adapter, vf->mc_addrs, vf->mc_addrs_num,
 				  false);
+
+	iavf_stop_queues(dev);
 
 	adapter->stopped = 1;
 	dev->data->dev_started = 0;
@@ -2641,6 +2644,19 @@ iavf_dev_close(struct rte_eth_dev *dev)
 	}
 
 	ret = iavf_dev_stop(dev);
+
+	/*
+	 * Release redundant queue resource when close the dev
+	 * so that other vfs can re-use the queues.
+	 */
+	if (vf->lv_enabled) {
+		ret = iavf_request_queues(dev, IAVF_MAX_NUM_QUEUES_DFLT);
+		if (ret)
+			PMD_DRV_LOG(ERR, "Reset the num of queues failed");
+
+		vf->max_rss_qregion = IAVF_MAX_NUM_QUEUES_DFLT;
+	}
+
 	adapter->closed = true;
 
 	/* free iAVF security device context all related resources */

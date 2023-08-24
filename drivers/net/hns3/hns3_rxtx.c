@@ -50,6 +50,8 @@ hns3_rx_queue_release_mbufs(struct hns3_rx_queue *rxq)
 				rxq->sw_ring[i].mbuf = NULL;
 			}
 		}
+		for (i = 0; i < rxq->rx_rearm_nb; i++)
+			rxq->sw_ring[rxq->rx_rearm_start + i].mbuf = NULL;
 	}
 
 	for (i = 0; i < rxq->bulk_mbuf_num; i++)
@@ -587,7 +589,7 @@ hns3_tqp_enable(struct hns3_hw *hw, uint16_t queue_id, bool enable)
 
 	ret = hns3_cmd_send(hw, &desc, 1);
 	if (ret)
-		hns3_err(hw, "TQP enable fail, ret = %d", ret);
+		hns3_err(hw, "TQP %s fail, ret = %d", enable ? "enable" : "disable", ret);
 
 	return ret;
 }
@@ -1644,7 +1646,7 @@ hns3_set_fake_rx_or_tx_queues(struct rte_eth_dev *dev, uint16_t nb_rx_q,
 
 	ret = hns3_fake_tx_queue_config(hw, tx_need_add_nb_q);
 	if (ret) {
-		hns3_err(hw, "Fail to configure fake rx queues: %d", ret);
+		hns3_err(hw, "Fail to configure fake tx queues: %d", ret);
 		goto cfg_fake_tx_q_fail;
 	}
 
@@ -2797,6 +2799,7 @@ hns3_rx_burst_mode_get(struct rte_eth_dev *dev, __rte_unused uint16_t queue_id,
 		{ hns3_recv_scattered_pkts,	"Scalar Scattered" },
 		{ hns3_recv_pkts_vec,		"Vector Neon"   },
 		{ hns3_recv_pkts_vec_sve,	"Vector Sve"    },
+		{ hns3_dummy_rxtx_burst,	"Dummy"         },
 	};
 
 	eth_rx_burst_t pkt_burst = dev->rx_pkt_burst;
@@ -4283,24 +4286,31 @@ int
 hns3_tx_burst_mode_get(struct rte_eth_dev *dev, __rte_unused uint16_t queue_id,
 		       struct rte_eth_burst_mode *mode)
 {
+	static const struct {
+		eth_tx_burst_t pkt_burst;
+		const char *info;
+	} burst_infos[] = {
+		{ hns3_xmit_pkts_simple,	"Scalar Simple" },
+		{ hns3_xmit_pkts,		"Scalar"        },
+		{ hns3_xmit_pkts_vec,		"Vector Neon"   },
+		{ hns3_xmit_pkts_vec_sve,	"Vector Sve"    },
+		{ hns3_dummy_rxtx_burst,	"Dummy"         },
+	};
+
 	eth_tx_burst_t pkt_burst = dev->tx_pkt_burst;
-	const char *info = NULL;
+	int ret = -EINVAL;
+	unsigned int i;
 
-	if (pkt_burst == hns3_xmit_pkts_simple)
-		info = "Scalar Simple";
-	else if (pkt_burst == hns3_xmit_pkts)
-		info = "Scalar";
-	else if (pkt_burst == hns3_xmit_pkts_vec)
-		info = "Vector Neon";
-	else if (pkt_burst == hns3_xmit_pkts_vec_sve)
-		info = "Vector Sve";
+	for (i = 0; i < RTE_DIM(burst_infos); i++) {
+		if (pkt_burst == burst_infos[i].pkt_burst) {
+			snprintf(mode->info, sizeof(mode->info), "%s",
+				 burst_infos[i].info);
+			ret = 0;
+			break;
+		}
+	}
 
-	if (info == NULL)
-		return -EINVAL;
-
-	snprintf(mode->info, sizeof(mode->info), "%s", info);
-
-	return 0;
+	return ret;
 }
 
 static bool
@@ -4327,26 +4337,30 @@ hns3_get_tx_prep_needed(struct rte_eth_dev *dev)
 		RTE_ETH_TX_OFFLOAD_GENEVE_TNL_TSO)
 
 	uint64_t tx_offload = dev->data->dev_conf.txmode.offloads;
+
 	if (tx_offload & HNS3_DEV_TX_CSKUM_TSO_OFFLOAD_MASK)
 		return true;
 
 	return false;
 }
 
-eth_tx_burst_t
-hns3_get_tx_function(struct rte_eth_dev *dev, eth_tx_prep_t *prep)
+static eth_tx_prep_t
+hns3_get_tx_prepare(struct rte_eth_dev *dev)
+{
+	return hns3_get_tx_prep_needed(dev) ? hns3_prep_pkts : NULL;
+}
+
+static eth_tx_burst_t
+hns3_get_tx_function(struct rte_eth_dev *dev)
 {
 	struct hns3_adapter *hns = dev->data->dev_private;
 	bool vec_allowed, sve_allowed, simple_allowed;
-	bool vec_support, tx_prepare_needed;
+	bool vec_support;
 
 	vec_support = hns3_tx_check_vec_support(dev) == 0;
 	vec_allowed = vec_support && hns3_get_default_vec_support();
 	sve_allowed = vec_support && hns3_get_sve_support();
 	simple_allowed = hns3_tx_check_simple_support(dev);
-	tx_prepare_needed = hns3_get_tx_prep_needed(dev);
-
-	*prep = NULL;
 
 	if (hns->tx_func_hint == HNS3_IO_FUNC_HINT_VEC && vec_allowed)
 		return hns3_xmit_pkts_vec;
@@ -4354,19 +4368,14 @@ hns3_get_tx_function(struct rte_eth_dev *dev, eth_tx_prep_t *prep)
 		return hns3_xmit_pkts_vec_sve;
 	if (hns->tx_func_hint == HNS3_IO_FUNC_HINT_SIMPLE && simple_allowed)
 		return hns3_xmit_pkts_simple;
-	if (hns->tx_func_hint == HNS3_IO_FUNC_HINT_COMMON) {
-		if (tx_prepare_needed)
-			*prep = hns3_prep_pkts;
+	if (hns->tx_func_hint == HNS3_IO_FUNC_HINT_COMMON)
 		return hns3_xmit_pkts;
-	}
 
 	if (vec_allowed)
 		return hns3_xmit_pkts_vec;
 	if (simple_allowed)
 		return hns3_xmit_pkts_simple;
 
-	if (tx_prepare_needed)
-		*prep = hns3_prep_pkts;
 	return hns3_xmit_pkts;
 }
 
@@ -4414,7 +4423,6 @@ hns3_set_rxtx_function(struct rte_eth_dev *eth_dev)
 {
 	struct hns3_hw *hw = HNS3_DEV_PRIVATE_TO_HW(eth_dev->data->dev_private);
 	struct hns3_adapter *hns = eth_dev->data->dev_private;
-	eth_tx_prep_t prep = NULL;
 
 	if (hns->hw.adapter_state == HNS3_NIC_STARTED &&
 	    __atomic_load_n(&hns->hw.reset.resetting, __ATOMIC_RELAXED) == 0) {
@@ -4422,8 +4430,8 @@ hns3_set_rxtx_function(struct rte_eth_dev *eth_dev)
 		eth_dev->rx_descriptor_status = hns3_dev_rx_descriptor_status;
 		eth_dev->tx_pkt_burst = hw->set_link_down ?
 					hns3_dummy_rxtx_burst :
-					hns3_get_tx_function(eth_dev, &prep);
-		eth_dev->tx_pkt_prepare = prep;
+					hns3_get_tx_function(eth_dev);
+		eth_dev->tx_pkt_prepare = hns3_get_tx_prepare(eth_dev);
 		eth_dev->tx_descriptor_status = hns3_dev_tx_descriptor_status;
 	} else {
 		eth_dev->rx_pkt_burst = hns3_dummy_rxtx_burst;
@@ -4482,6 +4490,13 @@ hns3_dev_rx_queue_start(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 		return -ENOTSUP;
 
 	rte_spinlock_lock(&hw->lock);
+
+	if (__atomic_load_n(&hw->reset.resetting, __ATOMIC_RELAXED)) {
+		hns3_err(hw, "fail to start Rx queue during resetting.");
+		rte_spinlock_unlock(&hw->lock);
+		return -EIO;
+	}
+
 	ret = hns3_reset_queue(hw, rx_queue_id, HNS3_RING_TYPE_RX);
 	if (ret) {
 		hns3_err(hw, "fail to reset Rx queue %u, ret = %d.",
@@ -4489,6 +4504,9 @@ hns3_dev_rx_queue_start(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 		rte_spinlock_unlock(&hw->lock);
 		return ret;
 	}
+
+	if (rxq->sw_ring[0].mbuf != NULL)
+		hns3_rx_queue_release_mbufs(rxq);
 
 	ret = hns3_init_rxq(hns, rx_queue_id);
 	if (ret) {
@@ -4528,6 +4546,13 @@ hns3_dev_rx_queue_stop(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 		return -ENOTSUP;
 
 	rte_spinlock_lock(&hw->lock);
+
+	if (__atomic_load_n(&hw->reset.resetting, __ATOMIC_RELAXED)) {
+		hns3_err(hw, "fail to stop Rx queue during resetting.");
+		rte_spinlock_unlock(&hw->lock);
+		return -EIO;
+	}
+
 	hns3_enable_rxq(rxq, false);
 
 	hns3_rx_queue_release_mbufs(rxq);
@@ -4550,6 +4575,13 @@ hns3_dev_tx_queue_start(struct rte_eth_dev *dev, uint16_t tx_queue_id)
 		return -ENOTSUP;
 
 	rte_spinlock_lock(&hw->lock);
+
+	if (__atomic_load_n(&hw->reset.resetting, __ATOMIC_RELAXED)) {
+		hns3_err(hw, "fail to start Tx queue during resetting.");
+		rte_spinlock_unlock(&hw->lock);
+		return -EIO;
+	}
+
 	ret = hns3_reset_queue(hw, tx_queue_id, HNS3_RING_TYPE_TX);
 	if (ret) {
 		hns3_err(hw, "fail to reset Tx queue %u, ret = %d.",
@@ -4576,6 +4608,13 @@ hns3_dev_tx_queue_stop(struct rte_eth_dev *dev, uint16_t tx_queue_id)
 		return -ENOTSUP;
 
 	rte_spinlock_lock(&hw->lock);
+
+	if (__atomic_load_n(&hw->reset.resetting, __ATOMIC_RELAXED)) {
+		hns3_err(hw, "fail to stop Tx queue during resetting.");
+		rte_spinlock_unlock(&hw->lock);
+		return -EIO;
+	}
+
 	hns3_enable_txq(txq, false);
 	hns3_tx_queue_release_mbufs(txq);
 	/*
@@ -4769,14 +4808,40 @@ hns3_stop_tx_datapath(struct rte_eth_dev *dev)
 void
 hns3_start_tx_datapath(struct rte_eth_dev *dev)
 {
-	eth_tx_prep_t prep = NULL;
-
-	dev->tx_pkt_burst = hns3_get_tx_function(dev, &prep);
-	dev->tx_pkt_prepare = prep;
+	dev->tx_pkt_burst = hns3_get_tx_function(dev);
+	dev->tx_pkt_prepare = hns3_get_tx_prepare(dev);
 	hns3_eth_dev_fp_ops_config(dev);
 
 	if (rte_eal_process_type() == RTE_PROC_SECONDARY)
 		return;
 
 	hns3_mp_req_start_tx(dev);
+}
+
+void
+hns3_stop_rxtx_datapath(struct rte_eth_dev *dev)
+{
+	struct hns3_hw *hw = HNS3_DEV_PRIVATE_TO_HW(dev->data->dev_private);
+
+	hns3_set_rxtx_function(dev);
+
+	if (rte_eal_process_type() == RTE_PROC_SECONDARY)
+		return;
+
+	rte_wmb();
+	/* Disable datapath on secondary process. */
+	hns3_mp_req_stop_rxtx(dev);
+	/* Prevent crashes when queues are still in use. */
+	rte_delay_ms(hw->cfg_max_queues);
+}
+
+void
+hns3_start_rxtx_datapath(struct rte_eth_dev *dev)
+{
+	hns3_set_rxtx_function(dev);
+
+	if (rte_eal_process_type() == RTE_PROC_SECONDARY)
+		return;
+
+	hns3_mp_req_start_rxtx(dev);
 }

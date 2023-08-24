@@ -179,7 +179,9 @@ static const struct rte_txgbe_xstats_name_off rte_txgbe_stats_strings[] = {
 	HW_XSTAT(tx_total_packets),
 	HW_XSTAT(rx_total_missed_packets),
 	HW_XSTAT(rx_broadcast_packets),
+	HW_XSTAT(tx_broadcast_packets),
 	HW_XSTAT(rx_multicast_packets),
+	HW_XSTAT(tx_multicast_packets),
 	HW_XSTAT(rx_management_packets),
 	HW_XSTAT(tx_management_packets),
 	HW_XSTAT(rx_management_dropped),
@@ -1776,6 +1778,7 @@ txgbe_dev_start(struct rte_eth_dev *dev)
 		speed = (TXGBE_LINK_SPEED_100M_FULL |
 			 TXGBE_LINK_SPEED_1GB_FULL |
 			 TXGBE_LINK_SPEED_10GB_FULL);
+		hw->autoneg = true;
 	} else {
 		if (*link_speeds & RTE_ETH_LINK_SPEED_10G)
 			speed |= TXGBE_LINK_SPEED_10GB_FULL;
@@ -1787,6 +1790,7 @@ txgbe_dev_start(struct rte_eth_dev *dev)
 			speed |= TXGBE_LINK_SPEED_1GB_FULL;
 		if (*link_speeds & RTE_ETH_LINK_SPEED_100M)
 			speed |= TXGBE_LINK_SPEED_100M_FULL;
+		hw->autoneg = false;
 	}
 
 	err = hw->mac.setup_link(hw, speed, link_up);
@@ -2009,8 +2013,9 @@ txgbe_dev_close(struct rte_eth_dev *dev)
 		rte_delay_ms(100);
 	} while (retries++ < (10 + TXGBE_LINK_UP_TIME));
 
-	/* cancel the delay handler before remove dev */
+	/* cancel all alarm handler before remove dev */
 	rte_eal_alarm_cancel(txgbe_dev_interrupt_delayed_handler, dev);
+	rte_eal_alarm_cancel(txgbe_dev_setup_link_alarm_handler, dev);
 
 	/* uninitialize PF if max_vfs not zero */
 	txgbe_pf_host_uninit(dev);
@@ -3132,7 +3137,8 @@ txgbe_dev_interrupt_delayed_handler(void *param)
 	}
 
 	/* restore original mask */
-	intr->mask_misc |= TXGBE_ICRMISC_LSC;
+	if (dev->data->dev_conf.intr_conf.lsc == 1)
+		intr->mask_misc |= TXGBE_ICRMISC_LSC;
 
 	intr->mask = intr->mask_orig;
 	intr->mask_orig = 0;
