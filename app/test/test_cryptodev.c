@@ -6386,6 +6386,7 @@ snow3g_hash_test_vector_setup(const struct snow3g_test_data *pattern,
 static int
 test_snow3g_decryption_with_digest_test_case_1(void)
 {
+	int ret;
 	struct snow3g_hash_test_data snow3g_hash_data;
 
 	/*
@@ -6394,8 +6395,9 @@ test_snow3g_decryption_with_digest_test_case_1(void)
 	 */
 	snow3g_hash_test_vector_setup(&snow3g_test_case_7, &snow3g_hash_data);
 
-	if (test_snow3g_decryption(&snow3g_test_case_7))
-		return TEST_FAILED;
+	ret = test_snow3g_decryption(&snow3g_test_case_7);
+	if (ret != 0)
+		return ret;
 
 	return test_snow3g_authentication_verify(&snow3g_hash_data);
 }
@@ -7709,7 +7711,7 @@ test_authenticated_encryption(const struct aead_test_data *tdata)
 			tdata->key.data, tdata->key.len,
 			tdata->aad.len, tdata->auth_tag.len,
 			tdata->iv.len);
-	if (retval < 0)
+	if (retval != TEST_SUCCESS)
 		return retval;
 
 	if (tdata->aad.len > MBUF_SIZE) {
@@ -9762,7 +9764,7 @@ test_authenticated_decryption_oop(const struct aead_test_data *tdata)
 			tdata->key.data, tdata->key.len,
 			tdata->aad.len, tdata->auth_tag.len,
 			tdata->iv.len);
-	if (retval < 0)
+	if (retval != TEST_SUCCESS)
 		return retval;
 
 	/* alloc mbuf and set payload */
@@ -10172,11 +10174,11 @@ test_stats(void)
 	TEST_ASSERT((stats.enqueued_count == 1),
 		"rte_cryptodev_stats_get returned unexpected enqueued stat");
 	TEST_ASSERT((stats.dequeued_count == 1),
-		"rte_cryptodev_stats_get returned unexpected enqueued stat");
+		"rte_cryptodev_stats_get returned unexpected dequeued stat");
 	TEST_ASSERT((stats.enqueue_err_count == 0),
-		"rte_cryptodev_stats_get returned unexpected enqueued stat");
+		"rte_cryptodev_stats_get returned unexpected enqueued error count stat");
 	TEST_ASSERT((stats.dequeue_err_count == 0),
-		"rte_cryptodev_stats_get returned unexpected enqueued stat");
+		"rte_cryptodev_stats_get returned unexpected dequeued error count stat");
 
 	/* invalid device but should ignore and not reset device stats*/
 	rte_cryptodev_stats_reset(ts_params->valid_devs[0] + 300);
@@ -10184,7 +10186,7 @@ test_stats(void)
 			&stats),
 		"rte_cryptodev_stats_get failed");
 	TEST_ASSERT((stats.enqueued_count == 1),
-		"rte_cryptodev_stats_get returned unexpected enqueued stat");
+		"rte_cryptodev_stats_get returned unexpected enqueued stat after invalid reset");
 
 	/* check that a valid reset clears stats */
 	rte_cryptodev_stats_reset(ts_params->valid_devs[0]);
@@ -10192,9 +10194,9 @@ test_stats(void)
 			&stats),
 					  "rte_cryptodev_stats_get failed");
 	TEST_ASSERT((stats.enqueued_count == 0),
-		"rte_cryptodev_stats_get returned unexpected enqueued stat");
+		"rte_cryptodev_stats_get returned unexpected enqueued stat after valid reset");
 	TEST_ASSERT((stats.dequeued_count == 0),
-		"rte_cryptodev_stats_get returned unexpected enqueued stat");
+		"rte_cryptodev_stats_get returned unexpected dequeued stat after valid reset");
 
 	return TEST_SUCCESS;
 }

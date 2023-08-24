@@ -248,7 +248,8 @@ ice_program_hw_rx_queue(struct ice_rx_queue *rxq)
 	buf_size = (uint16_t)(rte_pktmbuf_data_room_size(rxq->mp) -
 			      RTE_PKTMBUF_HEADROOM);
 	rxq->rx_hdr_len = 0;
-	rxq->rx_buf_len = RTE_ALIGN(buf_size, (1 << ICE_RLAN_CTX_DBUF_S));
+	rxq->rx_buf_len = RTE_ALIGN_FLOOR(buf_size, (1 << ICE_RLAN_CTX_DBUF_S));
+	rxq->rx_buf_len = RTE_MIN(rxq->rx_buf_len, ICE_RX_MAX_DATA_BUF_SIZE);
 	rxq->max_pkt_len = RTE_MIN((uint32_t)
 				   ICE_SUPPORT_CHAIN_NUM * rxq->rx_buf_len,
 				   dev_data->dev_conf.rxmode.max_rx_pkt_len);
@@ -2343,7 +2344,8 @@ ice_parse_tunneling_params(uint64_t ol_flags,
 	 * Shall be set only if L4TUNT = 01b and EIPT is not zero
 	 */
 	if (!(*cd_tunneling & ICE_TX_CTX_EIPT_NONE) &&
-	    (*cd_tunneling & ICE_TXD_CTX_UDP_TUNNELING))
+		(*cd_tunneling & ICE_TXD_CTX_UDP_TUNNELING) &&
+		(ol_flags & PKT_TX_OUTER_UDP_CKSUM))
 		*cd_tunneling |= ICE_TXD_CTX_QW0_L4T_CS_M;
 }
 
@@ -2354,10 +2356,7 @@ ice_txd_enable_checksum(uint64_t ol_flags,
 			union ice_tx_offload tx_offload)
 {
 	/* Set MACLEN */
-	if (ol_flags & PKT_TX_TUNNEL_MASK)
-		*td_offset |= (tx_offload.outer_l2_len >> 1)
-			<< ICE_TX_DESC_LEN_MACLEN_S;
-	else
+	if (!(ol_flags & PKT_TX_TUNNEL_MASK))
 		*td_offset |= (tx_offload.l2_len >> 1)
 			<< ICE_TX_DESC_LEN_MACLEN_S;
 
@@ -2617,9 +2616,12 @@ ice_xmit_pkts(void *tx_queue, struct rte_mbuf **tx_pkts, uint16_t nb_pkts)
 
 		/* Fill in tunneling parameters if necessary */
 		cd_tunneling_params = 0;
-		if (ol_flags & PKT_TX_TUNNEL_MASK)
+		if (ol_flags & PKT_TX_TUNNEL_MASK) {
+			td_offset |= (tx_offload.outer_l2_len >> 1)
+				<< ICE_TX_DESC_LEN_MACLEN_S;
 			ice_parse_tunneling_params(ol_flags, tx_offload,
 						   &cd_tunneling_params);
+		}
 
 		/* Enable checksum offloading */
 		if (ol_flags & ICE_TX_CKSUM_OFFLOAD_MASK)
