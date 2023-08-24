@@ -1730,6 +1730,7 @@ mlx5_free_shared_dev_ctx(struct mlx5_dev_ctx_shared *sh)
 	if (LIST_EMPTY(&mlx5_dev_ctx_list)) {
 		mlx5_os_net_cleanup();
 		mlx5_flow_os_release_workspace();
+		mlx5_flow_workspace_gc_release();
 	}
 	pthread_mutex_unlock(&mlx5_dev_ctx_list_mutex);
 	if (sh->flex_parsers_dv) {
@@ -2478,6 +2479,7 @@ mlx5_port_args_config(struct mlx5_priv *priv, struct mlx5_kvargs_ctrl *mkvlist,
 	config->mprq.max_memcpy_len = MLX5_MPRQ_MEMCPY_DEFAULT_LEN;
 	config->mprq.min_rxqs_num = MLX5_MPRQ_MIN_RXQS;
 	config->mprq.log_stride_num = MLX5_MPRQ_DEFAULT_LOG_STRIDE_NUM;
+	config->mprq.log_stride_size = MLX5_MPRQ_DEFAULT_LOG_STRIDE_SIZE;
 	config->log_hp_size = MLX5_ARG_UNSET;
 	config->std_delay_drop = 0;
 	config->hp_delay_drop = 0;

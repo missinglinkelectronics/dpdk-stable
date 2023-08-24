@@ -51,6 +51,11 @@ qat_sym_init_op_cookie(void *op_cookie)
 			rte_mempool_virt2iova(cookie) +
 			offsetof(struct qat_sym_op_cookie,
 			opt.spc_gmac.cd_cipher);
+
+	cookie->digest_null_phys_addr =
+			rte_mempool_virt2iova(cookie) +
+			offsetof(struct qat_sym_op_cookie,
+			digest_null);
 }
 
 static __rte_always_inline int
@@ -179,7 +184,7 @@ qat_sym_dequeue_burst(void *qp, struct rte_crypto_op **ops,
 
 int
 qat_sym_dev_create(struct qat_pci_device *qat_pci_dev,
-		struct qat_dev_cmd_param *qat_dev_cmd_param __rte_unused)
+		struct qat_dev_cmd_param *qat_dev_cmd_param)
 {
 	int i = 0, ret = 0;
 	uint16_t slice_map = 0;

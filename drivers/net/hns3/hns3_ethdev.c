@@ -15,6 +15,7 @@
 #include "hns3_dcb.h"
 #include "hns3_mp.h"
 #include "hns3_flow.h"
+#include "hns3_ptp.h"
 #include "hns3_ethdev.h"
 
 #define HNS3_SERVICE_INTERVAL		1000000 /* us */
@@ -43,6 +44,7 @@
 #define HNS3_VECTOR0_IMP_CMDQ_ERR_B	4U
 #define HNS3_VECTOR0_IMP_RD_POISON_B	5U
 #define HNS3_VECTOR0_ALL_MSIX_ERR_B	6U
+#define HNS3_VECTOR0_TRIGGER_IMP_RESET_B	7U
 
 #define HNS3_RESET_WAIT_MS	100
 #define HNS3_RESET_WAIT_CNT	200
@@ -59,6 +61,13 @@ enum hns3_evt_cause {
 	HNS3_VECTOR0_EVENT_PTP,
 	HNS3_VECTOR0_EVENT_OTHER,
 };
+
+#define HNS3_SPEEDS_SUPP_FEC (RTE_ETH_LINK_SPEED_10G | \
+			      RTE_ETH_LINK_SPEED_25G | \
+			      RTE_ETH_LINK_SPEED_40G | \
+			      RTE_ETH_LINK_SPEED_50G | \
+			      RTE_ETH_LINK_SPEED_100G | \
+			      RTE_ETH_LINK_SPEED_200G)
 
 static const struct rte_eth_fec_capa speed_fec_capa_tbl[] = {
 	{ RTE_ETH_SPEED_NUM_10G, RTE_ETH_FEC_MODE_CAPA_MASK(NOFEC) |
@@ -83,8 +92,7 @@ static const struct rte_eth_fec_capa speed_fec_capa_tbl[] = {
 			      RTE_ETH_FEC_MODE_CAPA_MASK(AUTO) |
 			      RTE_ETH_FEC_MODE_CAPA_MASK(RS) },
 
-	{ RTE_ETH_SPEED_NUM_200G, RTE_ETH_FEC_MODE_CAPA_MASK(NOFEC) |
-			      RTE_ETH_FEC_MODE_CAPA_MASK(AUTO) |
+	{ RTE_ETH_SPEED_NUM_200G, RTE_ETH_FEC_MODE_CAPA_MASK(AUTO) |
 			      RTE_ETH_FEC_MODE_CAPA_MASK(RS) }
 };
 
@@ -287,6 +295,19 @@ hns3_handle_mac_tnl(struct hns3_hw *hw)
 }
 
 static void
+hns3_delay_before_clear_event_cause(struct hns3_hw *hw, uint32_t event_type, uint32_t regclr)
+{
+#define IMPRESET_WAIT_MS_TIME	5
+
+	if (event_type == HNS3_VECTOR0_EVENT_RST &&
+	    regclr & BIT(HNS3_VECTOR0_IMPRESET_INT_B) &&
+	    hw->revision >= PCI_REVISION_ID_HIP09_A) {
+		rte_delay_ms(IMPRESET_WAIT_MS_TIME);
+		hns3_dbg(hw, "wait firmware watchdog initialization completed.");
+	}
+}
+
+static void
 hns3_interrupt_handler(void *param)
 {
 	struct rte_eth_dev *dev = (struct rte_eth_dev *)param;
@@ -305,6 +326,7 @@ hns3_interrupt_handler(void *param)
 	vector0_int = hns3_read_dev(hw, HNS3_VECTOR0_OTHER_INT_STS_REG);
 	ras_int = hns3_read_dev(hw, HNS3_RAS_PF_OTHER_INT_STS_REG);
 	cmdq_int = hns3_read_dev(hw, HNS3_VECTOR0_CMDQ_SRC_REG);
+	hns3_delay_before_clear_event_cause(hw, event_cause, clearval);
 	hns3_clear_event_cause(hw, event_cause, clearval);
 	/* vector 0 interrupt is shared with reset and mailbox source events. */
 	if (event_cause == HNS3_VECTOR0_EVENT_ERR) {
@@ -2257,6 +2279,7 @@ hns3_dev_link_update(struct rte_eth_dev *eth_dev, int wait_to_complete)
 	struct rte_eth_link new_link;
 	int ret;
 
+	memset(&new_link, 0, sizeof(new_link));
 	/* When port is stopped, report link down. */
 	if (eth_dev->data->dev_started == 0) {
 		new_link.link_autoneg = mac->link_autoneg;
@@ -2280,7 +2303,6 @@ hns3_dev_link_update(struct rte_eth_dev *eth_dev, int wait_to_complete)
 		rte_delay_ms(HNS3_LINK_CHECK_INTERVAL);
 	} while (retry_cnt--);
 
-	memset(&new_link, 0, sizeof(new_link));
 	hns3_setup_linkstatus(eth_dev, &new_link);
 
 out:
@@ -3614,7 +3636,7 @@ hns3_get_mac_ethertype_cmd_status(uint16_t cmdq_resp, uint8_t resp_code)
 
 	if (cmdq_resp) {
 		PMD_INIT_LOG(ERR,
-			     "cmdq execute failed for get_mac_ethertype_cmd_status, status=%u.\n",
+			     "cmdq execute failed for get_mac_ethertype_cmd_status, status=%u.",
 			     cmdq_resp);
 		return -EIO;
 	}
@@ -4388,6 +4410,12 @@ hns3_init_hardware(struct hns3_adapter *hns)
 		goto err_mac_init;
 	}
 
+	ret = hns3_ptp_init(hw);
+	if (ret) {
+		PMD_INIT_LOG(ERR, "Failed to init PTP, ret = %d", ret);
+		goto err_mac_init;
+	}
+
 	return 0;
 
 err_mac_init:
@@ -4567,10 +4595,6 @@ hns3_init_pf(struct rte_eth_dev *eth_dev)
 		goto err_intr_callback_register;
 	}
 
-	ret = hns3_ptp_init(hw);
-	if (ret)
-		goto err_get_config;
-
 	/* Enable interrupt */
 	rte_intr_enable(pci_dev->intr_handle);
 	hns3_pf_enable_irq0(hw);
@@ -4627,6 +4651,7 @@ err_enable_intr:
 	hns3_fdir_filter_uninit(hns);
 err_fdir:
 	hns3_uninit_umv_space(hw);
+	hns3_ptp_uninit(hw);
 err_init_hw:
 	hns3_stats_uninit(hw);
 err_get_config:
@@ -4662,6 +4687,7 @@ hns3_uninit_pf(struct rte_eth_dev *eth_dev)
 	hns3_flow_uninit(eth_dev);
 	hns3_fdir_filter_uninit(hns);
 	hns3_uninit_umv_space(hw);
+	hns3_ptp_uninit(hw);
 	hns3_stats_uninit(hw);
 	hns3_config_mac_tnl_int(hw, false);
 	hns3_pf_disable_irq0(hw);
@@ -5304,16 +5330,7 @@ hns3_check_fc_autoneg_valid(struct hns3_hw *hw, uint8_t autoneg)
 
 	if (!pf->support_fc_autoneg) {
 		if (autoneg != 0) {
-			hns3_err(hw, "unsupported fc auto-negotiation setting.");
-			return -EOPNOTSUPP;
-		}
-
-		/*
-		 * Flow control auto-negotiation of the NIC is not supported,
-		 * but other auto-negotiation features may be supported.
-		 */
-		if (autoneg != hw->mac.link_autoneg) {
-			hns3_err(hw, "please use 'link_speeds' in struct rte_eth_conf to disable autoneg!");
+			hns3_err(hw, "unsupported fc auto-negotiation.");
 			return -EOPNOTSUPP;
 		}
 
@@ -5593,17 +5610,6 @@ hns3_func_reset_cmd(struct hns3_hw *hw, int func_id)
 	return hns3_cmd_send(hw, &desc, 1);
 }
 
-static int
-hns3_imp_reset_cmd(struct hns3_hw *hw)
-{
-	struct hns3_cmd_desc desc;
-
-	hns3_cmd_setup_basic_desc(&desc, 0xFFFE, false);
-	desc.data[0] = 0xeedd;
-
-	return hns3_cmd_send(hw, &desc, 1);
-}
-
 static void
 hns3_msix_process(struct hns3_adapter *hns, enum hns3_reset_level reset_level)
 {
@@ -5621,7 +5627,9 @@ hns3_msix_process(struct hns3_adapter *hns, enum hns3_reset_level reset_level)
 
 	switch (reset_level) {
 	case HNS3_IMP_RESET:
-		hns3_imp_reset_cmd(hw);
+		val = hns3_read_dev(hw, HNS3_VECTOR0_OTER_EN_REG);
+		hns3_set_bit(val, HNS3_VECTOR0_TRIGGER_IMP_RESET_B, 1);
+		hns3_write_dev(hw, HNS3_VECTOR0_OTER_EN_REG, val);
 		hns3_warn(hw, "IMP Reset requested time=%ld.%.6ld",
 			  tv.tv_sec, tv.tv_usec);
 		break;
@@ -5928,56 +5936,27 @@ hns3_reset_service(void *param)
 		hns3_msix_process(hns, reset_level);
 }
 
-static unsigned int
-hns3_get_speed_capa_num(uint16_t device_id)
+static uint32_t
+hns3_get_speed_fec_capa(struct rte_eth_fec_capa *speed_fec_capa,
+			uint32_t speed_capa)
 {
-	unsigned int num;
+	uint32_t speed_bit;
+	uint32_t num = 0;
+	uint32_t i;
 
-	switch (device_id) {
-	case HNS3_DEV_ID_25GE:
-	case HNS3_DEV_ID_25GE_RDMA:
-		num = 2;
-		break;
-	case HNS3_DEV_ID_100G_RDMA_MACSEC:
-	case HNS3_DEV_ID_200G_RDMA:
-		num = 1;
-		break;
-	default:
-		num = 0;
-		break;
+	for (i = 0; i < RTE_DIM(speed_fec_capa_tbl); i++) {
+		speed_bit =
+			rte_eth_speed_bitflag(speed_fec_capa_tbl[i].speed,
+					      RTE_ETH_LINK_FULL_DUPLEX);
+		if ((speed_capa & speed_bit) == 0)
+			continue;
+
+		speed_fec_capa[num].speed = speed_fec_capa_tbl[i].speed;
+		speed_fec_capa[num].capa = speed_fec_capa_tbl[i].capa;
+		num++;
 	}
 
 	return num;
-}
-
-static int
-hns3_get_speed_fec_capa(struct rte_eth_fec_capa *speed_fec_capa,
-			uint16_t device_id)
-{
-	switch (device_id) {
-	case HNS3_DEV_ID_25GE:
-	/* fallthrough */
-	case HNS3_DEV_ID_25GE_RDMA:
-		speed_fec_capa[0].speed = speed_fec_capa_tbl[1].speed;
-		speed_fec_capa[0].capa = speed_fec_capa_tbl[1].capa;
-
-		/* In HNS3 device, the 25G NIC is compatible with 10G rate */
-		speed_fec_capa[1].speed = speed_fec_capa_tbl[0].speed;
-		speed_fec_capa[1].capa = speed_fec_capa_tbl[0].capa;
-		break;
-	case HNS3_DEV_ID_100G_RDMA_MACSEC:
-		speed_fec_capa[0].speed = speed_fec_capa_tbl[4].speed;
-		speed_fec_capa[0].capa = speed_fec_capa_tbl[4].capa;
-		break;
-	case HNS3_DEV_ID_200G_RDMA:
-		speed_fec_capa[0].speed = speed_fec_capa_tbl[5].speed;
-		speed_fec_capa[0].capa = speed_fec_capa_tbl[5].capa;
-		break;
-	default:
-		return -ENOTSUP;
-	}
-
-	return 0;
 }
 
 static int
@@ -5986,27 +5965,27 @@ hns3_fec_get_capability(struct rte_eth_dev *dev,
 			unsigned int num)
 {
 	struct hns3_hw *hw = HNS3_DEV_PRIVATE_TO_HW(dev->data->dev_private);
-	struct rte_pci_device *pci_dev = RTE_ETH_DEV_TO_PCI(dev);
-	uint16_t device_id = pci_dev->id.device_id;
-	unsigned int capa_num;
-	int ret;
+	unsigned int speed_num;
+	uint32_t speed_capa;
 
-	capa_num = hns3_get_speed_capa_num(device_id);
-	if (capa_num == 0) {
-		hns3_err(hw, "device(0x%x) is not supported by hns3 PMD",
-			 device_id);
+	speed_capa = hns3_get_speed_capa(hw);
+	/* speed_num counts number of speed capabilities */
+	speed_num = __builtin_popcount(speed_capa & HNS3_SPEEDS_SUPP_FEC);
+	if (speed_num == 0)
 		return -ENOTSUP;
+
+	if (speed_fec_capa == NULL)
+		return speed_num;
+
+	if (num < speed_num) {
+		hns3_err(hw, "not enough array size(%u) to store FEC capabilities, should not be less than %u",
+			 num, speed_num);
+		return -EINVAL;
 	}
 
-	if (speed_fec_capa == NULL || num < capa_num)
-		return capa_num;
-
-	ret = hns3_get_speed_fec_capa(speed_fec_capa, device_id);
-	if (ret)
-		return -ENOTSUP;
-
-	return capa_num;
+	return hns3_get_speed_fec_capa(speed_fec_capa, speed_capa);
 }
+
 
 static int
 get_current_fec_auto_state(struct hns3_hw *hw, uint8_t *state)
@@ -6145,61 +6124,27 @@ hns3_set_fec_hw(struct hns3_hw *hw, uint32_t mode)
 }
 
 static uint32_t
-get_current_speed_fec_cap(struct hns3_hw *hw, struct rte_eth_fec_capa *fec_capa)
+hns3_get_current_speed_fec_cap(struct hns3_mac *mac)
 {
-	struct hns3_mac *mac = &hw->mac;
-	uint32_t cur_capa;
+	uint32_t i;
 
-	switch (mac->link_speed) {
-	case RTE_ETH_SPEED_NUM_10G:
-		cur_capa = fec_capa[1].capa;
-		break;
-	case RTE_ETH_SPEED_NUM_25G:
-	case RTE_ETH_SPEED_NUM_100G:
-	case RTE_ETH_SPEED_NUM_200G:
-		cur_capa = fec_capa[0].capa;
-		break;
-	default:
-		cur_capa = 0;
-		break;
+	for (i = 0; i < RTE_DIM(speed_fec_capa_tbl); i++) {
+		if (mac->link_speed == speed_fec_capa_tbl[i].speed)
+			return speed_fec_capa_tbl[i].capa;
 	}
 
-	return cur_capa;
-}
-
-static bool
-is_fec_mode_one_bit_set(uint32_t mode)
-{
-	int cnt = 0;
-	uint8_t i;
-
-	for (i = 0; i < sizeof(mode); i++)
-		if (mode >> i & 0x1)
-			cnt++;
-
-	return cnt == 1 ? true : false;
+	return 0;
 }
 
 static int
-hns3_fec_set(struct rte_eth_dev *dev, uint32_t mode)
+hns3_fec_mode_valid(struct rte_eth_dev *dev, uint32_t mode)
 {
-#define FEC_CAPA_NUM 2
 	struct hns3_adapter *hns = dev->data->dev_private;
 	struct hns3_hw *hw = HNS3_DEV_PRIVATE_TO_HW(hns);
-	struct hns3_pf *pf = &hns->pf;
-	struct rte_eth_fec_capa fec_capa[FEC_CAPA_NUM];
 	uint32_t cur_capa;
-	uint32_t num = FEC_CAPA_NUM;
-	int ret;
 
-	ret = hns3_fec_get_capability(dev, fec_capa, num);
-	if (ret < 0)
-		return ret;
-
-	/* HNS3 PMD only support one bit set mode, e.g. 0x1, 0x4 */
-	if (!is_fec_mode_one_bit_set(mode)) {
-		hns3_err(hw, "FEC mode(0x%x) not supported in HNS3 PMD, "
-			     "FEC mode should be only one bit set", mode);
+	if (__builtin_popcount(mode) != 1) {
+		hns3_err(hw, "FEC mode(0x%x) should be only one bit set", mode);
 		return -EINVAL;
 	}
 
@@ -6207,11 +6152,26 @@ hns3_fec_set(struct rte_eth_dev *dev, uint32_t mode)
 	 * Check whether the configured mode is within the FEC capability.
 	 * If not, the configured mode will not be supported.
 	 */
-	cur_capa = get_current_speed_fec_cap(hw, fec_capa);
-	if (!(cur_capa & mode)) {
-		hns3_err(hw, "unsupported FEC mode = 0x%x", mode);
+	cur_capa = hns3_get_current_speed_fec_cap(&hw->mac);
+	if ((cur_capa & mode) == 0) {
+		hns3_err(hw, "unsupported FEC mode(0x%x)", mode);
 		return -EINVAL;
 	}
+
+	return 0;
+}
+
+static int
+hns3_fec_set(struct rte_eth_dev *dev, uint32_t mode)
+{
+	struct hns3_adapter *hns = dev->data->dev_private;
+	struct hns3_hw *hw = HNS3_DEV_PRIVATE_TO_HW(hns);
+	struct hns3_pf *pf = &hns->pf;
+	int ret;
+
+	ret = hns3_fec_mode_valid(dev, mode);
+	if (ret != 0)
+		return ret;
 
 	rte_spinlock_lock(&hw->lock);
 	ret = hns3_set_fec_hw(hw, mode);
@@ -6267,7 +6227,7 @@ hns3_optical_module_existed(struct hns3_hw *hw)
 	ret = hns3_cmd_send(hw, &desc, 1);
 	if (ret) {
 		hns3_err(hw,
-			 "fail to get optical module exist state, ret = %d.\n",
+			 "fail to get optical module exist state, ret = %d.",
 			 ret);
 		return false;
 	}
@@ -6305,7 +6265,7 @@ hns3_get_module_eeprom_data(struct hns3_hw *hw, uint32_t offset,
 
 	ret = hns3_cmd_send(hw, desc, HNS3_SFP_INFO_CMD_NUM);
 	if (ret) {
-		hns3_err(hw, "fail to get module EEPROM info, ret = %d.\n",
+		hns3_err(hw, "fail to get module EEPROM info, ret = %d.",
 				ret);
 		return ret;
 	}
@@ -6342,7 +6302,7 @@ hns3_get_module_eeprom(struct rte_eth_dev *dev,
 		return -ENOTSUP;
 
 	if (!hns3_optical_module_existed(hw)) {
-		hns3_err(hw, "fail to read module EEPROM: no module is connected.\n");
+		hns3_err(hw, "fail to read module EEPROM: no module is connected.");
 		return -EIO;
 	}
 
@@ -6405,7 +6365,7 @@ hns3_get_module_info(struct rte_eth_dev *dev,
 		modinfo->eeprom_len = RTE_ETH_MODULE_SFF_8636_MAX_LEN;
 		break;
 	default:
-		hns3_err(hw, "unknown module, type = %u, extra_type = %u.\n",
+		hns3_err(hw, "unknown module, type = %u, extra_type = %u.",
 			 sfp_type.type, sfp_type.ext_type);
 		return -EINVAL;
 	}

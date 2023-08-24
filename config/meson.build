@@ -200,10 +200,11 @@ if fdt_dep.found() and cc.has_header('fdt.h')
 endif
 
 libexecinfo = cc.find_library('execinfo', required: false)
-if libexecinfo.found() and cc.has_header('execinfo.h')
+if libexecinfo.found()
     add_project_link_arguments('-lexecinfo', language: 'c')
     dpdk_extra_ldflags += '-lexecinfo'
 endif
+dpdk_conf.set('RTE_BACKTRACE', cc.has_header('execinfo.h') or is_windows)
 
 libarchive = dependency('libarchive', required: false, method: 'pkg-config')
 if libarchive.found()
@@ -365,7 +366,7 @@ if max_numa_nodes == 'detect'
         error('Discovery of max_numa_nodes not supported for cross-compilation.')
     endif
     # overwrite the default value with discovered values
-    max_numa_nodes = run_command(get_numa_count_cmd).stdout().to_int()
+    max_numa_nodes = run_command(get_numa_count_cmd, check: true).stdout().to_int()
     message('Found @0@ numa nodes'.format(max_numa_nodes))
     dpdk_conf.set('RTE_MAX_NUMA_NODES', max_numa_nodes)
 elif max_numa_nodes != 'default'

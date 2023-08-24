@@ -2129,6 +2129,8 @@ flow_dv_validate_item_meta(struct rte_eth_dev *dev __rte_unused,
  *   Pointer to the rte_eth_dev structure.
  * @param[in] item
  *   Item specification.
+ * @param[in] tag_bitmap
+ *   Tag index bitmap.
  * @param[in] attr
  *   Attributes of flow that includes this item.
  * @param[out] error
@@ -2140,6 +2142,7 @@ flow_dv_validate_item_meta(struct rte_eth_dev *dev __rte_unused,
 static int
 flow_dv_validate_item_tag(struct rte_eth_dev *dev,
 			  const struct rte_flow_item *item,
+			  uint32_t *tag_bitmap,
 			  const struct rte_flow_attr *attr __rte_unused,
 			  struct rte_flow_error *error)
 {
@@ -2183,6 +2186,12 @@ flow_dv_validate_item_tag(struct rte_eth_dev *dev,
 	if (ret < 0)
 		return ret;
 	MLX5_ASSERT(ret != REG_NON);
+	if (*tag_bitmap & (1 << ret))
+		return rte_flow_error_set(error, EINVAL,
+					  RTE_FLOW_ERROR_TYPE_ITEM_SPEC,
+					  item->spec,
+					  "Duplicated tag index");
+	*tag_bitmap |= 1 << ret;
 	return 0;
 }
 
@@ -7051,9 +7060,10 @@ flow_dv_validate(struct rte_eth_dev *dev, const struct rte_flow_attr *attr,
 	bool def_policy = false;
 	bool shared_count = false;
 	uint16_t udp_dport = 0;
-	uint32_t tag_id = 0;
+	uint32_t tag_id = 0, tag_bitmap = 0;
 	const struct rte_flow_action_age *non_shared_age = NULL;
 	const struct rte_flow_action_count *count = NULL;
+	const struct mlx5_rte_flow_item_tag *mlx5_tag;
 	struct mlx5_priv *act_priv = NULL;
 	int aso_after_sample = 0;
 
@@ -7371,7 +7381,7 @@ flow_dv_validate(struct rte_eth_dev *dev, const struct rte_flow_attr *attr,
 			last_item = MLX5_FLOW_LAYER_ICMP6;
 			break;
 		case RTE_FLOW_ITEM_TYPE_TAG:
-			ret = flow_dv_validate_item_tag(dev, items,
+			ret = flow_dv_validate_item_tag(dev, items, &tag_bitmap,
 							attr, error);
 			if (ret < 0)
 				return ret;
@@ -7381,6 +7391,13 @@ flow_dv_validate(struct rte_eth_dev *dev, const struct rte_flow_attr *attr,
 			last_item = MLX5_FLOW_ITEM_SQ;
 			break;
 		case MLX5_RTE_FLOW_ITEM_TYPE_TAG:
+			mlx5_tag = (const struct mlx5_rte_flow_item_tag *)items->spec;
+			if (tag_bitmap & (1 << mlx5_tag->id))
+				return rte_flow_error_set(error, EINVAL,
+							  RTE_FLOW_ERROR_TYPE_ITEM_SPEC,
+							  items->spec,
+							  "Duplicated tag index");
+			tag_bitmap |= 1 << mlx5_tag->id;
 			break;
 		case RTE_FLOW_ITEM_TYPE_GTP:
 			ret = flow_dv_validate_item_gtp(dev, items, item_flags,
@@ -7562,7 +7579,7 @@ flow_dv_validate(struct rte_eth_dev *dev, const struct rte_flow_attr *attr,
 			rw_act_num += MLX5_ACT_NUM_SET_TAG;
 			break;
 		case RTE_FLOW_ACTION_TYPE_DROP:
-			ret = mlx5_flow_validate_action_drop(action_flags,
+			ret = mlx5_flow_validate_action_drop(dev, is_root,
 							     attr, error);
 			if (ret < 0)
 				return ret;
@@ -9223,12 +9240,10 @@ flow_dv_translate_item_vxlan(struct rte_eth_dev *dev,
 {
 	const struct rte_flow_item_vxlan *vxlan_m;
 	const struct rte_flow_item_vxlan *vxlan_v;
-	const struct rte_flow_item_vxlan *vxlan_vv = item->spec;
 	void *headers_v;
 	void *misc_v;
 	void *misc5_v;
 	uint32_t tunnel_v;
-	uint32_t *tunnel_header_v;
 	char *vni_v;
 	uint16_t dport;
 	int size;
@@ -9280,24 +9295,11 @@ flow_dv_translate_item_vxlan(struct rte_eth_dev *dev,
 			vni_v[i] = vxlan_m->vni[i] & vxlan_v->vni[i];
 		return;
 	}
-	tunnel_header_v = (uint32_t *)MLX5_ADDR_OF(fte_match_set_misc5,
-						   misc5_v,
-						   tunnel_header_1);
 	tunnel_v = (vxlan_v->vni[0] & vxlan_m->vni[0]) |
 		   (vxlan_v->vni[1] & vxlan_m->vni[1]) << 8 |
 		   (vxlan_v->vni[2] & vxlan_m->vni[2]) << 16;
-	*tunnel_header_v = tunnel_v;
-	if (key_type == MLX5_SET_MATCHER_SW_M) {
-		tunnel_v = (vxlan_vv->vni[0] & vxlan_m->vni[0]) |
-			   (vxlan_vv->vni[1] & vxlan_m->vni[1]) << 8 |
-			   (vxlan_vv->vni[2] & vxlan_m->vni[2]) << 16;
-		if (!tunnel_v)
-			*tunnel_header_v = 0x0;
-		if (vxlan_vv->rsvd1 & vxlan_m->rsvd1)
-			*tunnel_header_v |= vxlan_v->rsvd1 << 24;
-	} else {
-		*tunnel_header_v |= (vxlan_v->rsvd1 & vxlan_m->rsvd1) << 24;
-	}
+	tunnel_v |= (vxlan_v->rsvd1 & vxlan_m->rsvd1) << 24;
+	MLX5_SET(fte_match_set_misc5, misc5_v, tunnel_header_1, RTE_BE32(tunnel_v));
 }
 
 /**
@@ -14825,7 +14827,7 @@ flow_dv_apply(struct rte_eth_dev *dev, struct rte_flow *flow,
 			}
 			dv->actions[n++] = priv->sh->default_miss_action;
 		}
-		misc_mask = flow_dv_matcher_enable(dv->value.buf);
+		misc_mask = flow_dv_matcher_enable(dv_h->matcher->mask.buf);
 		__flow_dv_adjust_buf_size(&dv->value.size, misc_mask);
 		err = mlx5_flow_os_create_flow(dv_h->matcher->matcher_object,
 					       (void *)&dv->value, n,
@@ -17025,7 +17027,7 @@ flow_dv_destroy_def_policy(struct rte_eth_dev *dev)
 static int
 __flow_dv_create_policy_flow(struct rte_eth_dev *dev,
 			uint32_t color_reg_c_idx,
-			enum rte_color color, void *matcher_object,
+			enum rte_color color, struct mlx5_flow_dv_matcher *matcher,
 			int actions_n, void *actions,
 			bool match_src_port, const struct rte_flow_item *item,
 			void **rule, const struct rte_flow_attr *attr)
@@ -17055,9 +17057,9 @@ __flow_dv_create_policy_flow(struct rte_eth_dev *dev,
 	}
 	flow_dv_match_meta_reg(value.buf, (enum modify_reg)color_reg_c_idx,
 			       rte_col_2_mlx5_col(color), UINT32_MAX);
-	misc_mask = flow_dv_matcher_enable(value.buf);
+	misc_mask = flow_dv_matcher_enable(matcher->mask.buf);
 	__flow_dv_adjust_buf_size(&value.size, misc_mask);
-	ret = mlx5_flow_os_create_flow(matcher_object, (void *)&value,
+	ret = mlx5_flow_os_create_flow(matcher->matcher_object, (void *)&value,
 				       actions_n, actions, rule);
 	if (ret) {
 		DRV_LOG(ERR, "Failed to create meter policy%d flow.", color);
@@ -17211,7 +17213,7 @@ __flow_dv_create_domain_policy_rules(struct rte_eth_dev *dev,
 		/* Create flow, matching color. */
 		if (__flow_dv_create_policy_flow(dev,
 				color_reg_c_idx, (enum rte_color)i,
-				color_rule->matcher->matcher_object,
+				color_rule->matcher,
 				acts[i].actions_n, acts[i].dv_actions,
 				svport_match, NULL, &color_rule->rule,
 				&attr)) {
@@ -17679,7 +17681,7 @@ flow_dv_create_mtr_tbls(struct rte_eth_dev *dev,
 			actions[i++] = priv->sh->dr_drop_action;
 			flow_dv_match_meta_reg_all(matcher_para.buf, value.buf,
 				(enum modify_reg)mtr_id_reg_c, 0, 0);
-			misc_mask = flow_dv_matcher_enable(value.buf);
+			misc_mask = flow_dv_matcher_enable(mtrmng->def_matcher[domain]->mask.buf);
 			__flow_dv_adjust_buf_size(&value.size, misc_mask);
 			ret = mlx5_flow_os_create_flow
 				(mtrmng->def_matcher[domain]->matcher_object,
@@ -17724,7 +17726,7 @@ flow_dv_create_mtr_tbls(struct rte_eth_dev *dev,
 					fm->drop_cnt, NULL);
 		actions[i++] = cnt->action;
 		actions[i++] = priv->sh->dr_drop_action;
-		misc_mask = flow_dv_matcher_enable(value.buf);
+		misc_mask = flow_dv_matcher_enable(drop_matcher->mask.buf);
 		__flow_dv_adjust_buf_size(&value.size, misc_mask);
 		ret = mlx5_flow_os_create_flow(drop_matcher->matcher_object,
 					       (void *)&value, i, actions,
@@ -18204,7 +18206,7 @@ flow_dv_meter_hierarchy_rule_create(struct rte_eth_dev *dev,
 				goto err_exit;
 			}
 			if (__flow_dv_create_policy_flow(dev, color_reg_c_idx, (enum rte_color)j,
-						color_rule->matcher->matcher_object,
+						color_rule->matcher,
 						acts.actions_n, acts.dv_actions,
 						true, item, &color_rule->rule, &attr)) {
 				rte_spinlock_unlock(&mtr_policy->sl);
@@ -18914,7 +18916,7 @@ flow_dv_validate_mtr_policy_acts(struct rte_eth_dev *dev,
 				break;
 			case RTE_FLOW_ACTION_TYPE_DROP:
 				ret = mlx5_flow_validate_action_drop
-					(action_flags[i], attr, &flow_err);
+					(dev, false, attr, &flow_err);
 				if (ret < 0)
 					return -rte_mtr_error_set(error,
 					ENOTSUP,
@@ -19248,7 +19250,7 @@ flow_dv_discover_priorities(struct rte_eth_dev *dev,
 			break;
 		}
 		/* Try to apply the flow to HW. */
-		misc_mask = flow_dv_matcher_enable(flow.dv.value.buf);
+		misc_mask = flow_dv_matcher_enable(flow.handle->dvh.matcher->mask.buf);
 		__flow_dv_adjust_buf_size(&flow.dv.value.size, misc_mask);
 		err = mlx5_flow_os_create_flow
 				(flow.handle->dvh.matcher->matcher_object,

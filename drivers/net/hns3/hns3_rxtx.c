@@ -50,6 +50,8 @@ hns3_rx_queue_release_mbufs(struct hns3_rx_queue *rxq)
 				rxq->sw_ring[i].mbuf = NULL;
 			}
 		}
+		for (i = 0; i < rxq->rx_rearm_nb; i++)
+			rxq->sw_ring[rxq->rx_rearm_start + i].mbuf = NULL;
 	}
 
 	for (i = 0; i < rxq->bulk_mbuf_num; i++)
@@ -584,7 +586,7 @@ hns3_tqp_enable(struct hns3_hw *hw, uint16_t queue_id, bool enable)
 
 	ret = hns3_cmd_send(hw, &desc, 1);
 	if (ret)
-		hns3_err(hw, "TQP enable fail, ret = %d", ret);
+		hns3_err(hw, "TQP %s fail, ret = %d", enable ? "enable" : "disable", ret);
 
 	return ret;
 }
@@ -1637,7 +1639,7 @@ hns3_set_fake_rx_or_tx_queues(struct rte_eth_dev *dev, uint16_t nb_rx_q,
 
 	ret = hns3_fake_tx_queue_config(hw, tx_need_add_nb_q);
 	if (ret) {
-		hns3_err(hw, "Fail to configure fake rx queues: %d", ret);
+		hns3_err(hw, "Fail to configure fake tx queues: %d", ret);
 		goto cfg_fake_tx_q_fail;
 	}
 
@@ -4469,6 +4471,13 @@ hns3_dev_rx_queue_start(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 		return -ENOTSUP;
 
 	rte_spinlock_lock(&hw->lock);
+
+	if (__atomic_load_n(&hw->reset.resetting, __ATOMIC_RELAXED)) {
+		hns3_err(hw, "fail to start Rx queue during resetting.");
+		rte_spinlock_unlock(&hw->lock);
+		return -EIO;
+	}
+
 	ret = hns3_reset_queue(hw, rx_queue_id, HNS3_RING_TYPE_RX);
 	if (ret) {
 		hns3_err(hw, "fail to reset Rx queue %u, ret = %d.",
@@ -4476,6 +4485,9 @@ hns3_dev_rx_queue_start(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 		rte_spinlock_unlock(&hw->lock);
 		return ret;
 	}
+
+	if (rxq->sw_ring[0].mbuf != NULL)
+		hns3_rx_queue_release_mbufs(rxq);
 
 	ret = hns3_init_rxq(hns, rx_queue_id);
 	if (ret) {
@@ -4515,6 +4527,13 @@ hns3_dev_rx_queue_stop(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 		return -ENOTSUP;
 
 	rte_spinlock_lock(&hw->lock);
+
+	if (__atomic_load_n(&hw->reset.resetting, __ATOMIC_RELAXED)) {
+		hns3_err(hw, "fail to stop Rx queue during resetting.");
+		rte_spinlock_unlock(&hw->lock);
+		return -EIO;
+	}
+
 	hns3_enable_rxq(rxq, false);
 
 	hns3_rx_queue_release_mbufs(rxq);
@@ -4537,6 +4556,13 @@ hns3_dev_tx_queue_start(struct rte_eth_dev *dev, uint16_t tx_queue_id)
 		return -ENOTSUP;
 
 	rte_spinlock_lock(&hw->lock);
+
+	if (__atomic_load_n(&hw->reset.resetting, __ATOMIC_RELAXED)) {
+		hns3_err(hw, "fail to start Tx queue during resetting.");
+		rte_spinlock_unlock(&hw->lock);
+		return -EIO;
+	}
+
 	ret = hns3_reset_queue(hw, tx_queue_id, HNS3_RING_TYPE_TX);
 	if (ret) {
 		hns3_err(hw, "fail to reset Tx queue %u, ret = %d.",
@@ -4563,6 +4589,13 @@ hns3_dev_tx_queue_stop(struct rte_eth_dev *dev, uint16_t tx_queue_id)
 		return -ENOTSUP;
 
 	rte_spinlock_lock(&hw->lock);
+
+	if (__atomic_load_n(&hw->reset.resetting, __ATOMIC_RELAXED)) {
+		hns3_err(hw, "fail to stop Tx queue during resetting.");
+		rte_spinlock_unlock(&hw->lock);
+		return -EIO;
+	}
+
 	hns3_enable_txq(txq, false);
 	hns3_tx_queue_release_mbufs(txq);
 	/*

@@ -22,7 +22,7 @@ static uint8_t mana_rss_hash_key_default[TOEPLITZ_HASH_KEY_SIZE_IN_BYTES] = {
 };
 
 int
-mana_rq_ring_doorbell(struct mana_rxq *rxq, uint8_t arm)
+mana_rq_ring_doorbell(struct mana_rxq *rxq)
 {
 	struct mana_priv *priv = rxq->priv;
 	int ret;
@@ -36,13 +36,16 @@ mana_rq_ring_doorbell(struct mana_rxq *rxq, uint8_t arm)
 		db_page = process_priv->db_page;
 	}
 
+	/* Hardware Spec specifies that software client should set 0 for
+	 * wqe_cnt for Receive Queues.
+	 */
 	ret = mana_ring_doorbell(db_page, GDMA_QUEUE_RECEIVE,
 			 rxq->gdma_rq.id,
 			 rxq->gdma_rq.head * GDMA_WQE_ALIGNMENT_UNIT_SIZE,
-			 arm);
+			 0);
 
 	if (ret)
-		DRV_LOG(ERR, "failed to ring RX doorbell ret %d", ret);
+		DP_LOG(ERR, "failed to ring RX doorbell ret %d", ret);
 
 	return ret;
 }
@@ -52,8 +55,8 @@ mana_alloc_and_post_rx_wqe(struct mana_rxq *rxq)
 {
 	struct rte_mbuf *mbuf = NULL;
 	struct gdma_sgl_element sgl[1];
-	struct gdma_work_request request = {0};
-	struct gdma_posted_wqe_info wqe_info = {0};
+	struct gdma_work_request request;
+	uint32_t wqe_size_in_bu;
 	struct mana_priv *priv = rxq->priv;
 	int ret;
 	struct mana_mr_cache *mr;
@@ -66,13 +69,12 @@ mana_alloc_and_post_rx_wqe(struct mana_rxq *rxq)
 
 	mr = mana_find_pmd_mr(&rxq->mr_btree, priv, mbuf);
 	if (!mr) {
-		DRV_LOG(ERR, "failed to register RX MR");
+		DP_LOG(ERR, "failed to register RX MR");
 		rte_pktmbuf_free(mbuf);
 		return -ENOMEM;
 	}
 
 	request.gdma_header.struct_size = sizeof(request);
-	wqe_info.gdma_header.struct_size = sizeof(wqe_info);
 
 	sgl[0].address = rte_cpu_to_le_64(rte_pktmbuf_mtod(mbuf, uint64_t));
 	sgl[0].memory_key = mr->lkey;
@@ -87,17 +89,17 @@ mana_alloc_and_post_rx_wqe(struct mana_rxq *rxq)
 	request.flags = 0;
 	request.client_data_unit = NOT_USING_CLIENT_DATA_UNIT;
 
-	ret = gdma_post_work_request(&rxq->gdma_rq, &request, &wqe_info);
+	ret = gdma_post_work_request(&rxq->gdma_rq, &request, &wqe_size_in_bu);
 	if (!ret) {
 		struct mana_rxq_desc *desc =
 			&rxq->desc_ring[rxq->desc_ring_head];
 
 		/* update queue for tracking pending packets */
 		desc->pkt = mbuf;
-		desc->wqe_size_in_bu = wqe_info.wqe_size_in_bu;
+		desc->wqe_size_in_bu = wqe_size_in_bu;
 		rxq->desc_ring_head = (rxq->desc_ring_head + 1) % rxq->num_desc;
 	} else {
-		DRV_LOG(ERR, "failed to post recv ret %d", ret);
+		DP_LOG(DEBUG, "failed to post recv ret %d", ret);
 		return ret;
 	}
 
@@ -116,12 +118,12 @@ mana_alloc_and_post_rx_wqes(struct mana_rxq *rxq)
 	for (i = 0; i < rxq->num_desc; i++) {
 		ret = mana_alloc_and_post_rx_wqe(rxq);
 		if (ret) {
-			DRV_LOG(ERR, "failed to post RX ret = %d", ret);
+			DP_LOG(ERR, "failed to post RX ret = %d", ret);
 			return ret;
 		}
 	}
 
-	mana_rq_ring_doorbell(rxq, rxq->num_desc);
+	mana_rq_ring_doorbell(rxq);
 
 	return ret;
 }
@@ -381,27 +383,20 @@ uint16_t
 mana_rx_burst(void *dpdk_rxq, struct rte_mbuf **pkts, uint16_t pkts_n)
 {
 	uint16_t pkt_received = 0;
-	uint8_t wqe_posted = 0;
+	uint16_t wqe_posted = 0;
 	struct mana_rxq *rxq = dpdk_rxq;
 	struct mana_priv *priv = rxq->priv;
-	struct gdma_comp comp;
 	struct rte_mbuf *mbuf;
 	int ret;
+	uint32_t num_pkts;
 
-	while (pkt_received < pkts_n &&
-	       gdma_poll_completion_queue(&rxq->gdma_cq, &comp) == 1) {
-		struct mana_rxq_desc *desc;
-		struct mana_rx_comp_oob *oob =
-			(struct mana_rx_comp_oob *)&comp.completion_data[0];
+	num_pkts = gdma_poll_completion_queue(&rxq->gdma_cq, rxq->gdma_comp_buf, pkts_n);
+	for (uint32_t i = 0; i < num_pkts; i++) {
+		struct mana_rx_comp_oob *oob = (struct mana_rx_comp_oob *)
+			rxq->gdma_comp_buf[i].cqe_data;
+		struct mana_rxq_desc *desc =
+			&rxq->desc_ring[rxq->desc_ring_tail];
 
-		if (comp.work_queue_number != rxq->gdma_rq.id) {
-			DRV_LOG(ERR, "rxq comp id mismatch wqid=0x%x rcid=0x%x",
-				comp.work_queue_number, rxq->gdma_rq.id);
-			rxq->stats.errors++;
-			break;
-		}
-
-		desc = &rxq->desc_ring[rxq->desc_ring_tail];
 		rxq->gdma_rq.tail += desc->wqe_size_in_bu;
 		mbuf = desc->pkt;
 
@@ -411,22 +406,22 @@ mana_rx_burst(void *dpdk_rxq, struct rte_mbuf **pkts, uint16_t pkts_n)
 			break;
 
 		case CQE_RX_TRUNCATED:
-			DRV_LOG(ERR, "Drop a truncated packet");
+			DP_LOG(DEBUG, "Drop a truncated packet");
 			rxq->stats.errors++;
 			rte_pktmbuf_free(mbuf);
 			goto drop;
 
 		case CQE_RX_COALESCED_4:
-			DRV_LOG(ERR, "RX coalescing is not supported");
+			DP_LOG(ERR, "RX coalescing is not supported");
 			continue;
 
 		default:
-			DRV_LOG(ERR, "Unknown RX CQE type %d",
-				oob->cqe_hdr.cqe_type);
+			DP_LOG(ERR, "Unknown RX CQE type %d",
+			       oob->cqe_hdr.cqe_type);
 			continue;
 		}
 
-		DRV_LOG(DEBUG, "mana_rx_comp_oob CQE_RX_OKAY rxq %p", rxq);
+		DP_LOG(DEBUG, "mana_rx_comp_oob CQE_RX_OKAY rxq %p", rxq);
 
 		mbuf->data_off = RTE_PKTMBUF_HEADROOM;
 		mbuf->nb_segs = 1;
@@ -470,7 +465,7 @@ drop:
 		/* Post another request */
 		ret = mana_alloc_and_post_rx_wqe(rxq);
 		if (ret) {
-			DRV_LOG(ERR, "failed to post rx wqe ret=%d", ret);
+			DP_LOG(ERR, "failed to post rx wqe ret=%d", ret);
 			break;
 		}
 
@@ -478,7 +473,7 @@ drop:
 	}
 
 	if (wqe_posted)
-		mana_rq_ring_doorbell(rxq, wqe_posted);
+		mana_rq_ring_doorbell(rxq);
 
 	return pkt_received;
 }
@@ -490,8 +485,8 @@ mana_arm_cq(struct mana_rxq *rxq, uint8_t arm)
 	uint32_t head = rxq->gdma_cq.head %
 		(rxq->gdma_cq.count << COMPLETION_QUEUE_ENTRY_OWNER_BITS_SIZE);
 
-	DRV_LOG(ERR, "Ringing completion queue ID %u head %u arm %d",
-		rxq->gdma_cq.id, head, arm);
+	DP_LOG(DEBUG, "Ringing completion queue ID %u head %u arm %d",
+	       rxq->gdma_cq.id, head, arm);
 
 	return mana_ring_doorbell(priv->db_page, GDMA_QUEUE_COMPLETION,
 				  rxq->gdma_cq.id, head, arm);
@@ -521,8 +516,8 @@ mana_rx_intr_disable(struct rte_eth_dev *dev, uint16_t rx_queue_id)
 
 	if (ret) {
 		if (ret != EAGAIN)
-			DRV_LOG(ERR, "Can't disable RX intr queue %d",
-				rx_queue_id);
+			DP_LOG(ERR, "Can't disable RX intr queue %d",
+			       rx_queue_id);
 	} else {
 		ibv_ack_cq_events(rxq->cq, 1);
 	}

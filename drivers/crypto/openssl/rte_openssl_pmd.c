@@ -1195,8 +1195,11 @@ process_openssl_auth_encryption_gcm(struct rte_mbuf *mbuf_src, int offset,
 		int srclen, uint8_t *aad, int aadlen, uint8_t *iv,
 		uint8_t *dst, uint8_t *tag, EVP_CIPHER_CTX *ctx)
 {
-	int len = 0, unused = 0;
+	int len = 0;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	int unused = 0;
 	uint8_t empty[] = {};
+#endif
 
 	if (EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv) <= 0)
 		goto process_auth_encryption_gcm_err;
@@ -1210,9 +1213,11 @@ process_openssl_auth_encryption_gcm(struct rte_mbuf *mbuf_src, int offset,
 				srclen, ctx, 0))
 			goto process_auth_encryption_gcm_err;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* Workaround open ssl bug in version less then 1.0.1f */
 	if (EVP_EncryptUpdate(ctx, empty, &unused, empty, 0) <= 0)
 		goto process_auth_encryption_gcm_err;
+#endif
 
 	if (EVP_EncryptFinal_ex(ctx, dst, &len) <= 0)
 		goto process_auth_encryption_gcm_err;
@@ -1274,8 +1279,11 @@ process_openssl_auth_decryption_gcm(struct rte_mbuf *mbuf_src, int offset,
 		int srclen, uint8_t *aad, int aadlen, uint8_t *iv,
 		uint8_t *dst, uint8_t *tag, EVP_CIPHER_CTX *ctx)
 {
-	int len = 0, unused = 0;
+	int len = 0;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	int unused = 0;
 	uint8_t empty[] = {};
+#endif
 
 	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag) <= 0)
 		goto process_auth_decryption_gcm_err;
@@ -1292,9 +1300,11 @@ process_openssl_auth_decryption_gcm(struct rte_mbuf *mbuf_src, int offset,
 				srclen, ctx, 0))
 			goto process_auth_decryption_gcm_err;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	/* Workaround open ssl bug in version less then 1.0.1f */
 	if (EVP_DecryptUpdate(ctx, empty, &unused, empty, 0) <= 0)
 		goto process_auth_decryption_gcm_err;
+#endif
 
 	if (EVP_DecryptFinal_ex(ctx, dst, &len) <= 0)
 		return -EFAULT;
@@ -1797,7 +1807,6 @@ process_openssl_auth_op(struct openssl_qp *qp, struct rte_crypto_op *op,
 # if OPENSSL_VERSION_NUMBER >= 0x30000000L
 	EVP_MAC_CTX *ctx_h;
 	EVP_MAC_CTX *ctx_c;
-	EVP_MAC *mac;
 # else
 	HMAC_CTX *ctx_h;
 	CMAC_CTX *ctx_c;
@@ -1818,10 +1827,7 @@ process_openssl_auth_op(struct openssl_qp *qp, struct rte_crypto_op *op,
 		break;
 	case OPENSSL_AUTH_AS_HMAC:
 # if OPENSSL_VERSION_NUMBER >= 0x30000000L
-		mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
-		ctx_h = EVP_MAC_CTX_new(mac);
 		ctx_h = EVP_MAC_CTX_dup(sess->auth.hmac.ctx);
-		EVP_MAC_free(mac);
 		status = process_openssl_auth_mac(mbuf_src, dst,
 				op->sym->auth.data.offset, srclen,
 				ctx_h);
@@ -1836,10 +1842,7 @@ process_openssl_auth_op(struct openssl_qp *qp, struct rte_crypto_op *op,
 		break;
 	case OPENSSL_AUTH_AS_CMAC:
 # if OPENSSL_VERSION_NUMBER >= 0x30000000L
-		mac = EVP_MAC_fetch(NULL, OSSL_MAC_NAME_CMAC, NULL);
-		ctx_c = EVP_MAC_CTX_new(mac);
 		ctx_c = EVP_MAC_CTX_dup(sess->auth.cmac.ctx);
-		EVP_MAC_free(mac);
 		status = process_openssl_auth_mac(mbuf_src, dst,
 				op->sym->auth.data.offset, srclen,
 				ctx_c);
@@ -1927,7 +1930,7 @@ process_openssl_dsa_sign_op_evp(struct rte_crypto_op *cop,
 
 	if (EVP_PKEY_sign(dsa_ctx, dsa_sign_data, &outlen, op->message.data,
 						op->message.length) <= 0) {
-		free(dsa_sign_data);
+		OPENSSL_free(dsa_sign_data);
 		goto err_dsa_sign;
 	}
 
@@ -1935,7 +1938,7 @@ process_openssl_dsa_sign_op_evp(struct rte_crypto_op *cop,
 	DSA_SIG *sign = d2i_DSA_SIG(NULL, &dsa_sign_data_p, outlen);
 	if (!sign) {
 		OPENSSL_LOG(ERR, "%s:%d\n", __func__, __LINE__);
-		free(dsa_sign_data);
+		OPENSSL_free(dsa_sign_data);
 		goto err_dsa_sign;
 	} else {
 		const BIGNUM *r = NULL, *s = NULL;
@@ -1947,7 +1950,7 @@ process_openssl_dsa_sign_op_evp(struct rte_crypto_op *cop,
 	}
 
 	DSA_SIG_free(sign);
-	free(dsa_sign_data);
+	OPENSSL_free(dsa_sign_data);
 	return 0;
 
 err_dsa_sign:
